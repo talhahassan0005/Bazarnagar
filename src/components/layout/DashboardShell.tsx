@@ -2,12 +2,14 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LogOut, Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { SidebarNav, type NavItem } from "./SidebarNav";
 import { Avatar } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useAppDispatch } from "@/store/hooks";
+import { logout } from "@/store/authSlice";
 
 /**
  * Generic dashboard layout with a collapsible sidebar.
@@ -29,6 +31,13 @@ export function DashboardShell({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push(homeHref.startsWith("/admin") ? "/admin/login" : "/login");
+  };
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -42,10 +51,18 @@ export function DashboardShell({
       <div className="border-t border-slate-100 p-3">
         <div className="flex items-center gap-3 rounded-xl px-2 py-2">
           <Avatar name={user.name} src={user.avatarUrl} size={36} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-800">{user.name}</p>
             <p className="truncate text-xs text-slate-400">{user.subtitle}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-accent-600"
+            aria-label="Log out"
+            title="Log out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
