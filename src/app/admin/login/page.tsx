@@ -21,6 +21,16 @@ export default function AdminLoginPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-brand-900 px-4">
+      {/* Blurred shop/marketplace backdrop (matches seller auth) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 scale-105 bg-cover bg-center opacity-20 blur-[3px]"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1600&auto=format&fit=crop')",
+        }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-brand-900/70" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(232,93,44,0.18),_transparent_55%)]" />
       <div className="relative mb-6 flex items-center gap-2.5 text-white">
         <BrandMark className="h-9 w-9" />

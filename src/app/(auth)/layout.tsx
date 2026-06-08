@@ -9,6 +9,17 @@ import { BrandMark } from "@/components/layout/Logo";
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-brand-900 px-4 py-10">
+      {/* Blurred shop/marketplace backdrop */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 scale-105 bg-cover bg-center opacity-20 blur-[3px]"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1600&auto=format&fit=crop')",
+        }}
+      />
+      {/* Navy wash to keep the dark brand mood and card contrast */}
+      <div className="pointer-events-none absolute inset-0 bg-brand-900/70" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(232,93,44,0.18),_transparent_55%)]" />
       <Link
         href="/"

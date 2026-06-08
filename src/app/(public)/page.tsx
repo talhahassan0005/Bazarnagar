@@ -33,6 +33,17 @@ export default function LandingPage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-brand-50 via-white to-white">
+        {/* Blurred shop/marketplace backdrop */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 scale-105 bg-cover bg-center opacity-[0.16] blur-[1.2px]"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600&auto=format&fit=crop')",
+          }}
+        />
+        {/* Soften the image into the page so hero text stays crisp */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/30 to-white" />
         <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 top-40 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl" />
         <div className="relative mx-auto grid w-full max-w-[1600px] items-center gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:px-8">
