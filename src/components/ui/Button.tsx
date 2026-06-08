@@ -14,17 +14,17 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-brand-700 text-white hover:bg-brand-800 focus-visible:ring-brand-500 shadow-sm shadow-brand-700/20",
+    "bg-brand-700 text-white hover:bg-brand-800 focus-visible:ring-brand-500 shadow-sm shadow-brand-700/20 hover:shadow-md hover:shadow-brand-700/25",
   accent:
-    "bg-accent-500 text-white hover:bg-accent-600 focus-visible:ring-accent-400 shadow-sm shadow-accent-500/25",
+    "bg-accent-500 text-white hover:bg-accent-600 focus-visible:ring-accent-400 shadow-sm shadow-accent-500/25 hover:shadow-md hover:shadow-accent-500/30",
   secondary:
-    "bg-slate-900 text-white hover:bg-slate-800 focus-visible:ring-slate-500 shadow-sm",
+    "bg-slate-900 text-white hover:bg-slate-800 focus-visible:ring-slate-500 shadow-sm hover:shadow-md",
   outline:
     "border border-slate-300 bg-white text-brand-700 hover:border-brand-300 hover:bg-brand-50 focus-visible:ring-brand-300",
   ghost: "text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-300",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm",
+  danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm hover:shadow-md",
   whatsapp:
-    "bg-whatsapp text-white hover:bg-whatsapp-dark focus-visible:ring-whatsapp shadow-sm shadow-whatsapp/25",
+    "bg-whatsapp text-white hover:bg-whatsapp-dark focus-visible:ring-whatsapp shadow-sm shadow-whatsapp/25 hover:shadow-md hover:shadow-whatsapp/30",
 };
 
 const sizes: Record<Size, string> = {
