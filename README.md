@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DukanNama — Frontend (Prototype 1)
 
-## Getting Started
+Mobile-friendly mini-store / product-catalog builder for WhatsApp & Instagram sellers.
+Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS v4**.
 
-First, run the development server:
+This is the **frontend only**. It currently runs against an in-memory mock data
+layer; a separate **Node.js / Express + MongoDB** backend will replace the mock
+layer in the next phase (see [Backend integration](#backend-integration)).
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm run lint     # eslint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Routes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Area     | Route                                      | Description                          |
+| -------- | ------------------------------------------ | ------------------------------------ |
+| Public   | `/`                                        | Landing page                         |
+| Public   | `/search`                                  | Product search + filters             |
+| Public   | `/store/[slug]`                            | Public shop page                     |
+| Public   | `/store/[slug]/product/[productId]`        | Product detail + WhatsApp inquiry    |
+| Auth     | `/login`, `/signup`                        | Seller authentication                |
+| Seller   | `/dashboard`                               | Dashboard (metrics, store link)      |
+| Seller   | `/dashboard/store`                         | Create / edit store profile          |
+| Seller   | `/dashboard/products` `…/new` `…/[id]/edit`| Product management                   |
+| Seller   | `/dashboard/analytics`                     | Views & WhatsApp click analytics     |
+| Seller   | `/dashboard/plan`                          | Plan & subscription                  |
+| Admin    | `/admin/login`                             | Admin sign in                        |
+| Admin    | `/admin`                                   | Overview + moderation queue          |
+| Admin    | `/admin/sellers` `/stores` `/products`     | Management tables                    |
+| Admin    | `/admin/moderation`                        | Product moderation queue             |
+| Admin    | `/admin/plans`                             | Plan & subscription management       |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+src/
+├─ app/
+│  ├─ (public)/        # landing, search, store, product detail  (PublicNavbar + Footer)
+│  ├─ (auth)/          # login, signup                           (centered layout)
+│  ├─ dashboard/       # seller area                             (SellerShell sidebar)
+│  └─ admin/
+│     ├─ login/        # standalone admin login
+│     └─ (panel)/      # admin pages                             (AdminShell sidebar)
+├─ components/
+│  ├─ ui/              # generic primitives: Button, Input, Card, Badge, Modal, Toggle…
+│  ├─ layout/          # Logo, navbars, Footer, sidebars, DashboardShell, SellerShell, AdminShell
+│  ├─ domain/          # ProductCard, ProductForm, StoreProfileForm, StoreHeader,
+│  │                   #   WhatsAppButton, StatCard, DataTable, status badges…
+│  └─ auth/            # AuthCard
+├─ hooks/
+│  └─ useAsync.ts      # tiny data-fetching hook (loading/data/error)
+└─ lib/
+   ├─ types.ts         # shared domain types (Seller, Store, Product, Plan…)
+   ├─ constants.ts     # plans, categories, cities, moderation metadata
+   ├─ utils.ts         # cn, formatPrice, slugify, buildWhatsAppLink…
+   ├─ mockData.ts      # sample sellers / stores / products
+   └─ api.ts           # API client abstraction (mock today → Express tomorrow)
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Component philosophy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Every page composes small, reusable components. Pages hold layout + data wiring;
+all visual / interactive logic lives in `components/`. Domain components are
+data-shape driven (they take a `Product` / `Store` / `Plan`), so they work
+identically with mock data or real API responses.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Backend integration
 
-## Deploy on Vercel
+All data access flows through **`src/lib/api.ts`**. To connect the real backend:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Set `NEXT_PUBLIC_API_BASE` in `.env.local` (e.g. `http://localhost:5000/api`).
+2. Replace each method body in `lib/api.ts` with a `fetch` to the matching
+   Express endpoint. The return types (`lib/types.ts`) stay the same, so **no
+   component or page needs to change.**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The mock data shapes already mirror the intended MongoDB documents.
