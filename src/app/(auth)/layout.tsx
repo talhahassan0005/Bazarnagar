@@ -1,16 +1,25 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { LogoImage } from "@/components/layout/Logo";
+import { BrandMark } from "@/components/layout/Logo";
 
+/**
+ * Seller auth shell — mirrors the admin login design: dark navy backdrop with a
+ * warm radial glow, brand lockup on top, and a white card holding the form.
+ */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-brand-50 via-white to-slate-50 px-4 py-10">
-      {/* soft brand glow */}
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-accent-200/30 blur-3xl" />
-      <Link href="/" className="relative mb-8 transition-transform hover:scale-[1.02]">
-        <LogoImage className="h-24 w-auto sm:h-28" priority />
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-brand-900 px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(232,93,44,0.18),_transparent_55%)]" />
+      <Link
+        href="/"
+        className="relative mb-6 flex items-center gap-2.5 text-white transition-transform hover:scale-[1.02]"
+      >
+        <BrandMark className="h-10 w-10" />
+        <span className="text-xl font-bold tracking-tight">
+          Bazaar<span className="text-accent-500">nagar</span>
+        </span>
       </Link>
-      <div className="relative w-full max-w-md animate-fade-in-up">{children}</div>
+      <div className="relative w-full max-w-sm animate-fade-in-up">{children}</div>
     </div>
   );
 }
