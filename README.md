@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DukanNama — Frontend (Prototype 1)
 
 Mobile-friendly mini-store / product-catalog builder for WhatsApp & Instagram sellers.
@@ -80,3 +81,6 @@ All data access flows through **`src/lib/api.ts`**. To connect the real backend:
    component or page needs to change.**
 
 The mock data shapes already mirror the intended MongoDB documents.
+=======
+# Bazarnagar
+>>>>>>> 6ea0c69eb4f3a4471990c2ca8d97ceb989e9d345
