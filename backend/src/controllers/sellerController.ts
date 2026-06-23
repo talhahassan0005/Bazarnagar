@@ -112,6 +112,24 @@ export const updateStoreLanding = asyncHandler(async (req: Request, res: Respons
   res.json(store.toJSON());
 });
 
+const stripeSchema = z.object({
+  connected: z.boolean(),
+  accountId: z.string().optional(),
+  email: z.string().optional(),
+});
+
+/** PATCH /api/seller/store/payment — connect/update the store's Stripe payment method. */
+export const updateStorePayment = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  if (!seller.storeId) throw new ApiError(400, "Create your store profile first");
+  const store = await Store.findById(seller.storeId);
+  if (!store) throw new ApiError(404, "Store not found");
+
+  store.stripe = stripeSchema.parse(req.body);
+  await store.save();
+  res.json(store.toJSON());
+});
+
 const planSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
 });

@@ -8,6 +8,9 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+export type PaymentMethod = "cod" | "card";
+export type PaymentStatus = "unpaid" | "paid";
+
 export interface OrderItem {
   productId: Types.ObjectId;
   name: string;
@@ -26,6 +29,8 @@ export interface OrderDoc extends Document {
   items: OrderItem[];
   total: number;
   status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
   createdAt: Date;
 }
 
@@ -56,6 +61,8 @@ const orderSchema = new Schema<OrderDoc>(
       default: "pending",
       index: true,
     },
+    paymentMethod: { type: String, enum: ["cod", "card"], default: "cod" },
+    paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
   },
   baseSchemaOptions
 );

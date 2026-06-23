@@ -20,6 +20,14 @@ export interface StoreLanding {
   showContact: boolean;
 }
 
+/** Seller's Stripe payment-method connection (to accept online card payments). */
+export interface StoreStripe {
+  connected: boolean;
+  accountId?: string; // Stripe account id (acct_…) — from Connect or manual entry
+  email?: string; // Stripe account email
+  chargesEnabled?: boolean; // true once Stripe lets the account take payments
+}
+
 export interface StoreDoc extends Document {
   sellerId: Types.ObjectId;
   name: string;
@@ -39,6 +47,7 @@ export interface StoreDoc extends Document {
   deliveryInfo?: string;
   paymentInfo?: string;
   landing?: StoreLanding;
+  stripe?: StoreStripe;
   status: StoreStatus;
   views: number;
   whatsappClicks: number;
@@ -62,6 +71,16 @@ const landingSchema = new Schema<StoreLanding>(
     aboutTitle: String,
     aboutText: String,
     showContact: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
+const stripeSchema = new Schema<StoreStripe>(
+  {
+    connected: { type: Boolean, default: false },
+    accountId: String,
+    email: String,
+    chargesEnabled: { type: Boolean, default: false },
   },
   { _id: false }
 );
@@ -90,6 +109,7 @@ const storeSchema = new Schema<StoreDoc>(
     deliveryInfo: String,
     paymentInfo: String,
     landing: { type: landingSchema, default: undefined },
+    stripe: { type: stripeSchema, default: undefined },
     status: {
       type: String,
       enum: ["active", "inactive", "pending"],
