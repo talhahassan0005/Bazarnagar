@@ -26,8 +26,13 @@ export interface ProductDoc extends Document {
   negotiable: boolean;
   condition?: ProductCondition;
   deliveryAvailable?: boolean;
+  /** Optional per-product location (falls back to the store's location). */
+  lat?: number;
+  lng?: number;
   moderationStatus: ModerationStatus;
   moderationReason?: string;
+  /** Paid "boost" — product is featured while this date is in the future. */
+  boostedUntil?: Date;
   views: number;
   whatsappClicks: number;
   createdAt: Date;
@@ -53,6 +58,8 @@ const productSchema = new Schema<ProductDoc>(
     negotiable: { type: Boolean, default: false },
     condition: { type: String, enum: ["new", "used"] },
     deliveryAvailable: Boolean,
+    lat: Number,
+    lng: Number,
     moderationStatus: {
       type: String,
       enum: ["pending", "approved", "flagged", "rejected", "needs_edit"],
@@ -60,6 +67,7 @@ const productSchema = new Schema<ProductDoc>(
       index: true,
     },
     moderationReason: String,
+    boostedUntil: { type: Date, index: true },
     views: { type: Number, default: 0 },
     whatsappClicks: { type: Number, default: 0 },
   },

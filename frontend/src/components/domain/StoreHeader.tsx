@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Badge, Button } from "@/components/ui";
+import { StoreMap } from "@/components/storefront/StoreMap";
 import { toWhatsAppNumber } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 
@@ -40,6 +41,9 @@ export function StoreHeader({ store }: { store: Store }) {
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <Badge tone="brand">{store.category}</Badge>
+                <Badge tone={store.isOpen === false ? "red" : "green"}>
+                  {store.isOpen === false ? "Closed" : "Open"}
+                </Badge>
                 {store.showLocation && location && (
                   <span className="flex items-center gap-1 text-sm text-slate-500">
                     <MapPin className="h-3.5 w-3.5" />
@@ -109,6 +113,17 @@ export function StoreHeader({ store }: { store: Store }) {
             </a>
           )}
         </div>
+
+        {store.showLocation && (store.lat != null || store.fullAddress || location) && (
+          <div className="mt-4">
+            <StoreMap
+              lat={store.lat}
+              lng={store.lng}
+              query={store.fullAddress || location}
+              className="h-48"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

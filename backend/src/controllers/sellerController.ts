@@ -4,6 +4,7 @@ import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { getPlan } from "../lib/plans";
+import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
@@ -36,10 +37,13 @@ const storeSchema = z.object({
   area: z.string().optional(),
   fullAddress: z.string().optional(),
   mapsLink: z.string().url().optional().or(z.literal("")),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   logoUrl: z.string().optional(),
   coverUrl: z.string().optional(),
   showLocation: z.boolean().optional(),
   showInSearch: z.boolean().optional(),
+  isOpen: z.boolean().optional(),
   socials: z
     .object({
       instagram: z.string().optional(),
@@ -164,6 +168,8 @@ const productSchema = z.object({
   negotiable: z.boolean().default(false),
   condition: z.enum(["new", "used"]).optional(),
   deliveryAvailable: z.boolean().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 
 async function requireOwnedStore(req: Request) {
@@ -249,6 +255,29 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   const product = await Product.findOneAndDelete({ _id: req.params.id, storeId: store._id });
   if (!product) throw new ApiError(404, "Product not found");
   res.json({ ok: true });
+});
+
+const boostSchema = z.object({ packageId: z.string().min(1) });
+
+/** POST /api/seller/products/:id/boost — feature a product (paid plans only). */
+export const boostProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { seller, store } = await requireOwnedStore(req);
+  if (seller.planId === "starter") {
+    throw new ApiError(403, "Boosting is a paid feature. Upgrade your plan to feature products.");
+  }
+  const { packageId } = boostSchema.parse(req.body);
+  const pkg = getBoostPackage(packageId);
+  if (!pkg) throw new ApiError(400, "Invalid boost package");
+
+  const product = await Product.findOne({ _id: req.params.id, storeId: store._id });
+  if (!product) throw new ApiError(404, "Product not found");
+
+  // Extend from the later of now / current expiry (stacking boosts).
+  const now = new Date();
+  const base = product.boostedUntil && product.boostedUntil > now ? product.boostedUntil : now;
+  product.boostedUntil = new Date(base.getTime() + pkg.days * 24 * 60 * 60 * 1000);
+  await product.save();
+  res.json(product.toJSON());
 });
 
 /* -------------------------------- Dashboard ------------------------------- */

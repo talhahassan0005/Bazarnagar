@@ -2,18 +2,51 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, SlidersHorizontal, Store as StoreIcon } from "lucide-react";
+import { Navigation, Search, SlidersHorizontal, Store as StoreIcon } from "lucide-react";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { StoreCard } from "@/components/storefront/StoreCard";
 import { useGetPublicStoresQuery } from "@/store/apiSlice";
 import { CITIES } from "@/lib/constants";
+import { distanceKm } from "@/lib/utils";
 
 export default function ShopsPage() {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const { data, isLoading } = useGetPublicStoresQuery({ q: query, city });
   const results = data ?? [];
+
+  function nearMe() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 10000 }
+    );
+  }
+
+  // Attach distance + sort nearest-first when a location is set.
+  const shops = results.map((store) => ({
+    store,
+    distance:
+      coords && store.lat != null && store.lng != null
+        ? distanceKm(coords.lat, coords.lng, store.lat, store.lng)
+        : undefined,
+  }));
+  if (coords) {
+    shops.sort((a, b) => {
+      if (a.distance == null && b.distance == null) return 0;
+      if (a.distance == null) return 1;
+      if (b.distance == null) return -1;
+      return a.distance - b.distance;
+    });
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
@@ -41,7 +74,7 @@ export default function ShopsPage() {
           />
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
-          <SlidersHorizontal className="h-4 w-4 text-slate-400" />
+          <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
@@ -55,6 +88,14 @@ export default function ShopsPage() {
             ))}
           </select>
         </div>
+        <Button
+          variant={coords ? "primary" : "outline"}
+          loading={locating}
+          leftIcon={<Navigation className="h-4 w-4" />}
+          onClick={nearMe}
+        >
+          {coords ? "Sorted by distance" : "Shops near me"}
+        </Button>
       </div>
 
       {/* Results */}
@@ -65,7 +106,7 @@ export default function ShopsPage() {
               <Skeleton key={i} className="h-56 rounded-2xl" />
             ))}
           </div>
-        ) : results.length === 0 ? (
+        ) : shops.length === 0 ? (
           <EmptyState
             icon={<StoreIcon className="h-6 w-6" />}
             title="No shops found"
@@ -84,10 +125,10 @@ export default function ShopsPage() {
           />
         ) : (
           <>
-            <p className="mb-3 text-sm text-slate-500">{results.length} shops</p>
+            <p className="mb-3 text-sm text-slate-500">{shops.length} shops</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {results.map((store) => (
-                <StoreCard key={store.id} store={store} />
+              {shops.map(({ store, distance }) => (
+                <StoreCard key={store.id} store={store} distanceKm={distance} />
               ))}
             </div>
           </>

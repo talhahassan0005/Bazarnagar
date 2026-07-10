@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { HeroPreview } from "@/components/marketing/HeroPreview";
+import { HomeCatalog } from "@/components/marketing/HomeCatalog";
 import { PLAN_LIST, SITE_TAGLINE_UR } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 
@@ -90,6 +91,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Shop by category (chips filter the product grid in place) */}
+      <HomeCatalog />
 
       {/* How it works */}
       <section className="mx-auto w-full max-w-[1600px] px-4 py-16 sm:px-6 lg:px-8">

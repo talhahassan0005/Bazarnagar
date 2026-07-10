@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Package, Pencil, Plus, Trash2 } from "lucide-react";
+import { Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
 import { Button, Card, TableSkeleton, EmptyState, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import {
@@ -11,13 +11,14 @@ import {
 } from "@/components/domain/StatusBadges";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  useBoostProductMutation,
   useDeleteProductMutation,
   useGetMyProductsQuery,
   useGetSellerQuery,
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
-import { PLANS } from "@/lib/constants";
-import { formatCount, formatPrice, getErrorMessage } from "@/lib/utils";
+import { BOOST_PACKAGES, PLANS } from "@/lib/constants";
+import { formatCount, formatPrice, getErrorMessage, isBoosted } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 export default function ProductsPage() {
@@ -26,7 +27,10 @@ export default function ProductsPage() {
   const { data: products, isLoading } = useGetMyProductsQuery(sellerId);
   const { data: seller } = useGetSellerQuery(sellerId);
   const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
+  const [boostProduct, { isLoading: boosting }] = useBoostProductMutation();
   const [toDelete, setToDelete] = useState<Product | null>(null);
+  const [toBoost, setToBoost] = useState<Product | null>(null);
+  const [pkgId, setPkgId] = useState<string>(BOOST_PACKAGES[0]?.id ?? "");
 
   if (isLoading) {
     return (
@@ -40,13 +44,18 @@ export default function ProductsPage() {
   const list = products ?? [];
   const plan = seller ? PLANS[seller.planId] : null;
   const atLimit = plan ? list.length >= plan.productLimit : false;
+  const isPaid = seller ? seller.planId !== "starter" : false;
 
   return (
     <>
       <PageHeader
         title="Products"
         description={
-          plan ? `${list.length} of ${plan.productLimit} products used` : undefined
+          plan
+            ? plan.productLimit >= 1_000_000
+              ? `${list.length} products`
+              : `${list.length} of ${plan.productLimit} products used`
+            : undefined
         }
         action={
           <Button
@@ -105,9 +114,14 @@ export default function ProductsPage() {
                   />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
-                    <div className="mt-0.5 flex items-center gap-2">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2">
                       <span className="text-xs text-slate-400">{p.category}</span>
                       <ProductStatusBadge status={p.status} />
+                      {isBoosted(p) && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                          ★ Featured
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 text-xs text-slate-400">
                       {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} WhatsApp clicks
@@ -124,6 +138,16 @@ export default function ProductsPage() {
                   <ModerationBadge status={p.moderationStatus} />
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
+                  {isPaid && (
+                    <button
+                      onClick={() => setToBoost(p)}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
+                      aria-label="Feature product"
+                      title={isBoosted(p) ? "Extend featured" : "Feature this product"}
+                    >
+                      <Rocket className="h-4 w-4" />
+                    </button>
+                  )}
                   <Button
                     href={`/dashboard/products/${p.id}/edit`}
                     variant="ghost"
@@ -179,6 +203,61 @@ export default function ProductsPage() {
           <span className="font-medium text-slate-900">{toDelete?.name}</span>? This action
           cannot be undone.
         </p>
+      </Modal>
+
+      <Modal
+        open={!!toBoost}
+        onClose={() => setToBoost(null)}
+        title="Feature this product"
+        footer={
+          <>
+            <Button variant="outline" disabled={boosting} onClick={() => setToBoost(null)}>
+              Cancel
+            </Button>
+            <Button
+              loading={boosting}
+              leftIcon={<Rocket className="h-4 w-4" />}
+              onClick={async () => {
+                if (!toBoost) return;
+                try {
+                  await boostProduct({ id: toBoost.id, packageId: pkgId }).unwrap();
+                  dispatch(addToast(`"${toBoost.name}" is now featured`, "success"));
+                  setToBoost(null);
+                } catch (err) {
+                  dispatch(addToast(getErrorMessage(err, "Could not feature product"), "error"));
+                }
+              }}
+            >
+              Feature now
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Featured products appear <span className="font-medium">first</span> in search and store
+            listings with a ★ Featured tag. Choose a duration:
+          </p>
+          <div className="space-y-2">
+            {BOOST_PACKAGES.map((pkg) => (
+              <label
+                key={pkg.id}
+                className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50"
+              >
+                <span className="flex items-center gap-2.5">
+                  <input
+                    type="radio"
+                    name="boost"
+                    checked={pkgId === pkg.id}
+                    onChange={() => setPkgId(pkg.id)}
+                  />
+                  Featured for {pkg.label}
+                </span>
+                <span className="font-semibold text-slate-900">{formatPrice(pkg.price)}</span>
+              </label>
+            ))}
+          </div>
+        </div>
       </Modal>
     </>
   );

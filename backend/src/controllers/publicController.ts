@@ -1,11 +1,20 @@
 import type { Request, Response } from "express";
 import { Store } from "../models/Store";
-import { Product } from "../models/Product";
+import { Product, type ProductDoc } from "../models/Product";
 import { asyncHandler } from "../lib/helpers";
 import { ratingSummary } from "./reviewController";
 
 /** Only products customers may see publicly (SRS §7). */
 const PUBLIC_PRODUCT_FILTER = { status: "active", moderationStatus: "approved" } as const;
+
+/** Sort actively-boosted (featured) products first, then newest. */
+function boostFirst(a: ProductDoc, b: ProductDoc): number {
+  const t = Date.now();
+  const ab = a.boostedUntil ? a.boostedUntil.getTime() > t : false;
+  const bb = b.boostedUntil ? b.boostedUntil.getTime() > t : false;
+  if (ab !== bb) return ab ? -1 : 1;
+  return b.createdAt.getTime() - a.createdAt.getTime();
+}
 
 /** GET /api/public/stores/:slug — public shop page. Increments shop views. */
 export const getStoreBySlug = asyncHandler(async (req: Request, res: Response) => {
@@ -43,6 +52,7 @@ export const getStoreProducts = asyncHandler(async (req: Request, res: Response)
   const filter: Record<string, unknown> = { storeId: req.params.storeId };
   if (publicOnly) Object.assign(filter, PUBLIC_PRODUCT_FILTER);
   const products = await Product.find(filter).sort({ createdAt: -1 });
+  products.sort(boostFirst);
   res.json(products.map((p) => p.toJSON()));
 });
 
@@ -101,6 +111,7 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
     });
   }
 
+  products.sort(boostFirst);
   res.json(
     products.map((p) => ({
       ...p.toJSON(),

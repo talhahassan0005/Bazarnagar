@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ImagePlus, Navigation, Trash2 } from "lucide-react";
 import {
   Card,
   CardBody,
@@ -63,6 +64,20 @@ export function ProductForm({
 
   const set = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) =>
     setV((prev) => ({ ...prev, [key]: value }));
+
+  const [locating, setLocating] = useState(false);
+  function captureLocation() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setV((prev) => ({ ...prev, lat: pos.coords.latitude, lng: pos.coords.longitude }));
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
   const setImage = (i: number, url: string) =>
     setV((prev) => ({ ...prev, images: prev.images.map((im, idx) => (idx === i ? url : im)) }));
@@ -169,7 +184,7 @@ export function ProductForm({
               )}
             </div>
           ))}
-          {canAddImage && (
+          {canAddImage ? (
             <Button
               type="button"
               variant="outline"
@@ -179,6 +194,14 @@ export function ProductForm({
             >
               Add image ({v.images.length}/{plan.imageLimit})
             </Button>
+          ) : (
+            <p className="text-xs text-slate-500">
+              You've reached your {plan.name} plan's limit of {plan.imageLimit} image
+              {plan.imageLimit > 1 ? "s" : ""} per product.{" "}
+              <Link href="/dashboard/plan" className="font-medium text-brand-700 hover:underline">
+                Upgrade for more →
+              </Link>
+            </p>
           )}
           {plan.videoLimit > 0 && (
             <Input
@@ -235,6 +258,27 @@ export function ProductForm({
               checked={!!v.deliveryAvailable}
               onChange={(val) => set("deliveryAvailable", val)}
             />
+          </div>
+
+          <div className="sm:col-span-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              loading={locating}
+              leftIcon={<Navigation className="h-4 w-4" />}
+              onClick={captureLocation}
+            >
+              Use my current location (optional)
+            </Button>
+            {v.lat != null && v.lng != null && (
+              <span className="ml-3 text-xs font-medium text-leaf-600">
+                Pinned ({v.lat.toFixed(3)}, {v.lng.toFixed(3)}) — helps nearby shoppers find it.
+              </span>
+            )}
+            <p className="mt-1 text-xs text-slate-400">
+              Leave blank to use your store&apos;s location.
+            </p>
           </div>
         </CardBody>
       </Card>

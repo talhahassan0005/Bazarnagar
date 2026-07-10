@@ -41,8 +41,11 @@ export interface StoreDoc extends Document {
   area?: string;
   fullAddress?: string;
   mapsLink?: string;
+  lat?: number;
+  lng?: number;
   showLocation: boolean;
   showInSearch: boolean;
+  isOpen: boolean;
   socials?: { instagram?: string; facebook?: string; tiktok?: string };
   deliveryInfo?: string;
   paymentInfo?: string;
@@ -99,8 +102,11 @@ const storeSchema = new Schema<StoreDoc>(
     area: { type: String, index: true },
     fullAddress: String,
     mapsLink: String,
+    lat: Number,
+    lng: Number,
     showLocation: { type: Boolean, default: true },
     showInSearch: { type: Boolean, default: true },
+    isOpen: { type: Boolean, default: true },
     socials: {
       instagram: String,
       facebook: String,

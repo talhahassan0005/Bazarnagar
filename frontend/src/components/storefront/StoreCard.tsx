@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 import { Badge } from "@/components/ui";
+import { formatDistance } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 
 /** Compact shop card for the shops directory (/shops). */
-export function StoreCard({ store }: { store: Store }) {
+export function StoreCard({ store, distanceKm }: { store: Store; distanceKm?: number }) {
   const location = [store.area, store.city].filter(Boolean).join(", ");
 
   return (
@@ -34,10 +35,19 @@ export function StoreCard({ store }: { store: Store }) {
         </h3>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <Badge tone="brand">{store.category}</Badge>
+          <Badge tone={store.isOpen === false ? "red" : "green"}>
+            {store.isOpen === false ? "Closed" : "Open"}
+          </Badge>
           {store.showLocation && location && (
             <span className="flex items-center gap-1 text-xs text-slate-500">
               <MapPin className="h-3 w-3" />
               {location}
+            </span>
+          )}
+          {typeof distanceKm === "number" && (
+            <span className="flex items-center gap-1 text-xs font-medium text-brand-700">
+              <Navigation className="h-3 w-3" />
+              {formatDistance(distanceKm)} away
             </span>
           )}
         </div>

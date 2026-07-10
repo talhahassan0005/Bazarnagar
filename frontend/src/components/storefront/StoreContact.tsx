@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui";
+import { StoreMap } from "./StoreMap";
 import { STORE_THEMES, type ResolvedLanding } from "@/lib/landing";
 import { cn, toWhatsAppNumber } from "@/lib/utils";
 import type { Store } from "@/lib/types";
@@ -107,6 +108,15 @@ export function StoreContact({
             </div>
           )}
         </div>
+
+        {store.showLocation && (store.lat != null || store.fullAddress || location) && (
+          <div className="lg:col-span-2">
+            <p className={cn("mb-2 text-xs font-semibold uppercase tracking-wide", theme.accentText)}>
+              Find us
+            </p>
+            <StoreMap lat={store.lat} lng={store.lng} query={store.fullAddress || location} />
+          </div>
+        )}
       </div>
     </section>
   );

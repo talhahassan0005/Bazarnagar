@@ -87,8 +87,13 @@ export interface Store {
   area?: string;
   fullAddress?: string;
   mapsLink?: string;
+  /** Shop coordinates — captured via "use my current location". */
+  lat?: number;
+  lng?: number;
   showLocation: boolean;
   showInSearch: boolean;
+  /** Seller toggle — is the shop currently open for orders? */
+  isOpen?: boolean;
   socials?: {
     instagram?: string;
     facebook?: string;
@@ -132,7 +137,12 @@ export interface Product {
   negotiable: boolean;
   condition?: ProductCondition;
   deliveryAvailable?: boolean;
+  /** Optional per-product location (falls back to the store's location). */
+  lat?: number;
+  lng?: number;
   moderationStatus: ModerationStatus;
+  /** Paid "boost" — product is featured while this date is in the future. */
+  boostedUntil?: string;
   views: number;
   whatsappClicks: number;
   createdAt: string;

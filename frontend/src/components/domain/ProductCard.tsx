@@ -1,18 +1,27 @@
 import Link from "next/link";
+import { Navigation } from "lucide-react";
 import { Badge } from "@/components/ui";
 import { StockBadge } from "./StatusBadges";
 import { WhatsAppButton } from "./WhatsAppButton";
 import { AddToCartButton } from "@/components/storefront/CartButtons";
 import type { Product, Store } from "@/lib/types";
-import { discountPercent, effectivePrice, formatPrice } from "@/lib/utils";
+import {
+  discountPercent,
+  effectivePrice,
+  formatDistance,
+  formatPrice,
+  isBoosted,
+} from "@/lib/utils";
 
 /** Customer-facing product card (SRS §7.2). */
 export function ProductCard({
   product,
   store,
+  distanceKm,
 }: {
   product: Product;
   store: Store;
+  distanceKm?: number;
 }) {
   const href = `/store/${store.slug}/product/${product.id}`;
   const discount = discountPercent(product);
@@ -26,6 +35,7 @@ export function ProductCard({
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
         <div className="absolute left-2 top-2 flex flex-col gap-1">
+          {isBoosted(product) && <Badge tone="amber">★ Featured</Badge>}
           {discount && <Badge tone="red">{discount}% OFF</Badge>}
           {product.negotiable && <Badge tone="brand">Negotiable</Badge>}
         </div>
@@ -59,6 +69,12 @@ export function ProductCard({
         <div className="mt-2">
           <StockBadge status={product.stockStatus} />
         </div>
+
+        {typeof distanceKm === "number" && (
+          <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-brand-700">
+            <Navigation className="h-3 w-3" /> {formatDistance(distanceKm)} away
+          </p>
+        )}
 
         <div className="mt-auto space-y-2 pt-3">
           <AddToCartButton product={product} store={store} size="sm" fullWidth />

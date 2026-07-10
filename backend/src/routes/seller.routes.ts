@@ -10,6 +10,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  boostProduct,
   getDashboard,
 } from "../controllers/sellerController";
 import { getSellerOrders, updateOrderStatus } from "../controllers/orderController";
@@ -33,6 +34,7 @@ router.get("/products", getMyProducts);
 router.post("/products", createProduct);
 router.put("/products/:id", updateProduct);
 router.delete("/products/:id", deleteProduct);
+router.post("/products/:id/boost", boostProduct);
 
 router.get("/orders", getSellerOrders);
 router.patch("/orders/:id/status", updateOrderStatus);

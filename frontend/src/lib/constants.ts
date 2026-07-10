@@ -1,5 +1,8 @@
 import type { ModerationStatus, Plan, PlanId } from "./types";
 
+/** A product limit at/above this counts as "unlimited" (paid plans). */
+export const UNLIMITED = 1_000_000;
+
 /** Subscription plans (SRS §6). */
 export const PLANS: Record<PlanId, Plan> = {
   starter: {
@@ -15,32 +18,46 @@ export const PLANS: Record<PlanId, Plan> = {
     id: "basic",
     name: "Basic",
     price: 500,
-    productLimit: 50,
+    productLimit: UNLIMITED,
     imageLimit: 3,
     videoLimit: 0,
-    highlights: ["50 products", "3 images per product", "Public product search"],
+    highlights: ["Unlimited products", "3 images per product", "Public product search"],
   },
   growth: {
     id: "growth",
     name: "Growth",
     price: 1000,
-    productLimit: 100,
+    productLimit: UNLIMITED,
     imageLimit: 5,
     videoLimit: 1,
-    highlights: ["100 products", "5 images per product", "1 video per product"],
+    highlights: ["Unlimited products", "5 images per product", "1 video per product"],
   },
   pro: {
     id: "pro",
     name: "Pro",
     price: 5000,
-    productLimit: 1000,
+    productLimit: UNLIMITED,
     imageLimit: 8,
     videoLimit: 2,
-    highlights: ["1,000 products", "8 images per product", "2 videos per product"],
+    highlights: ["Unlimited products", "8 images per product", "2 videos per product"],
   },
 };
 
 export const PLAN_LIST: Plan[] = Object.values(PLANS);
+
+/** Featured-product "boost" packages — configurable rates (mirror backend/lib/boost.ts). */
+export interface BoostPackage {
+  id: string;
+  label: string;
+  days: number;
+  price: number;
+}
+
+export const BOOST_PACKAGES: BoostPackage[] = [
+  { id: "boost7", label: "7 days", days: 7, price: 500 },
+  { id: "boost15", label: "15 days", days: 15, price: 900 },
+  { id: "boost30", label: "30 days", days: 30, price: 1500 },
+];
 
 /** Business / product categories (SRS §5.3 / §5.4). */
 export const CATEGORIES = [

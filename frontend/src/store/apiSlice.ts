@@ -149,6 +149,10 @@ export const apiSlice = createApi({
       queryFn: (id) => run(() => api.deleteProduct(id)),
       invalidatesTags: ["Product"],
     }),
+    boostProduct: builder.mutation<Product, { id: string; packageId: string }>({
+      queryFn: ({ id, packageId }) => run(() => api.boostProduct(id, packageId)),
+      invalidatesTags: ["Product"],
+    }),
     changePlan: builder.mutation<Seller, PlanId>({
       queryFn: (planId) => run(() => api.changePlan(planId)),
       invalidatesTags: ["Seller"],
@@ -244,6 +248,7 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useBoostProductMutation,
   useChangePlanMutation,
   useGetAllSellersQuery,
   useGetAllStoresQuery,

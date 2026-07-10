@@ -29,6 +29,29 @@ export function getErrorMessage(err: unknown, fallback = "Something went wrong")
   return fallback;
 }
 
+/** Great-circle distance between two lat/lng points, in kilometres. */
+export function distanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371; // Earth radius (km)
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Human-friendly distance, e.g. 0.4 -> "400 m", 3.2 -> "3.2 km". */
+export function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+}
+
 /** Format a number as PKR currency, e.g. 2500 -> "Rs. 2,500". */
 export function formatPrice(value: number): string {
   return `Rs. ${value.toLocaleString("en-PK")}`;
@@ -81,6 +104,11 @@ export function buildWhatsAppLink(opts: {
     `Product link: ${productLink}`,
   ].join("\n");
   return `https://wa.me/${toWhatsAppNumber(phone)}?text=${encodeURIComponent(message)}`;
+}
+
+/** Whether a product is currently boosted (featured). */
+export function isBoosted(p: { boostedUntil?: string }): boolean {
+  return p.boostedUntil ? new Date(p.boostedUntil).getTime() > Date.now() : false;
 }
 
 /** The price actually charged (discount if present and lower than price). */

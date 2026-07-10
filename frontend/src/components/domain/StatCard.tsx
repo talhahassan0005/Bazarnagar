@@ -53,21 +53,22 @@ export function PlanUsageBar({
   limit: number;
   className?: string;
 }) {
-  const pct = Math.min(100, Math.round((used / limit) * 100));
+  const unlimited = limit >= 1_000_000;
+  const pct = unlimited ? 100 : Math.min(100, Math.round((used / limit) * 100));
   const near = pct >= 80;
   return (
     <div className={className}>
       <div className="mb-1 flex items-center justify-between text-sm">
         <span className="text-slate-500">Products used</span>
         <span className="font-medium text-slate-700">
-          {used} / {limit}
+          {unlimited ? `${used} · Unlimited` : `${used} / ${limit}`}
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            near ? "bg-amber-500" : "bg-brand-500"
+            unlimited ? "bg-leaf-500" : near ? "bg-amber-500" : "bg-brand-500"
           )}
           style={{ width: `${pct}%` }}
         />

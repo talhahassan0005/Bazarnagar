@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Navigation } from "lucide-react";
 import { Card, CardBody, CardHeader, Button, Input, Select, Textarea, Toggle } from "@/components/ui";
 import { ImageUpload } from "./ImageUpload";
 import { CATEGORIES, CITIES } from "@/lib/constants";
@@ -21,6 +22,7 @@ const EMPTY: StoreFormValues = {
   mapsLink: "",
   showLocation: true,
   showInSearch: true,
+  isOpen: true,
   logoUrl: "",
   coverUrl: "",
   socials: { instagram: "", facebook: "", tiktok: "" },
@@ -44,6 +46,24 @@ export function StoreProfileForm({
   const [v, setV] = useState<StoreFormValues>({ ...EMPTY, ...initial });
   const set = <K extends keyof StoreFormValues>(key: K, value: StoreFormValues[K]) =>
     setV((prev) => ({ ...prev, [key]: value }));
+
+  const [locating, setLocating] = useState(false);
+  function captureLocation() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setV((prev) => ({
+          ...prev,
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        }));
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -160,6 +180,23 @@ export function StoreProfileForm({
             onChange={(e) => set("mapsLink", e.target.value)}
           />
           <div className="sm:col-span-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              loading={locating}
+              leftIcon={<Navigation className="h-4 w-4" />}
+              onClick={captureLocation}
+            >
+              Use my current location
+            </Button>
+            {v.lat != null && v.lng != null && (
+              <span className="ml-3 text-xs font-medium text-leaf-600">
+                Pin saved ({v.lat.toFixed(4)}, {v.lng.toFixed(4)}) — shoppers will see your distance.
+              </span>
+            )}
+          </div>
+          <div className="sm:col-span-2">
             <Toggle
               label="Show location publicly"
               description="Display city/area and a Get Directions button on your shop."
@@ -204,6 +241,14 @@ export function StoreProfileForm({
             placeholder="COD / bank transfer"
             onChange={(e) => set("paymentInfo", e.target.value)}
           />
+          <div className="sm:col-span-2">
+            <Toggle
+              label="Shop is open for orders"
+              description="Turn off temporarily — a “Closed” badge shows on your shop."
+              checked={v.isOpen ?? true}
+              onChange={(val) => set("isOpen", val)}
+            />
+          </div>
           <div className="sm:col-span-2">
             <Toggle
               label="Show my products in public search"

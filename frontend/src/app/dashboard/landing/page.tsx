@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { Button, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StoreLandingForm } from "@/components/domain/StoreLandingForm";
 import { NeedsStore } from "@/components/domain/NeedsStore";
@@ -47,19 +48,27 @@ export default function LandingCustomizerPage() {
       <PageHeader
         title="Landing page"
         description="Design the branded page customers see at your store link."
-        action={
-          store && (
-            <Button
-              href={`/store/${store.slug}`}
-              target="_blank"
-              variant="outline"
-              rightIcon={<ExternalLink className="h-4 w-4" />}
-            >
-              View live
-            </Button>
-          )
-        }
       />
+
+      {/* Prominent "view live" banner at the top — this is the customer-facing demo. */}
+      <Link
+        href={`/store/${store.slug}`}
+        target="_blank"
+        className="group mb-6 flex flex-col gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-4 transition-colors hover:bg-brand-100/60 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <p className="text-sm font-semibold text-brand-900">See your live landing page</p>
+          <p className="text-xs text-slate-500">
+            This is exactly what customers see at{" "}
+            <span className="font-medium text-brand-700">/store/{store.slug}</span> — click to open
+            the demo.
+          </p>
+        </div>
+        <span className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-700 px-5 text-sm font-medium text-white transition-colors group-hover:bg-brand-800 sm:self-auto">
+          View live page <ExternalLink className="h-4 w-4" />
+        </span>
+      </Link>
+
       <StoreLandingForm
         initial={store?.landing}
         products={products ?? []}

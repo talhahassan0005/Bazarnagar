@@ -274,6 +274,13 @@ export const api = {
     return request(`/seller/products/${id}`, { method: "DELETE" });
   },
 
+  async boostProduct(id: string, packageId: string): Promise<Product> {
+    return request(`/seller/products/${id}/boost`, {
+      method: "POST",
+      body: { packageId },
+    });
+  },
+
   async changePlan(planId: PlanId): Promise<Seller> {
     return request(`/seller/plan`, { method: "PATCH", body: { planId } });
   },
