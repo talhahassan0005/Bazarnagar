@@ -19,7 +19,7 @@ import type {
   Store,
   StoreLanding,
   StoreStatus,
-  StoreStripe,
+  StorePayout,
   SubscriptionStatus,
 } from "@/lib/types";
 
@@ -95,9 +95,19 @@ export const apiSlice = createApi({
       queryFn: (input) => run(() => api.createOrder(input)),
       invalidatesTags: ["Order"],
     }),
-    createCheckout: builder.mutation<{ url: string; orderId: string }, CreateOrderInput>({
-      queryFn: (input) => run(() => api.createCheckoutSession(input)),
+    safepayCheckout: builder.mutation<
+      { url: string; orderId: string; mock: boolean },
+      CreateOrderInput
+    >({
+      queryFn: (input) => run(() => api.safepayCheckout(input)),
       invalidatesTags: ["Order"],
+    }),
+    safepayMockConfirm: builder.mutation<Order, string>({
+      queryFn: (orderId) => run(() => api.safepayMockConfirm(orderId)),
+      invalidatesTags: ["Order"],
+    }),
+    getPaymentConfig: builder.query<{ hosted: boolean }, void>({
+      queryFn: () => run(() => api.getPaymentConfig()),
     }),
     getSellerOrders: builder.query<Order[], void>({
       queryFn: () => run(() => api.getSellerOrders()),
@@ -129,8 +139,8 @@ export const apiSlice = createApi({
       queryFn: (landing) => run(() => api.updateStoreLanding(landing)),
       invalidatesTags: ["Store"],
     }),
-    updateStorePayment: builder.mutation<Store | null, StoreStripe>({
-      queryFn: (stripe) => run(() => api.updatePayment(stripe)),
+    updateStorePayout: builder.mutation<Store | null, StorePayout>({
+      queryFn: (payout) => run(() => api.updatePayout(payout)),
       invalidatesTags: ["Store"],
     }),
     upsertStore: builder.mutation<Store, Partial<Store>>({
@@ -235,7 +245,9 @@ export const {
   useGetProductReviewsQuery,
   useCreateReviewMutation,
   useCreateOrderMutation,
-  useCreateCheckoutMutation,
+  useSafepayCheckoutMutation,
+  useSafepayMockConfirmMutation,
+  useGetPaymentConfigQuery,
   useGetSellerOrdersQuery,
   useUpdateOrderStatusMutation,
   useGetSellerQuery,
@@ -243,7 +255,7 @@ export const {
   useGetMyProductsQuery,
   useGetDashboardMetricsQuery,
   useUpdateStoreLandingMutation,
-  useUpdateStorePaymentMutation,
+  useUpdateStorePayoutMutation,
   useUpsertStoreMutation,
   useCreateProductMutation,
   useUpdateProductMutation,

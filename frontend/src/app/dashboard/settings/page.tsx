@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, User } from "lucide-react";
+import { Wallet, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/DashboardShell";
-import { StripePaymentSettings } from "@/components/domain/StripePaymentSettings";
+import { SellerPayoutSettings } from "@/components/domain/SellerPayoutSettings";
 import { AccountSettings } from "@/components/domain/AccountSettings";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { id: "payments", label: "Payment methods", icon: CreditCard },
+  { id: "payments", label: "Payout details", icon: Wallet },
   { id: "account", label: "Account", icon: User },
 ] as const;
 
@@ -49,7 +49,7 @@ export default function SettingsPage() {
 
       {/* Tab content — keyed so it micro-animates on switch */}
       <div key={tab} className="animate-fade-in">
-        {tab === "payments" ? <StripePaymentSettings /> : <AccountSettings />}
+        {tab === "payments" ? <SellerPayoutSettings /> : <AccountSettings />}
       </div>
     </>
   );

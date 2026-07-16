@@ -4,7 +4,7 @@ import {
   getMyStore,
   upsertStore,
   updateStoreLanding,
-  updateStorePayment,
+  updateStorePayout,
   changePlan,
   getMyProducts,
   createProduct,
@@ -14,7 +14,6 @@ import {
   getDashboard,
 } from "../controllers/sellerController";
 import { getSellerOrders, updateOrderStatus } from "../controllers/orderController";
-import { onboard, getStatus } from "../controllers/stripeController";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
@@ -26,7 +25,7 @@ router.get("/me", getMe);
 router.get("/store", getMyStore);
 router.put("/store", upsertStore);
 router.patch("/store/landing", updateStoreLanding);
-router.patch("/store/payment", updateStorePayment);
+router.patch("/store/payout", updateStorePayout);
 router.patch("/plan", changePlan);
 router.get("/dashboard", getDashboard);
 
@@ -38,8 +37,5 @@ router.post("/products/:id/boost", boostProduct);
 
 router.get("/orders", getSellerOrders);
 router.patch("/orders/:id/status", updateOrderStatus);
-
-router.post("/stripe/onboard", onboard);
-router.get("/stripe/status", getStatus);
 
 export default router;

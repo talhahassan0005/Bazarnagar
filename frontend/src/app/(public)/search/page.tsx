@@ -19,6 +19,7 @@ export default function SearchPage() {
   const [sort, setSort] = useState<Sort>("relevance");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState("");
 
   // Seed filters from the URL (e.g. /search?category=Clothing from the homepage).
   useEffect(() => {
@@ -34,15 +35,27 @@ export default function SearchPage() {
       setCoords(null); // toggle off
       return;
     }
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setGeoError("");
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoError("Your browser doesn't support location.");
+      return;
+    }
     setLocating(true);
+    // Triggers the browser's location-permission prompt.
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
       },
-      () => setLocating(false),
-      { timeout: 10000 }
+      (err) => {
+        setLocating(false);
+        setGeoError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location access denied. Enable it in your browser to see nearby products."
+            : "Couldn't get your location. Please try again."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   }
 
@@ -132,7 +145,8 @@ export default function SearchPage() {
           </Button>
         </div>
 
-        {coords && (
+        {geoError && <p className="text-xs font-medium text-red-500">{geoError}</p>}
+        {coords && !geoError && (
           <p className="text-xs text-brand-700">
             Showing products nearest to your location first.
           </p>

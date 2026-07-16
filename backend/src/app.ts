@@ -5,7 +5,7 @@ import { env } from "./config/env";
 import routes from "./routes";
 import { UPLOAD_DIR } from "./middleware/upload";
 import { notFound, errorHandler } from "./middleware/error";
-import { webhook as stripeWebhook } from "./controllers/stripeController";
+import { safepayWebhook } from "./controllers/safepayController";
 
 // Origins explicitly allowed via CLIENT_ORIGIN (comma-separated supported).
 const allowedOrigins = new Set(
@@ -35,12 +35,12 @@ export function createApp() {
       },
     })
   );
-  // Stripe webhook needs the RAW body for signature verification — mount it
-  // before the JSON body parser.
+  // The Safepay webhook needs the RAW body for signature verification — mount
+  // it before the JSON body parser.
   app.post(
-    "/api/webhooks/stripe",
+    "/api/webhooks/safepay",
     express.raw({ type: "application/json" }),
-    stripeWebhook
+    safepayWebhook
   );
 
   app.use(express.json({ limit: "1mb" }));

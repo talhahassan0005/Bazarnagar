@@ -11,14 +11,15 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? "dev-insecure-secret-change-me",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   publicUrl: process.env.PUBLIC_URL ?? "http://localhost:5000",
-  /** Frontend base URL used for Stripe redirect (onboarding / checkout) links. */
+  /** Frontend base URL used for payment gateway redirect (checkout return) links. */
   appUrl: (process.env.APP_URL ?? process.env.CLIENT_ORIGIN ?? "http://localhost:3000")
     .split(",")[0]!
     .trim(),
-  // Stripe (leave blank to keep online payments disabled).
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  // Safepay (Pakistan aggregator: EasyPaisa + JazzCash + card). Leave the API
+  // key blank to run in mock/sandbox mode (a local test gateway).
+  safepayApiKey: process.env.SAFEPAY_API_KEY ?? "",
+  safepayWebhookSecret: process.env.SAFEPAY_WEBHOOK_SECRET ?? "",
+  safepayEnv: (process.env.SAFEPAY_ENV ?? "sandbox") as "sandbox" | "production",
   adminEmail: process.env.ADMIN_EMAIL ?? "admin@bazaarnagar.com",
   adminPassword: process.env.ADMIN_PASSWORD ?? "admin123",
   get isProd() {

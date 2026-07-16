@@ -17,7 +17,7 @@ import type {
   Store,
   StoreLanding,
   StoreStatus,
-  StoreStripe,
+  StorePayout,
   SubscriptionStatus,
 } from "./types";
 
@@ -205,11 +205,26 @@ export const api = {
     return request(`/public/orders`, { method: "POST", body: input, auth: false });
   },
 
-  /** Create a Stripe Checkout Session for a card order — returns the pay URL. */
-  async createCheckoutSession(
+  /** Create an online (EasyPaisa/JazzCash/card via Safepay) order — returns the
+   *  gateway URL to redirect to. `mock` is true when running the test gateway. */
+  async safepayCheckout(
     input: CreateOrderInput
-  ): Promise<{ url: string; orderId: string }> {
-    return request(`/public/checkout`, { method: "POST", body: input, auth: false });
+  ): Promise<{ url: string; orderId: string; mock: boolean }> {
+    return request(`/public/safepay/checkout`, { method: "POST", body: input, auth: false });
+  },
+
+  /** Whether live online payments are enabled (hosted redirect) vs mock mode. */
+  async getPaymentConfig(): Promise<{ hosted: boolean }> {
+    return request(`/public/payment-config`, { auth: false });
+  },
+
+  /** Mock-mode only: simulate the gateway confirming payment (local demo). */
+  async safepayMockConfirm(orderId: string): Promise<Order> {
+    return request(`/public/safepay/mock-confirm`, {
+      method: "POST",
+      body: { orderId },
+      auth: false,
+    });
   },
 
   async getSellerOrders(): Promise<Order[]> {
@@ -244,18 +259,9 @@ export const api = {
     return request(`/seller/store/landing`, { method: "PATCH", body: landing });
   },
 
-  async updatePayment(stripe: StoreStripe): Promise<Store | null> {
-    return request(`/seller/store/payment`, { method: "PATCH", body: stripe });
-  },
-
-  /** Start (or resume) Stripe Connect onboarding — returns a redirect URL. */
-  async stripeOnboard(): Promise<{ url: string }> {
-    return request(`/seller/stripe/onboard`, { method: "POST" });
-  },
-
-  /** Refresh the connected Stripe account's status, returning the updated store. */
-  async stripeStatus(): Promise<Store | null> {
-    return request(`/seller/stripe/status`);
+  /** Save the seller's payout details (EasyPaisa / JazzCash / bank). */
+  async updatePayout(payout: StorePayout): Promise<Store | null> {
+    return request(`/seller/store/payout`, { method: "PATCH", body: payout });
   },
 
   async upsertStore(values: Partial<Store>): Promise<Store> {

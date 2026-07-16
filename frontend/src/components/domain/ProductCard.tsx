@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Navigation } from "lucide-react";
 import { Badge } from "@/components/ui";
+import { ProductImage } from "./ProductImage";
 import { StockBadge } from "./StatusBadges";
 import { WhatsAppButton } from "./WhatsAppButton";
 import { AddToCartButton } from "@/components/storefront/CartButtons";
@@ -29,7 +30,7 @@ export function ProductCard({
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-900/5">
       <Link href={href} className="relative block aspect-square overflow-hidden bg-slate-100">
-        <img
+        <ProductImage
           src={product.images[0]}
           alt={product.name}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

@@ -65,12 +65,14 @@ export interface StoreLanding {
   showContact: boolean; // WhatsApp / location / socials block
 }
 
-/** Seller's Stripe payment-method connection (to accept online card payments). */
-export interface StoreStripe {
-  connected: boolean;
-  accountId?: string; // Stripe account id (acct_…)
-  email?: string; // Stripe account email
-  chargesEnabled?: boolean; // true once Stripe lets the account take payments
+/** Seller's payout details — where the seller receives their earnings. */
+export type PayoutMethod = "easypaisa" | "jazzcash" | "bank";
+
+export interface StorePayout {
+  method: PayoutMethod;
+  accountTitle: string; // account holder's name
+  accountNumber: string; // mobile number (wallets) or account/IBAN (bank)
+  bankName?: string; // only for bank transfers
 }
 
 export interface Store {
@@ -103,8 +105,8 @@ export interface Store {
   paymentInfo?: string;
   /** Seller-customizable landing page config (optional). */
   landing?: StoreLanding;
-  /** Seller's Stripe payment-method connection (optional). */
-  stripe?: StoreStripe;
+  /** Seller's payout details (optional). */
+  payout?: StorePayout;
   status: StoreStatus;
   views: number;
   whatsappClicks: number;
@@ -221,7 +223,7 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
-export type PaymentMethod = "cod" | "card";
+export type PaymentMethod = "cod" | "card" | "online";
 export type PaymentStatus = "unpaid" | "paid";
 
 export interface OrderItem {

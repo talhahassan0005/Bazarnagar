@@ -35,6 +35,13 @@ export function Footer() {
               <li><Link href="/admin" className="transition-colors hover:text-brand-700">Admin</Link></li>
             </ul>
           </div>
+          <div>
+            <p className="mb-2 font-semibold text-slate-900">Legal</p>
+            <ul className="space-y-2 text-slate-500">
+              <li><Link href="/terms" className="transition-colors hover:text-brand-700">Terms &amp; Conditions</Link></li>
+              <li><Link href="/privacy" className="transition-colors hover:text-brand-700">Privacy Policy</Link></li>
+            </ul>
+          </div>
         </div>
       </div>
       <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-400">

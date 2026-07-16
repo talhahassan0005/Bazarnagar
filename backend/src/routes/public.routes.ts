@@ -8,7 +8,12 @@ import {
   trackWhatsappClick,
 } from "../controllers/publicController";
 import { createOrder } from "../controllers/orderController";
-import { createCheckout } from "../controllers/stripeController";
+import {
+  createSafepayCheckout,
+  mockConfirmSafepay,
+  getPaymentConfig,
+  safepayCallback,
+} from "../controllers/safepayController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
 
 const router = Router();
@@ -22,6 +27,9 @@ router.post("/products/:id/whatsapp-click", trackWhatsappClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
 router.post("/orders", createOrder);
-router.post("/checkout", createCheckout);
+router.get("/payment-config", getPaymentConfig);
+router.post("/safepay/checkout", createSafepayCheckout);
+router.post("/safepay/mock-confirm", mockConfirmSafepay);
+router.get("/safepay/callback", safepayCallback);
 
 export default router;

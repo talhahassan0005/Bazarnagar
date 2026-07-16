@@ -6,7 +6,7 @@ import { Button } from "@/components/ui";
 import { useAppDispatch } from "@/store/hooks";
 import { clearCart } from "@/store/cartSlice";
 
-/** Shown after a successful Stripe card payment (success_url). */
+/** Shown after a successful online payment (Safepay redirect / mock confirm). */
 export default function CheckoutSuccessPage() {
   const dispatch = useAppDispatch();
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function CheckoutSuccessPage() {
       </span>
       <h1 className="mt-4 text-2xl font-bold text-brand-900">Payment successful</h1>
       <p className="mt-2 text-slate-500">
-        Thank you! Your card payment went through and your order is confirmed.
+        Thank you! Your payment went through and your order is confirmed.
         {orderId && (
           <>
             {" "}

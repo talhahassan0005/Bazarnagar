@@ -1,14 +1,45 @@
-import { MapPin, MessageCircle, TrendingUp } from "lucide-react";
+import { MapPin, MessageCircle, Star, TrendingUp } from "lucide-react";
 import { BrandMark } from "@/components/layout/Logo";
 
-const PRODUCTS = [
-  { seed: "kurti-1", name: "Embroidered Kurti", price: "Rs. 1,999", was: "Rs. 2,500", tag: "20% OFF" },
-  { seed: "lawn-1", name: "Lawn 3-Piece", price: "Rs. 4,500", was: null, tag: null },
-  { seed: "lipstick-1", name: "Lipstick Set", price: "Rs. 1,199", was: "Rs. 1,500", tag: "Sale" },
-  { seed: "earbuds-1", name: "Wireless Earbuds", price: "Rs. 2,799", was: null, tag: "New" },
-];
+const IMG = "https://images.unsplash.com/photo";
 
-/** Stylized storefront preview shown in the landing hero. */
+const PRODUCTS = [
+  {
+    name: "Embroidered Kurti",
+    price: "Rs. 1,999",
+    was: "Rs. 2,500",
+    tag: "20% OFF",
+    img: `${IMG}-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=280&q=70`,
+    grad: "from-rose-100 to-rose-200",
+  },
+  {
+    name: "Lawn 3-Piece",
+    price: "Rs. 4,500",
+    was: null,
+    tag: null,
+    img: `${IMG}-1490481651871-ab68de25d43d?auto=format&fit=crop&w=280&q=70`,
+    grad: "from-brand-100 to-brand-200",
+  },
+  {
+    name: "Lipstick Set",
+    price: "Rs. 1,199",
+    was: "Rs. 1,500",
+    tag: "Sale",
+    img: `${IMG}-1586495777744-4413f21062fa?auto=format&fit=crop&w=280&q=70`,
+    grad: "from-fuchsia-100 to-pink-200",
+  },
+  {
+    name: "Wireless Earbuds",
+    price: "Rs. 2,799",
+    was: null,
+    tag: "New",
+    img: `${IMG}-1590658268037-6bf12165a8df?auto=format&fit=crop&w=280&q=70`,
+    grad: "from-slate-100 to-slate-200",
+  },
+] as const;
+
+/** Stylized storefront preview shown in the landing hero. Real product photos
+ *  layer over a branded gradient, so it stays crisp even if an image is slow. */
 export function HeroPreview() {
   return (
     <div className="relative mx-auto w-full max-w-md">
@@ -25,7 +56,10 @@ export function HeroPreview() {
         </div>
 
         {/* Cover */}
-        <div className="h-16 bg-gradient-to-r from-brand-700 via-brand-600 to-brand-800" />
+        <div className="relative h-16 overflow-hidden bg-gradient-to-r from-brand-700 via-brand-600 to-brand-800">
+          <div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/10" />
+          <div className="absolute -bottom-10 left-10 h-24 w-24 rounded-full bg-accent-500/20" />
+        </div>
 
         {/* Shop header */}
         <div className="px-4">
@@ -35,8 +69,13 @@ export function HeroPreview() {
             </span>
             <div className="flex-1 pb-1">
               <p className="text-sm font-bold text-slate-900">Ayesha Boutique</p>
-              <p className="flex items-center gap-1 text-[11px] text-slate-400">
-                <MapPin className="h-3 w-3" /> Gulberg, Lahore
+              <p className="flex items-center gap-2 text-[11px] text-slate-400">
+                <span className="flex items-center gap-0.5">
+                  <MapPin className="h-3 w-3" /> Gulberg, Lahore
+                </span>
+                <span className="flex items-center gap-0.5 text-amber-500">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> 4.8
+                </span>
               </p>
             </div>
             <span className="mb-1 flex items-center gap-1 rounded-lg bg-whatsapp px-2 py-1 text-[11px] font-medium text-white">
@@ -47,12 +86,14 @@ export function HeroPreview() {
           {/* Product grid */}
           <div className="my-4 grid grid-cols-2 gap-2.5">
             {PRODUCTS.map((p) => (
-              <div key={p.seed} className="overflow-hidden rounded-xl border border-slate-100">
-                <div className="relative aspect-square bg-slate-100">
+              <div key={p.name} className="overflow-hidden rounded-xl border border-slate-100">
+                {/* Gradient sits underneath as a graceful fallback for the photo. */}
+                <div className={`relative aspect-square bg-gradient-to-br ${p.grad}`}>
                   <img
-                    src={`https://picsum.photos/seed/${p.seed}/240/240`}
-                    alt=""
-                    className="h-full w-full object-cover"
+                    src={p.img}
+                    alt={p.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
                   {p.tag && (
                     <span className="absolute left-1.5 top-1.5 rounded-md bg-accent-500 px-1.5 py-0.5 text-[9px] font-semibold text-white">

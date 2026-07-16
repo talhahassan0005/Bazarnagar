@@ -20,12 +20,12 @@ export interface StoreLanding {
   showContact: boolean;
 }
 
-/** Seller's Stripe payment-method connection (to accept online card payments). */
-export interface StoreStripe {
-  connected: boolean;
-  accountId?: string; // Stripe account id (acct_…) — from Connect or manual entry
-  email?: string; // Stripe account email
-  chargesEnabled?: boolean; // true once Stripe lets the account take payments
+/** Seller's payout details — where the seller receives their earnings. */
+export interface StorePayout {
+  method: "easypaisa" | "jazzcash" | "bank";
+  accountTitle: string; // account holder's name
+  accountNumber: string; // mobile number (wallets) or account/IBAN (bank)
+  bankName?: string; // only for bank transfers
 }
 
 export interface StoreDoc extends Document {
@@ -50,7 +50,7 @@ export interface StoreDoc extends Document {
   deliveryInfo?: string;
   paymentInfo?: string;
   landing?: StoreLanding;
-  stripe?: StoreStripe;
+  payout?: StorePayout;
   status: StoreStatus;
   views: number;
   whatsappClicks: number;
@@ -78,12 +78,12 @@ const landingSchema = new Schema<StoreLanding>(
   { _id: false }
 );
 
-const stripeSchema = new Schema<StoreStripe>(
+const payoutSchema = new Schema<StorePayout>(
   {
-    connected: { type: Boolean, default: false },
-    accountId: String,
-    email: String,
-    chargesEnabled: { type: Boolean, default: false },
+    method: { type: String, enum: ["easypaisa", "jazzcash", "bank"], required: true },
+    accountTitle: { type: String, required: true },
+    accountNumber: { type: String, required: true },
+    bankName: String,
   },
   { _id: false }
 );
@@ -115,7 +115,7 @@ const storeSchema = new Schema<StoreDoc>(
     deliveryInfo: String,
     paymentInfo: String,
     landing: { type: landingSchema, default: undefined },
-    stripe: { type: stripeSchema, default: undefined },
+    payout: { type: payoutSchema, default: undefined },
     status: {
       type: String,
       enum: ["active", "inactive", "pending"],

@@ -8,7 +8,7 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
-export type PaymentMethod = "cod" | "card";
+export type PaymentMethod = "cod" | "card" | "online";
 export type PaymentStatus = "unpaid" | "paid";
 
 export interface OrderItem {
@@ -61,7 +61,7 @@ const orderSchema = new Schema<OrderDoc>(
       default: "pending",
       index: true,
     },
-    paymentMethod: { type: String, enum: ["cod", "card"], default: "cod" },
+    paymentMethod: { type: String, enum: ["cod", "card", "online"], default: "cod" },
     paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
   },
   baseSchemaOptions

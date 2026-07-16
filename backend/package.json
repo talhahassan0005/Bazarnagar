@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "seed": "tsx src/db/seed.ts"
+    "seed": "tsx src/db/seed.ts",
+    "backfill:coords": "tsx src/db/backfill-coords.ts",
+    "add:products": "tsx src/db/add-products.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
