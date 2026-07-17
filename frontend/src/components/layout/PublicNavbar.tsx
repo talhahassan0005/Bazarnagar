@@ -40,6 +40,12 @@ export function PublicNavbar() {
           >
             How it works
           </Link>
+          <Link
+            href="/about"
+            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 lg:inline-flex"
+          >
+            About
+          </Link>
 
           {/* Mobile icons */}
           <Link

@@ -12,6 +12,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy Policy"
       intro={`This policy explains what information ${SITE_NAME} collects, how we use it, and the choices you have.`}
+      icon="shield"
     >
       <h2>1. Information we collect</h2>
       <ul>

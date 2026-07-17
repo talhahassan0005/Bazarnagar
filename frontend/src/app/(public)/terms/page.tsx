@@ -12,6 +12,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms & Conditions"
       intro={`Welcome to ${SITE_NAME}. These terms govern your use of our website and services. By using ${SITE_NAME}, you agree to them.`}
+      icon="file"
     >
       <h2>1. About {SITE_NAME}</h2>
       <p>
