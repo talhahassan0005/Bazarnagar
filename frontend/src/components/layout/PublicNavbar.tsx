@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Store as StoreIcon } from "lucide-react";
+import { Info, Search, Store as StoreIcon } from "lucide-react";
 import { Logo } from "./Logo";
 import { CartLink } from "./CartLink";
 import { Button } from "@/components/ui";
@@ -35,14 +35,8 @@ export function PublicNavbar() {
             Products
           </Link>
           <Link
-            href="/how-it-works"
-            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 lg:inline-flex"
-          >
-            How it works
-          </Link>
-          <Link
             href="/about"
-            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 lg:inline-flex"
+            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 sm:inline-flex"
           >
             About
           </Link>
@@ -61,6 +55,13 @@ export function PublicNavbar() {
             aria-label="Browse shops"
           >
             <StoreIcon className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/about"
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 sm:hidden"
+            aria-label="About"
+          >
+            <Info className="h-5 w-5" />
           </Link>
 
           <CartLink />

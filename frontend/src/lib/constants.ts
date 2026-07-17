@@ -126,6 +126,6 @@ export const SITE_TAGLINE = "Your shop, in one link.";
 export const SITE_TAGLINE_UR = "آپ کی دکان، ایک لنک میں";
 export const SITE_DOMAIN = "bazaarnagar.com";
 /** Contact email shown on legal / support pages. */
-export const SITE_EMAIL = "support@bazaarnagar.com";
+export const SITE_EMAIL = "contact@bazaarnagar.com";
 /** Last revision date for the legal pages. */
 export const LEGAL_UPDATED = "16 July 2026";
