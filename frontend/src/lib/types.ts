@@ -33,6 +33,10 @@ export interface Seller {
   status: SellerStatus;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
+  /** When the current subscription period started (ISO date). */
+  subscriptionStartedAt?: string;
+  /** When the current period ends — renewal / next charge due (ISO date). */
+  subscriptionEndsAt?: string;
   storeId: string | null;
   createdAt: string; // ISO date
 }
@@ -73,11 +77,15 @@ export interface StorePayout {
   accountTitle: string; // account holder's name
   accountNumber: string; // mobile number (wallets) or account/IBAN (bank)
   bankName?: string; // only for bank transfers
+  /** Set once valid details are saved — the account is "connected" (ISO date). */
+  connectedAt?: string;
 }
 
 export interface Store {
   id: string;
   sellerId: string;
+  /** Seller's current plan — present on public store responses. */
+  planId?: PlanId;
   name: string;
   slug: string;
   logoUrl?: string;

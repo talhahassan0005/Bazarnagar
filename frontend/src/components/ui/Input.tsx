@@ -1,4 +1,7 @@
-import type { ComponentProps, ReactNode } from "react";
+"use client";
+
+import { useState, type ComponentProps, type ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const fieldBase =
@@ -47,8 +50,14 @@ export function Input({
   required,
   leftAddon,
   className,
+  type,
   ...rest
 }: InputProps) {
+  const [show, setShow] = useState(false);
+  // Password fields get a show/hide toggle automatically.
+  const isPassword = type === "password";
+  const effectiveType = isPassword ? (show ? "text" : "password") : type;
+
   return (
     <Field label={label} hint={hint} error={error} required={required}>
       <div className="relative flex items-center">
@@ -58,16 +67,29 @@ export function Input({
           </span>
         )}
         <input
+          type={effectiveType}
           className={cn(
             fieldBase,
             "h-11",
             leftAddon && "pl-9",
+            isPassword && "pr-11",
             error && "border-red-400 focus:border-red-400 focus:ring-red-100",
             className
           )}
           required={required}
           {...rest}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            className="absolute right-2.5 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600"
+            aria-label={show ? "Hide password" : "Show password"}
+            tabIndex={-1}
+          >
+            {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        )}
       </div>
     </Field>
   );

@@ -11,6 +11,7 @@ import { StoreAbout } from "@/components/storefront/StoreAbout";
 import { StoreContact } from "@/components/storefront/StoreContact";
 import { useGetStoreBySlugQuery, useGetStoreProductsQuery } from "@/store/apiSlice";
 import { resolveLanding } from "@/lib/landing";
+import { ShopBanner } from "@/components/storefront/ShopBanner";
 
 export default function PublicStorePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -61,6 +62,7 @@ export default function PublicStorePage() {
     return (
       <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
         <StoreHeader store={store.data} />
+        <ShopBanner store={store.data} />
         <div className="mt-6">
           <StoreCatalog store={store.data} />
         </div>
@@ -71,6 +73,7 @@ export default function PublicStorePage() {
   return (
     <>
       <StoreLandingHero store={store.data} landing={landing} />
+      <ShopBanner store={store.data} />
       {landing.showFeatured && (
         <FeaturedProducts store={store.data} landing={landing} products={featured} />
       )}

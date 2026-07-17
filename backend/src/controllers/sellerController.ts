@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
-import { getPlan } from "../lib/plans";
+import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
@@ -130,7 +130,9 @@ export const updateStorePayout = asyncHandler(async (req: Request, res: Response
   const store = await Store.findById(seller.storeId);
   if (!store) throw new ApiError(404, "Store not found");
 
-  store.payout = payoutSchema.parse(req.body);
+  const data = payoutSchema.parse(req.body);
+  // Valid details saved → mark the payout account connected.
+  store.payout = { ...data, connectedAt: new Date() };
   await store.save();
   res.json(store.toJSON());
 });
@@ -140,16 +142,51 @@ const planSchema = z.object({
 });
 
 /**
- * PATCH /api/seller/plan — seller switches their own plan.
+ * PATCH /api/seller/plan — seller switches (subscribes to) a plan.
  * (In production this would be gated behind a payment; for now it applies
- * immediately and marks the subscription active.)
+ * immediately, starts a fresh billing period, and marks the subscription
+ * active.)
  */
 export const changePlan = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const { planId } = planSchema.parse(req.body);
+  const now = new Date();
+  const wasInactive =
+    seller.subscriptionStatus === "expired" || seller.subscriptionStatus === "cancelled";
+
   seller.planId = planId;
   seller.subscriptionStatus = "active";
+  seller.subscriptionStartedAt = now;
+  seller.subscriptionEndsAt = addBillingPeriod(now);
   await seller.save();
+
+  // Reactivate a store that was hidden when the subscription lapsed.
+  if (wasInactive && seller.storeId) {
+    await Store.updateOne({ _id: seller.storeId, status: "inactive" }, { status: "active" });
+  }
+  res.json(seller.toJSON());
+});
+
+/**
+ * POST /api/seller/subscription/renew — renew the current plan for another
+ * billing cycle (extends from the later of now / current expiry).
+ */
+export const renewSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const now = new Date();
+  const wasInactive =
+    seller.subscriptionStatus === "expired" || seller.subscriptionStatus === "cancelled";
+  const base =
+    seller.subscriptionEndsAt && seller.subscriptionEndsAt > now ? seller.subscriptionEndsAt : now;
+
+  seller.subscriptionStartedAt = seller.subscriptionStartedAt ?? now;
+  seller.subscriptionEndsAt = addBillingPeriod(base);
+  seller.subscriptionStatus = "active";
+  await seller.save();
+
+  if (wasInactive && seller.storeId) {
+    await Store.updateOne({ _id: seller.storeId, status: "inactive" }, { status: "active" });
+  }
   res.json(seller.toJSON());
 });
 

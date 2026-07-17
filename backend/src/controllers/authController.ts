@@ -5,6 +5,7 @@ import { Seller } from "../models/Seller";
 import { Admin } from "../models/Admin";
 import { Store } from "../models/Store";
 import { signToken } from "../lib/jwt";
+import { addTrialPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
 const signupSchema = z.object({
@@ -24,6 +25,7 @@ export const signupSeller = asyncHandler(async (req: Request, res: Response) => 
   const data = signupSchema.parse(req.body);
   const passwordHash = await bcrypt.hash(data.password, 10);
 
+  const now = new Date();
   const seller = await Seller.create({
     name: data.name,
     phone: data.phone,
@@ -31,6 +33,8 @@ export const signupSeller = asyncHandler(async (req: Request, res: Response) => 
     passwordHash,
     planId: "starter",
     subscriptionStatus: "trial",
+    subscriptionStartedAt: now,
+    subscriptionEndsAt: addTrialPeriod(now),
     status: "active",
   });
 

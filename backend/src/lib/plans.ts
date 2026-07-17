@@ -23,3 +23,24 @@ export const PLANS: Record<PlanId, Plan> = {
 export function getPlan(planId: PlanId): Plan {
   return PLANS[planId] ?? PLANS.starter;
 }
+
+/* ----------------------------- Subscriptions ----------------------------- */
+
+/** Length of one billing cycle (monthly). */
+export const BILLING_DAYS = 30;
+/** Days after expiry before an unpaid subscription is cancelled (grace period). */
+export const GRACE_DAYS = 7;
+/** Length of the free trial for a new seller. */
+export const TRIAL_DAYS = 14;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Add one billing cycle to a date (defaults to now). */
+export function addBillingPeriod(from: Date = new Date()): Date {
+  return new Date(from.getTime() + BILLING_DAYS * DAY_MS);
+}
+
+/** Add the trial length to a date (defaults to now). */
+export function addTrialPeriod(from: Date = new Date()): Date {
+  return new Date(from.getTime() + TRIAL_DAYS * DAY_MS);
+}

@@ -23,7 +23,10 @@ export const getStoreBySlug = asyncHandler(async (req: Request, res: Response) =
     { $inc: { views: 1 } },
     { new: true }
   );
-  res.json(store ? store.toJSON() : null);
+  if (!store) return res.json(null);
+  const { Seller } = await import("../models/Seller");
+  const seller = await Seller.findById(store.sellerId).select("planId");
+  res.json({ ...store.toJSON(), planId: seller?.planId ?? "starter" });
 });
 
 /** GET /api/public/stores — browse all public shops (optional q / city filter). */

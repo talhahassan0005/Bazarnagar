@@ -26,6 +26,8 @@ export interface StorePayout {
   accountTitle: string; // account holder's name
   accountNumber: string; // mobile number (wallets) or account/IBAN (bank)
   bankName?: string; // only for bank transfers
+  /** Set once valid details are saved — the account is "connected". */
+  connectedAt?: Date;
 }
 
 export interface StoreDoc extends Document {
@@ -84,6 +86,7 @@ const payoutSchema = new Schema<StorePayout>(
     accountTitle: { type: String, required: true },
     accountNumber: { type: String, required: true },
     bankName: String,
+    connectedAt: Date,
   },
   { _id: false }
 );

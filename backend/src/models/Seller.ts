@@ -19,6 +19,10 @@ export interface SellerDoc extends Document {
   status: SellerStatus;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
+  /** When the current subscription period started. */
+  subscriptionStartedAt?: Date;
+  /** When the current period ends — i.e. renewal / next charge is due. */
+  subscriptionEndsAt?: Date;
   storeId: Types.ObjectId | null;
   createdAt: Date;
   comparePassword(plain: string): Promise<boolean>;
@@ -45,6 +49,8 @@ const sellerSchema = new Schema<SellerDoc>(
       enum: ["trial", "active", "expired", "suspended", "cancelled"],
       default: "trial",
     },
+    subscriptionStartedAt: Date,
+    subscriptionEndsAt: { type: Date, index: true },
     storeId: { type: Schema.Types.ObjectId, ref: "Store", default: null },
   },
   baseSchemaOptions

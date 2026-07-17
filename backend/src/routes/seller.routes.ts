@@ -6,6 +6,7 @@ import {
   updateStoreLanding,
   updateStorePayout,
   changePlan,
+  renewSubscription,
   getMyProducts,
   createProduct,
   updateProduct,
@@ -27,6 +28,7 @@ router.put("/store", upsertStore);
 router.patch("/store/landing", updateStoreLanding);
 router.patch("/store/payout", updateStorePayout);
 router.patch("/plan", changePlan);
+router.post("/subscription/renew", renewSubscription);
 router.get("/dashboard", getDashboard);
 
 router.get("/products", getMyProducts);
