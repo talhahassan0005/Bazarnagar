@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useAppDispatch } from "@/store/hooks";
@@ -9,14 +10,21 @@ import { clearCart } from "@/store/cartSlice";
 /** Shown after a successful online payment (Safepay redirect / mock confirm). */
 export default function CheckoutSuccessPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(7);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setOrderId(params.get("order"));
-    // Payment succeeded → clear the cart.
     dispatch(clearCart());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (countdown === 0) { router.push("/"); return; }
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, router]);
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16 text-center sm:px-6">
@@ -28,21 +36,19 @@ export default function CheckoutSuccessPage() {
         Thank you! Your payment went through and your order is confirmed.
         {orderId && (
           <>
-            {" "}
-            Order{" "}
-            <span className="font-medium text-slate-700">
-              #{orderId.slice(-6).toUpperCase()}
-            </span>
-            .
+            {" "}Order{" "}
+            <span className="font-medium text-slate-700">#{orderId.slice(-6).toUpperCase()}</span>.
           </>
         )}{" "}
         The shop will arrange delivery.
       </p>
+      <p className="mt-4 text-sm text-slate-400">
+        Redirecting to home in{" "}
+        <span className="font-semibold text-brand-600">{countdown}</span> seconds…
+      </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Button href="/search">Continue shopping</Button>
-        <Button href="/shops" variant="outline">
-          Browse shops
-        </Button>
+        <Button href="/">Go to Home</Button>
+        <Button href="/search" variant="outline">Continue shopping</Button>
       </div>
     </div>
   );
