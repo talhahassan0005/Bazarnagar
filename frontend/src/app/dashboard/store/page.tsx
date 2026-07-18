@@ -3,15 +3,14 @@
 import { Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StoreProfileForm } from "@/components/domain/StoreProfileForm";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { useGetMyStoreQuery, useUpsertStoreMutation } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function StoreProfilePage() {
   const dispatch = useAppDispatch();
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const { data: store, isLoading } = useGetMyStoreQuery(sellerId);
+  const { data: store, isLoading } = useGetMyStoreQuery();
   const [upsertStore, { isLoading: saving }] = useUpsertStoreMutation();
 
   if (isLoading) {

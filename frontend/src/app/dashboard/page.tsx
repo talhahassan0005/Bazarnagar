@@ -14,7 +14,6 @@ import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard, PlanUsageBar } from "@/components/domain/StatCard";
 import { CopyLink } from "@/components/domain/CopyLink";
 import { ModerationBadge, StockBadge } from "@/components/domain/StatusBadges";
-import { useAppSelector } from "@/store/hooks";
 import {
   useGetDashboardMetricsQuery,
   useGetMyStoreQuery,
@@ -24,10 +23,9 @@ import { SITE_DOMAIN } from "@/lib/constants";
 import { formatCount, formatPrice } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const metrics = useGetDashboardMetricsQuery(sellerId);
-  const store = useGetMyStoreQuery(sellerId);
-  const products = useGetMyProductsQuery(sellerId);
+  const metrics = useGetDashboardMetricsQuery();
+  const store = useGetMyStoreQuery();
+  const products = useGetMyProductsQuery();
 
   if (metrics.isLoading || store.isLoading || products.isLoading || !store.data) {
     return (

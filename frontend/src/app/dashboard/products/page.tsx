@@ -9,7 +9,7 @@ import {
   ProductStatusBadge,
   StockBadge,
 } from "@/components/domain/StatusBadges";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   useBoostProductMutation,
   useDeleteProductMutation,
@@ -23,9 +23,8 @@ import type { Product } from "@/lib/types";
 
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const { data: products, isLoading } = useGetMyProductsQuery(sellerId);
-  const { data: seller } = useGetSellerQuery(sellerId);
+  const { data: products, isLoading } = useGetMyProductsQuery();
+  const { data: seller } = useGetSellerQuery();
   const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
   const [boostProduct, { isLoading: boosting }] = useBoostProductMutation();
   const [toDelete, setToDelete] = useState<Product | null>(null);

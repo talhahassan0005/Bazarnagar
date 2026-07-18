@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { LoadingPanel, EmptyState, Button } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { ProductForm } from "@/components/domain/ProductForm";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   useGetProductQuery,
   useGetSellerQuery,
@@ -18,9 +18,8 @@ export default function EditProductPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { id } = useParams<{ id: string }>();
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
   const { data: product, isLoading } = useGetProductQuery(id);
-  const { data: seller } = useGetSellerQuery(sellerId);
+  const { data: seller } = useGetSellerQuery();
   const [updateProduct, { isLoading: saving }] = useUpdateProductMutation();
 
   if (isLoading || !seller) return <LoadingPanel label="Loading product…" />;

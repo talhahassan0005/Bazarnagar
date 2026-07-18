@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
 import { SubscriptionBadge } from "@/components/domain/StatusBadges";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   useChangePlanMutation,
   useGetSellerQuery,
@@ -17,9 +17,8 @@ import { formatPrice, getErrorMessage } from "@/lib/utils";
 
 export default function PlanPage() {
   const dispatch = useAppDispatch();
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const seller = useGetSellerQuery(sellerId);
-  const products = useGetMyProductsQuery(sellerId);
+  const seller = useGetSellerQuery();
+  const products = useGetMyProductsQuery();
   const [changePlan] = useChangePlanMutation();
 
   if (seller.isLoading || products.isLoading || !seller.data) {

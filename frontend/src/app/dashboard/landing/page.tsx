@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StoreLandingForm } from "@/components/domain/StoreLandingForm";
 import { NeedsStore } from "@/components/domain/NeedsStore";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   useGetMyProductsQuery,
   useGetMyStoreQuery,
@@ -17,9 +17,8 @@ import { getErrorMessage } from "@/lib/utils";
 
 export default function LandingCustomizerPage() {
   const dispatch = useAppDispatch();
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const { data: store, isLoading } = useGetMyStoreQuery(sellerId);
-  const { data: products } = useGetMyProductsQuery(sellerId);
+  const { data: store, isLoading } = useGetMyStoreQuery();
+  const { data: products } = useGetMyProductsQuery();
   const [updateLanding, { isLoading: saving }] = useUpdateStoreLandingMutation();
 
   if (isLoading) {

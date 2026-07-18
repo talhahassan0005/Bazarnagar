@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { LoadingPanel } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { ProductForm } from "@/components/domain/ProductForm";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   useCreateProductMutation,
   useGetMyStoreQuery,
@@ -18,9 +18,8 @@ import { NeedsStore } from "@/components/domain/NeedsStore";
 export default function NewProductPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const { data: seller, isLoading } = useGetSellerQuery(sellerId);
-  const { data: store, isLoading: storeLoading } = useGetMyStoreQuery(sellerId);
+  const { data: seller, isLoading } = useGetSellerQuery();
+  const { data: store, isLoading: storeLoading } = useGetMyStoreQuery();
   const [createProduct, { isLoading: saving }] = useCreateProductMutation();
 
   if (isLoading || storeLoading || !seller) return <LoadingPanel label="Loading…" />;

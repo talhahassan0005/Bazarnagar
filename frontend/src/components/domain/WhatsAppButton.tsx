@@ -2,7 +2,7 @@
 
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui";
-import { api } from "@/lib/api";
+import { useTrackWhatsappClickMutation } from "@/store/apiSlice";
 import { buildWhatsAppLink } from "@/lib/utils";
 import type { Product, Store } from "@/lib/types";
 
@@ -23,6 +23,7 @@ export function WhatsAppButton({
   fullWidth?: boolean;
   label?: string;
 }) {
+  const [trackClick] = useTrackWhatsappClickMutation();
   const productLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/store/${store.slug}/product/${product.id}`
@@ -45,10 +46,7 @@ export function WhatsAppButton({
       target="_blank"
       rel="noopener noreferrer"
       leftIcon={<MessageCircle className="h-4 w-4" />}
-      onClick={() => {
-        // Fire-and-forget impression tracking (WhatsApp inquiry clicks).
-        void api.trackWhatsappClick(product.id).catch(() => {});
-      }}
+      onClick={() => { void trackClick(product.id); }}
     >
       {label}
     </Button>

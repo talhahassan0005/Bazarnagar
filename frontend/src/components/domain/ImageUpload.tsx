@@ -5,7 +5,7 @@ import { ImagePlus } from "lucide-react";
 import { Input } from "@/components/ui";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
-import { api } from "@/lib/api";
+import { uploadImage } from "@/lib/api";
 import { getErrorMessage } from "@/lib/utils";
 
 /**
@@ -35,7 +35,7 @@ export function ImageUpload({
     if (!file) return;
     setUploading(true);
     try {
-      const { url } = await api.uploadImage(file);
+      const { url } = await uploadImage(file);
       onChange(url);
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Upload failed"), "error"));

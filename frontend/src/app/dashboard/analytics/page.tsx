@@ -9,9 +9,8 @@ import { useGetDashboardMetricsQuery, useGetMyProductsQuery } from "@/store/apiS
 import { formatCount } from "@/lib/utils";
 
 export default function AnalyticsPage() {
-  const sellerId = useAppSelector((s) => s.auth.sellerId) ?? undefined;
-  const metrics = useGetDashboardMetricsQuery(sellerId);
-  const products = useGetMyProductsQuery(sellerId);
+  const metrics = useGetDashboardMetricsQuery();
+  const products = useGetMyProductsQuery();
 
   if (metrics.isLoading || products.isLoading) {
     return (

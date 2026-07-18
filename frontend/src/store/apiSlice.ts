@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { type UnknownAction, type ThunkDispatch, type TypedStartListening } from "@reduxjs/toolkit";
 import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
 import { setSellerSession, setAdminSession, logout as logoutAction } from "@/store/authSlice";
 import type {
@@ -89,6 +90,10 @@ export const apiSlice = createApi({
     searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string }>({
       query: (params) => ({ url: "/public/search", params }),
       providesTags: ["Product"],
+    }),
+
+    trackWhatsappClick: builder.mutation<{ ok: boolean }, string>({
+      query: (productId) => ({ url: `/public/products/${productId}/whatsapp-click`, method: "POST" }),
     }),
 
     // ── Reviews ───────────────────────────────────────────────────────────
@@ -225,40 +230,36 @@ export const apiSlice = createApi({
 // we listen to RTK Query's matchFulfilled on auth endpoints and update
 // authSlice automatically — single source of truth.
 
-export function setupAuthListeners(
-  startListening: (opts: { matcher: unknown; effect: unknown }) => void
-) {
-  // login → store token + update authSlice
+type AppStartListening = TypedStartListening<unknown, ThunkDispatch<unknown, unknown, UnknownAction>>;
+
+export function setupAuthListeners(startListening: AppStartListening) {
   startListening({
     matcher: apiSlice.endpoints.loginSeller.matchFulfilled,
-    effect: async (action: { payload: SellerAuthResponse }, api: { dispatch: (a: unknown) => void }) => {
+    effect: (action, api) => {
       setToken(action.payload.token);
       api.dispatch(setSellerSession(action.payload.seller));
     },
   });
 
-  // signup → store token + update authSlice
   startListening({
     matcher: apiSlice.endpoints.signupSeller.matchFulfilled,
-    effect: async (action: { payload: SellerAuthResponse }, api: { dispatch: (a: unknown) => void }) => {
+    effect: (action, api) => {
       setToken(action.payload.token);
       api.dispatch(setSellerSession(action.payload.seller));
     },
   });
 
-  // admin login → store token + update authSlice
   startListening({
     matcher: apiSlice.endpoints.loginAdmin.matchFulfilled,
-    effect: async (action: { payload: AdminAuthResponse }, api: { dispatch: (a: unknown) => void }) => {
+    effect: (action, api) => {
       setToken(action.payload.token);
       api.dispatch(setAdminSession({ name: action.payload.admin.name }));
     },
   });
 
-  // getSeller (dashboard refresh) → keep authSlice.seller in sync
   startListening({
     matcher: apiSlice.endpoints.getSeller.matchFulfilled,
-    effect: async (action: { payload: Seller }, api: { dispatch: (a: unknown) => void }) => {
+    effect: (action, api) => {
       api.dispatch(setSellerSession(action.payload));
     },
   });
@@ -271,6 +272,7 @@ export const {
   useSignupSellerMutation,
   useLoginAdminMutation,
   useGetMeQuery,
+  useTrackWhatsappClickMutation,
   useGetPublicStoresQuery,
   useGetStoreBySlugQuery,
   useGetStoreProductsQuery,
