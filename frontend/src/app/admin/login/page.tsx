@@ -1,33 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button, Card, Input } from "@/components/ui";
 import { BrandMark } from "@/components/layout/Logo";
 import { useAppDispatch } from "@/store/hooks";
-import { setAdminSession } from "@/store/authSlice";
 import { addToast } from "@/store/uiSlice";
-import { api, setToken } from "@/lib/api";
+import { useLoginAdminMutation } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [loginAdmin, { isLoading }] = useLoginAdminMutation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     try {
-      const { token, admin } = await api.loginAdmin({ email, password });
-      setToken(token);
-      dispatch(setAdminSession({ name: admin.name }));
+      await loginAdmin({ email, password }).unwrap();
+      // token saved + authSlice updated automatically by the auth listener
       router.push("/admin");
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Login failed"), "error"));
-      setLoading(false);
     }
   }
 
@@ -70,8 +66,8 @@ export default function AdminLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button type="submit" fullWidth disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+          <Button type="submit" fullWidth disabled={isLoading}>
+            {isLoading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
       </Card>

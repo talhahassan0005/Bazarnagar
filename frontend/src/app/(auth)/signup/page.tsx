@@ -5,32 +5,28 @@ import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { useAppDispatch } from "@/store/hooks";
-import { setSellerSession } from "@/store/authSlice";
 import { addToast } from "@/store/uiSlice";
-import { api, setToken } from "@/lib/api";
+import { useSignupSellerMutation } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function SignupPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [signupSeller, { isLoading }] = useSignupSellerMutation();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     try {
-      const { token, seller } = await api.signupSeller({ name, phone, email, password });
-      setToken(token);
-      dispatch(setSellerSession(seller));
+      await signupSeller({ name, phone, email, password }).unwrap();
+      // token saved + authSlice updated automatically by the auth listener
       dispatch(addToast("Account created — let's set up your store.", "success"));
       router.push("/dashboard/store");
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Signup failed"), "error"));
-      setLoading(false);
     }
   }
 
@@ -77,8 +73,8 @@ export default function SignupPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button type="submit" fullWidth disabled={loading}>
-          {loading ? "Creating account…" : "Create account"}
+        <Button type="submit" fullWidth disabled={isLoading}>
+          {isLoading ? "Creating account…" : "Create account"}
         </Button>
       </form>
     </AuthCard>

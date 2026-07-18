@@ -6,30 +6,26 @@ import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { useAppDispatch } from "@/store/hooks";
-import { setSellerSession } from "@/store/authSlice";
 import { addToast } from "@/store/uiSlice";
-import { api, setToken } from "@/lib/api";
+import { useLoginSellerMutation } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [loginSeller, { isLoading }] = useLoginSellerMutation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     try {
-      const { token, seller } = await api.loginSeller({ email, password });
-      setToken(token);
-      dispatch(setSellerSession(seller));
+      await loginSeller({ email, password }).unwrap();
+      // token saved + authSlice updated automatically by the auth listener
       dispatch(addToast("Welcome back!", "success"));
       router.push("/dashboard");
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Login failed"), "error"));
-      setLoading(false);
     }
   }
 
@@ -68,8 +64,8 @@ export default function LoginPage() {
             </Link>
           </div>
         </div>
-        <Button type="submit" fullWidth disabled={loading}>
-          {loading ? "Logging in…" : "Log in"}
+        <Button type="submit" fullWidth disabled={isLoading}>
+          {isLoading ? "Logging in…" : "Log in"}
         </Button>
       </form>
     </AuthCard>

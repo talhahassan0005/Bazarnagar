@@ -1,5 +1,6 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { api } from "@/lib/api";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
+import { setSellerSession, setAdminSession, logout as logoutAction } from "@/store/authSlice";
 import type {
   AdminReview,
   CreateOrderInput,
@@ -23,220 +24,253 @@ import type {
   SubscriptionStatus,
 } from "@/lib/types";
 
-/**
- * Run an API call and convert it into RTK Query's `{ data } | { error }`
- * shape. This keeps thrown errors out of the console as "unhandled" and lets
- * `.unwrap()` reject with a clean `{ message }` the UI can show the user.
- */
-async function run<T>(
-  fn: () => Promise<T>
-): Promise<{ data: T } | { error: { message: string } }> {
-  try {
-    return { data: await fn() };
-  } catch (e) {
-    return { error: { message: e instanceof Error ? e.message : "Request failed" } };
-  }
-}
+/* ── Types ──────────────────────────────────────────────────────────────── */
 
-/**
- * RTK Query API slice. Endpoints delegate to the HTTP client in `lib/api.ts`,
- * which talks to the Express + MongoDB backend. Seller/admin calls send the
- * JWT automatically (stored by `lib/api.ts`).
- */
+export interface SellerAuthResponse { token: string; seller: Seller }
+export interface AdminAuthResponse { token: string; admin: { id: string; name: string; email: string } }
+
+type MeResponse =
+  | { role: "seller"; seller: Seller; store: Store | null }
+  | { role: "admin"; admin: { id: string; name: string; email: string } };
+
+/* ── Base query with auth header ────────────────────────────────────────── */
+
+const baseQuery = fetchBaseQuery({
+  baseUrl: API_BASE,
+  prepareHeaders: (headers) => {
+    const token = getToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return headers;
+  },
+});
+
+/* ── API slice ──────────────────────────────────────────────────────────── */
+
 export const apiSlice = createApi({
   reducerPath: "api",
-  baseQuery: fakeBaseQuery<{ message: string }>(),
+  baseQuery,
   tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment"],
   endpoints: (builder) => ({
-    // ---- Public / customer ----
+
+    // ── Auth ──────────────────────────────────────────────────────────────
+    loginSeller: builder.mutation<SellerAuthResponse, { email: string; password: string }>({
+      query: (body) => ({ url: "/auth/login", method: "POST", body }),
+    }),
+    signupSeller: builder.mutation<SellerAuthResponse, { name: string; phone: string; email: string; password: string }>({
+      query: (body) => ({ url: "/auth/signup", method: "POST", body }),
+    }),
+    loginAdmin: builder.mutation<AdminAuthResponse, { email: string; password: string }>({
+      query: (body) => ({ url: "/admin/login", method: "POST", body }),
+    }),
+    getMe: builder.query<MeResponse, void>({
+      query: () => "/auth/me",
+    }),
+
+    // ── Public / customer ─────────────────────────────────────────────────
     getPublicStores: builder.query<Store[], { q?: string; city?: string }>({
-      queryFn: (params) => run(() => api.getStores(params)),
+      query: (params) => ({ url: "/public/stores", params }),
       providesTags: ["Store"],
     }),
     getStoreBySlug: builder.query<Store | null, string>({
-      queryFn: (slug) => run(() => api.getStoreBySlug(slug)),
+      query: (slug) => `/public/stores/${slug}`,
       providesTags: ["Store"],
     }),
-    getStoreProducts: builder.query<
-      Product[],
-      { storeId: string; publicOnly?: boolean }
-    >({
-      queryFn: ({ storeId, publicOnly }) =>
-        run(() => api.getStoreProducts(storeId, { publicOnly })),
+    getStoreProducts: builder.query<Product[], { storeId: string; publicOnly?: boolean }>({
+      query: ({ storeId, publicOnly }) => ({
+        url: `/public/stores/${storeId}/products`,
+        params: publicOnly ? { publicOnly: "true" } : {},
+      }),
       providesTags: ["Product"],
     }),
     getProduct: builder.query<ProductWithStore | null, string>({
-      queryFn: (id) => run(() => api.getProduct(id)),
+      query: (id) => `/public/products/${id}`,
       providesTags: ["Product"],
     }),
-    searchProducts: builder.query<
-      ProductWithStore[],
-      { q?: string; category?: string; city?: string; area?: string }
-    >({
-      queryFn: (params) => run(() => api.searchProducts(params)),
+    searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string }>({
+      query: (params) => ({ url: "/public/search", params }),
       providesTags: ["Product"],
     }),
 
-    // ---- Reviews & ratings ----
+    // ── Reviews ───────────────────────────────────────────────────────────
     getProductReviews: builder.query<ProductReviews, string>({
-      queryFn: (productId) => run(() => api.getProductReviews(productId)),
+      query: (productId) => `/public/products/${productId}/reviews`,
       providesTags: ["Review"],
     }),
-    createReview: builder.mutation<
-      Review,
-      { productId: string; customerName: string; rating: number; comment?: string }
-    >({
-      queryFn: ({ productId, ...body }) => run(() => api.createReview(productId, body)),
+    createReview: builder.mutation<Review, { productId: string; customerName: string; rating: number; comment?: string }>({
+      query: ({ productId, ...body }) => ({ url: `/public/products/${productId}/reviews`, method: "POST", body }),
       invalidatesTags: ["Review", "Product"],
     }),
 
-    // ---- Orders ----
+    // ── Orders ────────────────────────────────────────────────────────────
     createOrder: builder.mutation<Order, CreateOrderInput>({
-      queryFn: (input) => run(() => api.createOrder(input)),
+      query: (body) => ({ url: "/public/orders", method: "POST", body }),
       invalidatesTags: ["Order"],
     }),
-    safepayCheckout: builder.mutation<
-      { url: string; orderId: string; mock: boolean },
-      CreateOrderInput
-    >({
-      queryFn: (input) => run(() => api.safepayCheckout(input)),
+    safepayCheckout: builder.mutation<{ url: string; orderId: string; mock: boolean }, CreateOrderInput>({
+      query: (body) => ({ url: "/public/safepay/checkout", method: "POST", body }),
       invalidatesTags: ["Order"],
     }),
     safepayMockConfirm: builder.mutation<Order, string>({
-      queryFn: (orderId) => run(() => api.safepayMockConfirm(orderId)),
+      query: (orderId) => ({ url: "/public/safepay/mock-confirm", method: "POST", body: { orderId } }),
       invalidatesTags: ["Order"],
     }),
     getPaymentConfig: builder.query<{ hosted: boolean }, void>({
-      queryFn: () => run(() => api.getPaymentConfig()),
+      query: () => "/public/payment-config",
     }),
     getSellerOrders: builder.query<Order[], void>({
-      queryFn: () => run(() => api.getSellerOrders()),
+      query: () => "/seller/orders",
       providesTags: ["Order"],
     }),
     updateOrderStatus: builder.mutation<Order, { id: string; status: OrderStatus }>({
-      queryFn: ({ id, status }) => run(() => api.updateOrderStatus(id, status)),
+      query: ({ id, status }) => ({ url: `/seller/orders/${id}/status`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Order"],
     }),
 
-    // ---- Seller (identity comes from the JWT) ----
-    getSeller: builder.query<Seller, string | undefined>({
-      queryFn: () => run(() => api.getSeller()),
+    // ── Seller ────────────────────────────────────────────────────────────
+    getSeller: builder.query<Seller, void>({
+      query: () => "/seller/me",
       providesTags: ["Seller"],
     }),
-    getMyStore: builder.query<Store | null, string | undefined>({
-      queryFn: () => run(() => api.getMyStore()),
+    getMyStore: builder.query<Store | null, void>({
+      query: () => "/seller/store",
       providesTags: ["Store"],
     }),
-    getMyProducts: builder.query<Product[], string | undefined>({
-      queryFn: () => run(() => api.getMyProducts()),
+    getMyProducts: builder.query<Product[], void>({
+      query: () => "/seller/products",
       providesTags: ["Product"],
     }),
-    getDashboardMetrics: builder.query<DashboardMetrics, string | undefined>({
-      queryFn: () => run(() => api.getDashboardMetrics()),
+    getDashboardMetrics: builder.query<DashboardMetrics, void>({
+      query: () => "/seller/dashboard",
       providesTags: ["Product"],
     }),
     updateStoreLanding: builder.mutation<Store | null, StoreLanding>({
-      queryFn: (landing) => run(() => api.updateStoreLanding(landing)),
+      query: (body) => ({ url: "/seller/store/landing", method: "PATCH", body }),
       invalidatesTags: ["Store"],
     }),
     updateStorePayout: builder.mutation<Store | null, StorePayout>({
-      queryFn: (payout) => run(() => api.updatePayout(payout)),
+      query: (body) => ({ url: "/seller/store/payout", method: "PATCH", body }),
       invalidatesTags: ["Store"],
     }),
     upsertStore: builder.mutation<Store, Partial<Store>>({
-      queryFn: (values) => run(() => api.upsertStore(values)),
+      query: (body) => ({ url: "/seller/store", method: "PUT", body }),
       invalidatesTags: ["Store", "Seller"],
     }),
     createProduct: builder.mutation<Product, Partial<Product>>({
-      queryFn: (values) => run(() => api.createProduct(values)),
+      query: (body) => ({ url: "/seller/products", method: "POST", body }),
       invalidatesTags: ["Product"],
     }),
     updateProduct: builder.mutation<Product, { id: string; values: Partial<Product> }>({
-      queryFn: ({ id, values }) => run(() => api.updateProduct(id, values)),
+      query: ({ id, values }) => ({ url: `/seller/products/${id}`, method: "PUT", body: values }),
       invalidatesTags: ["Product"],
     }),
     deleteProduct: builder.mutation<{ ok: boolean }, string>({
-      queryFn: (id) => run(() => api.deleteProduct(id)),
+      query: (id) => ({ url: `/seller/products/${id}`, method: "DELETE" }),
       invalidatesTags: ["Product"],
     }),
     boostProduct: builder.mutation<Product, { id: string; packageId: string }>({
-      queryFn: ({ id, packageId }) => run(() => api.boostProduct(id, packageId)),
+      query: ({ id, packageId }) => ({ url: `/seller/products/${id}/boost`, method: "POST", body: { packageId } }),
       invalidatesTags: ["Product"],
     }),
     changePlan: builder.mutation<Seller, PlanId>({
-      queryFn: (planId) => run(() => api.changePlan(planId)),
+      query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
     }),
 
-    // ---- Admin ----
+    // ── Admin ─────────────────────────────────────────────────────────────
     getAllSellers: builder.query<Seller[], void>({
-      queryFn: () => run(() => api.getAllSellers()),
+      query: () => "/admin/sellers",
       providesTags: ["Seller"],
     }),
     getAllStores: builder.query<Store[], void>({
-      queryFn: () => run(() => api.getAllStores()),
+      query: () => "/admin/stores",
       providesTags: ["Store"],
     }),
     getAllProducts: builder.query<ProductWithStore[], void>({
-      queryFn: () => run(() => api.getAllProducts()),
+      query: () => "/admin/products",
       providesTags: ["Product"],
     }),
-    moderateProduct: builder.mutation<
-      Product,
-      { id: string; moderationStatus: ModerationStatus; reason?: string }
-    >({
-      queryFn: ({ id, moderationStatus, reason }) =>
-        run(() => api.moderateProduct(id, moderationStatus, reason)),
+    moderateProduct: builder.mutation<Product, { id: string; moderationStatus: ModerationStatus; reason?: string }>({
+      query: ({ id, ...body }) => ({ url: `/admin/products/${id}/moderation`, method: "PATCH", body }),
       invalidatesTags: ["Product"],
     }),
-    updateSeller: builder.mutation<
-      Seller,
-      {
-        id: string;
-        status?: SellerStatus;
-        planId?: PlanId;
-        subscriptionStatus?: SubscriptionStatus;
-      }
-    >({
-      queryFn: ({ id, ...patch }) => run(() => api.updateSeller(id, patch)),
+    updateSeller: builder.mutation<Seller, { id: string; status?: SellerStatus; planId?: PlanId; subscriptionStatus?: SubscriptionStatus }>({
+      query: ({ id, ...patch }) => ({ url: `/admin/sellers/${id}`, method: "PATCH", body: patch }),
       invalidatesTags: ["Seller"],
     }),
     updateStoreStatus: builder.mutation<Store, { id: string; status: StoreStatus }>({
-      queryFn: ({ id, status }) => run(() => api.updateStore(id, status)),
+      query: ({ id, status }) => ({ url: `/admin/stores/${id}`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Store"],
     }),
     getSellerPayments: builder.query<Payment[], string>({
-      queryFn: (sellerId) => run(() => api.getSellerPayments(sellerId)),
+      query: (sellerId) => `/admin/sellers/${sellerId}/payments`,
       providesTags: ["Payment"],
     }),
-    recordPayment: builder.mutation<
-      { payment: Payment; seller: Seller },
-      {
-        sellerId: string;
-        planId: PlanId;
-        amount: number;
-        method: string;
-        paidAt?: string;
-        notes?: string;
-        applyToSeller?: boolean;
-        subscriptionStatus?: SubscriptionStatus;
-      }
-    >({
-      queryFn: ({ sellerId, ...body }) => run(() => api.recordPayment(sellerId, body)),
+    recordPayment: builder.mutation<{ payment: Payment; seller: Seller }, { sellerId: string; planId: PlanId; amount: number; method: string; paidAt?: string; notes?: string; applyToSeller?: boolean; subscriptionStatus?: SubscriptionStatus }>({
+      query: ({ sellerId, ...body }) => ({ url: `/admin/sellers/${sellerId}/payments`, method: "POST", body }),
       invalidatesTags: ["Payment", "Seller"],
     }),
     getAllReviews: builder.query<AdminReview[], void>({
-      queryFn: () => run(() => api.getAllReviews()),
+      query: () => "/admin/reviews",
       providesTags: ["Review"],
     }),
     moderateReview: builder.mutation<Review, { id: string; status: ReviewStatus }>({
-      queryFn: ({ id, status }) => run(() => api.moderateReview(id, status)),
+      query: ({ id, status }) => ({ url: `/admin/reviews/${id}`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Review"],
     }),
   }),
 });
 
+/* ── C: Sync authSlice from RTK Query results ───────────────────────────── */
+// Instead of manually dispatching setSellerSession in every component,
+// we listen to RTK Query's matchFulfilled on auth endpoints and update
+// authSlice automatically — single source of truth.
+
+export function setupAuthListeners(
+  startListening: (opts: { matcher: unknown; effect: unknown }) => void
+) {
+  // login → store token + update authSlice
+  startListening({
+    matcher: apiSlice.endpoints.loginSeller.matchFulfilled,
+    effect: async (action: { payload: SellerAuthResponse }, api: { dispatch: (a: unknown) => void }) => {
+      setToken(action.payload.token);
+      api.dispatch(setSellerSession(action.payload.seller));
+    },
+  });
+
+  // signup → store token + update authSlice
+  startListening({
+    matcher: apiSlice.endpoints.signupSeller.matchFulfilled,
+    effect: async (action: { payload: SellerAuthResponse }, api: { dispatch: (a: unknown) => void }) => {
+      setToken(action.payload.token);
+      api.dispatch(setSellerSession(action.payload.seller));
+    },
+  });
+
+  // admin login → store token + update authSlice
+  startListening({
+    matcher: apiSlice.endpoints.loginAdmin.matchFulfilled,
+    effect: async (action: { payload: AdminAuthResponse }, api: { dispatch: (a: unknown) => void }) => {
+      setToken(action.payload.token);
+      api.dispatch(setAdminSession({ name: action.payload.admin.name }));
+    },
+  });
+
+  // getSeller (dashboard refresh) → keep authSlice.seller in sync
+  startListening({
+    matcher: apiSlice.endpoints.getSeller.matchFulfilled,
+    effect: async (action: { payload: Seller }, api: { dispatch: (a: unknown) => void }) => {
+      api.dispatch(setSellerSession(action.payload));
+    },
+  });
+}
+
+/* ── Exports ────────────────────────────────────────────────────────────── */
+
 export const {
+  useLoginSellerMutation,
+  useSignupSellerMutation,
+  useLoginAdminMutation,
+  useGetMeQuery,
   useGetPublicStoresQuery,
   useGetStoreBySlugQuery,
   useGetStoreProductsQuery,
