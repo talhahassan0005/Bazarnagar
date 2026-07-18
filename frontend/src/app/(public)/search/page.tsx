@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { ArrowDownUp, Navigation, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, ChevronLeft, ChevronRight, Navigation, Search, SlidersHorizontal } from "lucide-react";
 import { Button, EmptyState, ProductGridSkeleton } from "@/components/ui";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { CategoryChips } from "@/components/domain/CategoryChips";
@@ -11,6 +11,7 @@ import { CATEGORIES, CITIES } from "@/lib/constants";
 import { distanceKm, effectivePrice } from "@/lib/utils";
 
 type Sort = "relevance" | "price-asc" | "price-desc";
+const PAGE_SIZE = 20;
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -20,6 +21,10 @@ export default function SearchPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Reset page on filter change
+  useEffect(() => { setPage(1); }, [query, category, city, sort, coords]);
 
   // Seed filters from the URL (e.g. /search?category=Clothing from the homepage).
   useEffect(() => {
@@ -78,6 +83,18 @@ export default function SearchPage() {
     items.sort((a, b) => effectivePrice(a.product) - effectivePrice(b.product));
   } else if (sort === "price-desc") {
     items.sort((a, b) => effectivePrice(b.product) - effectivePrice(a.product));
+  }
+
+  // Paginate
+  const totalPages = Math.ceil(items.length / PAGE_SIZE);
+  const paginated = useMemo(
+    () => items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [items, page]
+  );
+
+  function goToPage(p: number) {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -182,15 +199,36 @@ export default function SearchPage() {
           <>
             <p className="mb-3 text-sm text-slate-500">{items.length} products found</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {items.map(({ product, distance }) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  store={product.store}
-                  distanceKm={distance}
-                />
+              {paginated.map(({ product, distance }, i) => (
+                <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
               ))}
             </div>
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-1.5">
+                <button onClick={() => goToPage(page - 1)} disabled={page === 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                  .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("…");
+                    acc.push(p); return acc;
+                  }, [])
+                  .map((p, i) => p === "…" ? (
+                    <span key={`e${i}`} className="px-1 text-slate-400">…</span>
+                  ) : (
+                    <button key={p} onClick={() => goToPage(p as number)}
+                      className={`flex h-9 min-w-[36px] items-center justify-center rounded-lg border px-3 text-sm font-medium transition ${
+                        p === page ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}>{p}</button>
+                  ))}
+                <button onClick={() => goToPage(page + 1)} disabled={page === totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

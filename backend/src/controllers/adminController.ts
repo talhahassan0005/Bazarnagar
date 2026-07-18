@@ -4,6 +4,8 @@ import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Payment } from "../models/Payment";
+import { PlanConfig } from "../models/PlanConfig";
+import { PLANS } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
 /* ------------------------------- Listings -------------------------------- */
@@ -146,4 +148,38 @@ export const recordPayment = asyncHandler(async (req: Request, res: Response) =>
 export const getSellerPayments = asyncHandler(async (req: Request, res: Response) => {
   const payments = await Payment.find({ sellerId: req.params.id }).sort({ paidAt: -1 });
   res.json(payments.map((p) => p.toJSON()));
+});
+
+/* ----------------------------- Plan Config ------------------------------- */
+
+/** GET /api/admin/plan-config — return current plan prices (DB overrides defaults). */
+export const getPlanConfig = asyncHandler(async (_req: Request, res: Response) => {
+  const saved = await PlanConfig.find();
+  const savedById = new Map(saved.map((p) => [p.planId, p]));
+  const result = Object.values(PLANS).map((plan) => {
+    const override = savedById.get(plan.id);
+    return override
+      ? { ...plan, price: override.price, productLimit: override.productLimit, imageLimit: override.imageLimit, videoLimit: override.videoLimit }
+      : plan;
+  });
+  res.json(result);
+});
+
+const planConfigSchema = z.object({
+  planId: z.enum(["starter", "basic", "growth", "pro"]),
+  price: z.number().nonnegative(),
+  productLimit: z.number().int().positive(),
+  imageLimit: z.number().int().positive(),
+  videoLimit: z.number().int().min(0),
+});
+
+/** PATCH /api/admin/plan-config — upsert a plan's config. */
+export const updatePlanConfig = asyncHandler(async (req: Request, res: Response) => {
+  const data = planConfigSchema.parse(req.body);
+  const config = await PlanConfig.findOneAndUpdate(
+    { planId: data.planId },
+    data,
+    { upsert: true, new: true }
+  );
+  res.json(config.toJSON());
 });

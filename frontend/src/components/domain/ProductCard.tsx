@@ -19,16 +19,24 @@ export function ProductCard({
   product,
   store,
   distanceKm,
+  index = 0,
 }: {
   product: Product;
   store: Store;
   distanceKm?: number;
+  index?: number;
 }) {
   const href = `/store/${store.slug}/product/${product.id}`;
   const discount = discountPercent(product);
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-900/5">
+    <div
+      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-900/5"
+      style={{
+        animation: "fade-in-up 0.45s cubic-bezier(0.21,0.6,0.35,1) both",
+        animationDelay: `${Math.min(index, 11) * 55}ms`,
+      }}
+    >
       <Link href={href} className="relative block aspect-square overflow-hidden bg-slate-100">
         <ProductImage
           src={product.images[0]}

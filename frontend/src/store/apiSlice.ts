@@ -10,6 +10,7 @@ import type {
   Order,
   OrderStatus,
   Payment,
+  Plan,
   PlanId,
   Product,
   ProductReviews,
@@ -222,6 +223,16 @@ export const apiSlice = createApi({
       query: ({ id, status }) => ({ url: `/admin/reviews/${id}`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Review"],
     }),
+
+    // ── Admin Plan Config ─────────────────────────────────────────────────
+    getAdminPlanConfig: builder.query<Plan[], void>({
+      query: () => "/admin/plan-config",
+      providesTags: ["Seller"],
+    }),
+    updateAdminPlanConfig: builder.mutation<Plan, { planId: PlanId; price: number; productLimit: number; imageLimit: number; videoLimit: number }>({
+      query: (body) => ({ url: "/admin/plan-config", method: "PATCH", body }),
+      invalidatesTags: ["Seller"],
+    }),
   }),
 });
 
@@ -308,4 +319,6 @@ export const {
   useRecordPaymentMutation,
   useGetAllReviewsQuery,
   useModerateReviewMutation,
+  useGetAdminPlanConfigQuery,
+  useUpdateAdminPlanConfigMutation,
 } = apiSlice;

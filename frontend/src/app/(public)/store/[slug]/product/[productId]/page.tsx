@@ -10,8 +10,10 @@ import { StockBadge } from "@/components/domain/StatusBadges";
 import { StarRating } from "@/components/storefront/StarRating";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButtons";
-import { useGetProductQuery } from "@/store/apiSlice";
+import { ProductCard } from "@/components/domain/ProductCard";
+import { useGetProductQuery, useGetStoreProductsQuery } from "@/store/apiSlice";
 import { discountPercent, effectivePrice, formatCount, formatPrice } from "@/lib/utils";
+import type { Store } from "@/lib/types";
 
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -153,6 +155,41 @@ export default function ProductDetailPage() {
       </div>
 
       <ProductReviews productId={product.id} />
+
+      <RelatedProducts storeId={store.id} currentProductId={product.id} category={product.category} store={store} />
+    </div>
+  );
+}
+
+function RelatedProducts({
+  storeId,
+  currentProductId,
+  category,
+  store,
+}: {
+  storeId: string;
+  currentProductId: string;
+  category: string;
+  store: Store;
+}) {
+  const { data: allProducts } = useGetStoreProductsQuery({ storeId, publicOnly: true });
+
+  const related = (allProducts ?? [])
+    .filter((p) => p.id !== currentProductId && p.category === category)
+    .slice(0, 6);
+
+  if (related.length === 0) return null;
+
+  return (
+    <div className="mt-12">
+      <h2 className="mb-4 text-lg font-semibold text-slate-800">
+        More in <span className="text-brand-700">{category}</span>
+      </h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        {related.map((p) => (
+          <ProductCard key={p.id} product={p} store={store} />
+        ))}
+      </div>
     </div>
   );
 }

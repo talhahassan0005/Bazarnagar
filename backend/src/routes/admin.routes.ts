@@ -11,6 +11,8 @@ import {
   removeProduct,
   recordPayment,
   getSellerPayments,
+  getPlanConfig,
+  updatePlanConfig,
 } from "../controllers/adminController";
 import { getAllReviews, moderateReview } from "../controllers/reviewController";
 import { authenticate, requireRole } from "../middleware/auth";
@@ -39,5 +41,8 @@ router.delete("/products/:id", removeProduct);
 
 router.get("/reviews", getAllReviews);
 router.patch("/reviews/:id", moderateReview);
+
+router.get("/plan-config", getPlanConfig);
+router.patch("/plan-config", updatePlanConfig);
 
 export default router;
