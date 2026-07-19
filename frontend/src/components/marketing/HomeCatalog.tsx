@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ArrowRight, Navigation } from "lucide-react";
 import { ProductCard } from "@/components/domain/ProductCard";
@@ -10,6 +10,7 @@ import { CATEGORIES } from "@/lib/constants";
 import { cn, distanceKm } from "@/lib/utils";
 
 const NAVBAR_H = 64;
+const SECTION_OFFSET = 80; // px below navbar to trigger active
 
 const chip = (active: boolean) =>
   cn(
@@ -20,26 +21,65 @@ const chip = (active: boolean) =>
   );
 
 export function HomeCatalog() {
-  const [category, setCategory] = useState("");
+  const [activeCategory, setActiveCategory] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState("");
   const [isSticky, setIsSticky] = useState(false);
 
   const filterBarRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const userSelectedRef = useRef(false);
 
-  const { data, isLoading } = useSearchProductsQuery({ category });
+  // Fetch all products (no category filter — we group client-side)
+  const { data, isLoading } = useSearchProductsQuery({});
 
-  // Sticky detection
-  useEffect(() => {
-    const onScroll = () => {
-      const el = filterBarRef.current;
-      if (!el) return;
-      setIsSticky(el.getBoundingClientRect().top <= NAVBAR_H);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+  const items = (data ?? []).map((p) => {
+    const plat = p.lat ?? p.store.lat;
+    const plng = p.lng ?? p.store.lng;
+    const distance = coords && plat != null && plng != null
+      ? distanceKm(coords.lat, coords.lng, plat, plng) : undefined;
+    return { product: p, distance };
+  });
+  if (coords) items.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+
+  // Group by category; featured products always first in "All" view
+  const featured = items.filter(({ product: p }) => p.featured);
+  const grouped = CATEGORIES.map((cat) => ({
+    cat,
+    items: items.filter(({ product: p }) => p.category === cat),
+  })).filter(({ items }) => items.length > 0);
+
+  const updateActiveFromScroll = useCallback(() => {
+    const el = filterBarRef.current;
+    if (!el) return;
+    setIsSticky(el.getBoundingClientRect().bottom < NAVBAR_H);
+    if (userSelectedRef.current) return;
+    const threshold = NAVBAR_H + SECTION_OFFSET;
+    let current = "";
+    for (const cat of ["", ...CATEGORIES]) {
+      const sec = sectionRefs.current[cat];
+      if (!sec) continue;
+      if (sec.getBoundingClientRect().top <= threshold) current = cat;
+    }
+    setActiveCategory(current);
   }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", updateActiveFromScroll, { passive: true });
+    return () => window.removeEventListener("scroll", updateActiveFromScroll);
+  }, [updateActiveFromScroll]);
+
+  function scrollToCategory(c: string) {
+    setActiveCategory(c);
+    userSelectedRef.current = true;
+    const sec = sectionRefs.current[c];
+    if (sec) {
+      const top = sec.getBoundingClientRect().top + window.scrollY - NAVBAR_H - 8;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+    setTimeout(() => { userSelectedRef.current = false; }, 800);
+  }
 
   function nearMe() {
     if (coords) { setCoords(null); return; }
@@ -60,33 +100,27 @@ export function HomeCatalog() {
     );
   }
 
-  const items = (data ?? []).map((p) => {
-    const plat = p.lat ?? p.store.lat;
-    const plng = p.lng ?? p.store.lng;
-    const distance = coords && plat != null && plng != null
-      ? distanceKm(coords.lat, coords.lng, plat, plng) : undefined;
-    return { product: p, distance };
-  });
-  if (coords) items.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
-  const shown = items.slice(0, 18);
+  const ChipBar = () => (
+    <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <button type="button" onClick={() => scrollToCategory("")} className={chip(activeCategory === "")}>All</button>
+      {CATEGORIES.map((c) => (
+        <button key={c} type="button" onClick={() => scrollToCategory(c)} className={chip(activeCategory === c)}>{c}</button>
+      ))}
+    </div>
+  );
 
   return (
     <>
-      {/* Sticky floating category bar — appears when filter bar scrolls under navbar */}
+      {/* Sticky floating category bar */}
       {isSticky && (
         <div className="fixed top-16 left-0 right-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-sm">
           <div className="mx-auto w-full max-w-[1600px] px-4 py-2 sm:px-6 lg:px-8">
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              <button type="button" onClick={() => setCategory("")} className={chip(category === "")}>All</button>
-              {CATEGORIES.map((c) => (
-                <button key={c} type="button" onClick={() => setCategory(c)} className={chip(category === c)}>{c}</button>
-              ))}
-            </div>
+            <ChipBar />
           </div>
         </div>
       )}
 
-      {/* Category filter bar (sentinel) */}
+      {/* Inline category filter bar (sentinel) */}
       <section ref={filterBarRef} className="border-y border-slate-200 bg-white">
         <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -101,11 +135,8 @@ export function HomeCatalog() {
               </Link>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" onClick={() => setCategory("")} className={chip(category === "")}>All</button>
-            {CATEGORIES.map((c) => (
-              <button key={c} type="button" onClick={() => setCategory(c)} className={chip(category === c)}>{c}</button>
-            ))}
+          <div className="mt-4">
+            <ChipBar />
           </div>
           {geoError && <p className="mt-3 text-xs font-medium text-red-500">{geoError}</p>}
           {coords && !geoError && (
@@ -114,41 +145,76 @@ export function HomeCatalog() {
         </div>
       </section>
 
-      {/* Products */}
-      <section className="mx-auto w-full max-w-[1600px] px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-brand-900">
-              {coords ? "Nearby products" : category ? category : "Popular products"}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {coords ? "Sorted by distance from your location."
-                : category ? `Browsing ${category.toLowerCase()} from shops across Pakistan.`
-                : "Fresh picks from shops across Pakistan."}
-            </p>
-          </div>
-          <Link href={category ? `/search?category=${encodeURIComponent(category)}` : "/search"}
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
-            View all <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+      {/* Products — grouped by category with scroll-spy anchors */}
+      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        {isLoading ? (
+          <div className="py-12"><ProductGridSkeleton /></div>
+        ) : (
+          <>
+            {/* Featured / All section */}
+            <section
+              ref={(el) => { sectionRefs.current[""] = el; }}
+              id="cat-all"
+              className="py-10"
+            >
+              <div className="flex items-end justify-between gap-3 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-brand-900">
+                    {coords ? "Nearby products" : "Popular products"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {coords ? "Sorted by distance from your location." : "Fresh picks from shops across Pakistan."}
+                  </p>
+                </div>
+                <Link href="/search" className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
+                  View all <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              {featured.length === 0 && !coords ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                  {items.slice(0, 6).map(({ product, distance }, i) => (
+                    <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                  {(coords ? items : featured).slice(0, 6).map(({ product, distance }, i) => (
+                    <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
+                  ))}
+                </div>
+              )}
+            </section>
 
-        <div className="mt-6">
-          {isLoading ? (
-            <ProductGridSkeleton />
-          ) : shown.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-400">
-              No products in {category || "this catalog"} yet.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {shown.map(({ product, distance }, i) => (
-                <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+            {/* Per-category sections */}
+            {!coords && grouped.map(({ cat, items: catItems }) => (
+              <section
+                key={cat}
+                ref={(el) => { sectionRefs.current[cat] = el; }}
+                id={`cat-${cat}`}
+                className="border-t border-slate-100 py-10"
+              >
+                <div className="flex items-end justify-between gap-3 mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-brand-900">{cat}</h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Browsing {cat.toLowerCase()} from shops across Pakistan.
+                    </p>
+                  </div>
+                  <Link href={`/search?category=${encodeURIComponent(cat)}`}
+                    className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
+                    View all <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                  {catItems.slice(0, 6).map(({ product, distance }, i) => (
+                    <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </>
+        )}
+      </div>
     </>
   );
 }
