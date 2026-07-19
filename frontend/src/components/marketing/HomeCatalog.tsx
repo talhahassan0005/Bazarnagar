@@ -43,8 +43,8 @@ export function HomeCatalog() {
   });
   if (coords) items.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
 
-  // Group by category; featured products always first in "All" view
-  const featured = items.filter(({ product: p }) => p.featured);
+  // Group by category; boosted/featured products first in "All" view
+  const featured = items.filter(({ product: p }) => p.boostedUntil && new Date(p.boostedUntil) > new Date());
   const grouped = CATEGORIES.map((cat) => ({
     cat,
     items: items.filter(({ product: p }) => p.category === cat),
