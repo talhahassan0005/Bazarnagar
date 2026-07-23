@@ -33,12 +33,11 @@ export interface Seller {
   status: SellerStatus;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
-  /** When the current subscription period started (ISO date). */
   subscriptionStartedAt?: string;
-  /** When the current period ends — renewal / next charge due (ISO date). */
   subscriptionEndsAt?: string;
+  autoRenew?: boolean;
   storeId: string | null;
-  createdAt: string; // ISO date
+  createdAt: string;
 }
 
 export type StoreStatus = "active" | "inactive" | "pending";

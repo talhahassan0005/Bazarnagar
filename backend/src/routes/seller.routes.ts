@@ -7,6 +7,12 @@ import {
   updateStorePayout,
   changePlan,
   renewSubscription,
+  subscriptionCheckout,
+  subscriptionCallback,
+  getSubscriptionStatus,
+  toggleAutoRenew,
+  cancelSubscription,
+  getMyPayments,
   getMyProducts,
   createProduct,
   updateProduct,
@@ -19,7 +25,6 @@ import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
 
-// All seller routes require a logged-in seller.
 router.use(authenticate, requireRole("seller"));
 
 router.get("/me", getMe);
@@ -29,6 +34,12 @@ router.patch("/store/landing", updateStoreLanding);
 router.patch("/store/payout", updateStorePayout);
 router.patch("/plan", changePlan);
 router.post("/subscription/renew", renewSubscription);
+router.post("/subscription/checkout", subscriptionCheckout);
+router.get("/subscription/callback", subscriptionCallback);
+router.get("/subscription/status", getSubscriptionStatus);
+router.post("/subscription/toggle-auto-renew", toggleAutoRenew);
+router.post("/subscription/cancel", cancelSubscription);
+router.get("/payments", getMyPayments);
 router.get("/dashboard", getDashboard);
 
 router.get("/products", getMyProducts);

@@ -181,6 +181,32 @@ export const apiSlice = createApi({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
     }),
+    subscriptionCheckout: builder.mutation<{ url: string; mock: boolean }, PlanId>({
+      query: (planId) => ({ url: "/seller/subscription/checkout", method: "POST", body: { planId } }),
+    }),
+    getSubscriptionStatus: builder.query<{
+      planId: PlanId;
+      subscriptionStatus: string;
+      subscriptionEndsAt: string | null;
+      autoRenew: boolean;
+      daysRemaining: number;
+      hasCardToken: boolean;
+    }, void>({
+      query: () => "/seller/subscription/status",
+      providesTags: ["Seller"],
+    }),
+    toggleAutoRenew: builder.mutation<{ autoRenew: boolean }, void>({
+      query: () => ({ url: "/seller/subscription/toggle-auto-renew", method: "POST" }),
+      invalidatesTags: ["Seller"],
+    }),
+    cancelSubscription: builder.mutation<{ ok: boolean; subscriptionStatus: string; subscriptionEndsAt: string | null }, void>({
+      query: () => ({ url: "/seller/subscription/cancel", method: "POST" }),
+      invalidatesTags: ["Seller"],
+    }),
+    getMyPayments: builder.query<Payment[], void>({
+      query: () => "/seller/payments",
+      providesTags: ["Payment"],
+    }),
 
     // ── Admin ─────────────────────────────────────────────────────────────
     getAllSellers: builder.query<Seller[], void>({
@@ -309,6 +335,11 @@ export const {
   useDeleteProductMutation,
   useBoostProductMutation,
   useChangePlanMutation,
+  useSubscriptionCheckoutMutation,
+  useGetSubscriptionStatusQuery,
+  useToggleAutoRenewMutation,
+  useCancelSubscriptionMutation,
+  useGetMyPaymentsQuery,
   useGetAllSellersQuery,
   useGetAllStoresQuery,
   useGetAllProductsQuery,

@@ -5,7 +5,9 @@ import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Payment } from "../models/Payment";
 import { PlanConfig } from "../models/PlanConfig";
+import { Admin } from "../models/Admin";
 import { PLANS } from "../lib/plans";
+import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
 /* ------------------------------- Listings -------------------------------- */
@@ -148,6 +150,74 @@ export const recordPayment = asyncHandler(async (req: Request, res: Response) =>
 export const getSellerPayments = asyncHandler(async (req: Request, res: Response) => {
   const payments = await Payment.find({ sellerId: req.params.id }).sort({ paidAt: -1 });
   res.json(payments.map((p) => p.toJSON()));
+});
+
+/* --------------------------- Admin Payout Card --------------------------- */
+
+/** Check if the platform admin has a payout card configured. */
+export async function adminHasPayoutCard(): Promise<boolean> {
+  const admin = await Admin.findOne({ "payoutCard.token": { $exists: true, $ne: "" } });
+  return Boolean(admin?.payoutCard?.token);
+}
+
+const payoutCardSchema = z.object({
+  token: z.string().min(1),
+  last4: z.string().length(4),
+  brand: z.string().min(1),
+});
+
+/** POST /api/admin/payout-card — save Safepay card token as admin payout destination. */
+export const setPayoutCard = asyncHandler(async (req: Request, res: Response) => {
+  const data = payoutCardSchema.parse(req.body);
+  const admin = await Admin.findById(req.user!.id);
+  if (!admin) throw new ApiError(404, "Admin not found");
+
+  admin.payoutCard = { ...data, setAt: new Date() };
+  await admin.save();
+
+  // Activate all pending subscriptions now that payout card is set
+  const result = await Seller.updateMany(
+    { subscriptionStatus: "pending" },
+    { $set: { subscriptionStatus: "active", subscriptionStartedAt: new Date() } }
+  );
+
+  // Set endDate for newly activated sellers
+  const activated = await Seller.find({
+    subscriptionStatus: "active",
+    subscriptionEndsAt: { $exists: false },
+  });
+  for (const seller of activated) {
+    seller.subscriptionEndsAt = addBillingPeriod(new Date());
+    await seller.save();
+  }
+
+  res.json({
+    ok: true,
+    payoutCard: { last4: data.last4, brand: data.brand, setAt: admin.payoutCard.setAt },
+    activatedCount: result.modifiedCount,
+  });
+});
+
+/** DELETE /api/admin/payout-card — remove payout card. */
+export const removePayoutCard = asyncHandler(async (req: Request, res: Response) => {
+  const admin = await Admin.findById(req.user!.id);
+  if (!admin) throw new ApiError(404, "Admin not found");
+  admin.payoutCard = undefined;
+  await admin.save();
+  res.json({ ok: true });
+});
+
+/** GET /api/admin/payout-card — get current payout card info (no token exposed). */
+export const getPayoutCard = asyncHandler(async (req: Request, res: Response) => {
+  const admin = await Admin.findById(req.user!.id);
+  if (!admin) throw new ApiError(404, "Admin not found");
+  if (!admin.payoutCard?.token) return res.json({ set: false });
+  res.json({
+    set: true,
+    last4: admin.payoutCard.last4,
+    brand: admin.payoutCard.brand,
+    setAt: admin.payoutCard.setAt,
+  });
 });
 
 /* ----------------------------- Plan Config ------------------------------- */

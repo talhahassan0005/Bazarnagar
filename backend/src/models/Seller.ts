@@ -19,10 +19,11 @@ export interface SellerDoc extends Document {
   status: SellerStatus;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
-  /** When the current subscription period started. */
   subscriptionStartedAt?: Date;
-  /** When the current period ends — i.e. renewal / next charge is due. */
   subscriptionEndsAt?: Date;
+  autoRenew: boolean;
+  retryCount: number;
+  safepayCardToken?: string;
   storeId: Types.ObjectId | null;
   createdAt: Date;
   comparePassword(plain: string): Promise<boolean>;
@@ -51,6 +52,9 @@ const sellerSchema = new Schema<SellerDoc>(
     },
     subscriptionStartedAt: Date,
     subscriptionEndsAt: { type: Date, index: true },
+    autoRenew: { type: Boolean, default: false },
+    retryCount: { type: Number, default: 0 },
+    safepayCardToken: { type: String },
     storeId: { type: Schema.Types.ObjectId, ref: "Store", default: null },
   },
   baseSchemaOptions

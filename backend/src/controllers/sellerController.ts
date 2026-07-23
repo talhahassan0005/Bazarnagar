@@ -3,9 +3,12 @@ import { z } from "zod";
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
+import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
+import { safepayEnabled, createSafepaySession, verifyReturnSignature } from "../lib/safepay";
+import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
 /** Resolve the authenticated seller or throw. */
@@ -337,4 +340,127 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
     productViews: products.reduce((sum, p) => sum + p.views, 0),
     whatsappClicks: store?.whatsappClicks ?? 0,
   });
+});
+
+/* --------------------------- Subscription / Payments ---------------------- */
+
+const checkoutSchema = z.object({
+  planId: z.enum(["starter", "basic", "growth", "pro"]),
+});
+
+/**
+ * POST /api/seller/subscription/checkout
+ * Initiate a Safepay payment for a plan subscription / renewal.
+ * In mock mode returns a local test-gateway URL.
+ */
+export const subscriptionCheckout = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const { planId } = checkoutSchema.parse(req.body);
+  const plan = getPlan(planId);
+
+  if (!safepayEnabled) {
+    throw new ApiError(503, "Payment gateway is not configured. Please contact support.");
+  }
+
+  const url = await createSafepaySession({
+    amount: plan.price,
+    orderId: `sub_${seller.id}_${planId}_${Date.now()}`,
+    redirectUrl: `${env.publicUrl}/api/seller/subscription/callback?seller=${seller.id}&plan=${planId}`,
+    cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
+  });
+  res.json({ url });
+});
+
+/**
+ * GET /api/seller/subscription/callback
+ * Safepay redirects here (browser redirect) — responds with redirect.
+ * When called via fetch (mock gateway) with ?json=1, responds with JSON.
+ */
+export const subscriptionCallback = asyncHandler(async (req: Request, res: Response) => {
+  const sellerId = req.query.seller as string;
+  const planId = req.query.plan as string;
+  const tracker = req.query.tracker as string | undefined;
+  const sig = req.query.sig as string | undefined;
+
+  const fail = () => res.redirect(`${env.appUrl}/dashboard/plan?payment=failed`);
+
+  if (!sellerId || !planId) return fail();
+
+  // Verify Safepay return signature
+  if (!verifyReturnSignature(tracker, sig)) return fail();
+
+  const seller = await Seller.findById(sellerId);
+  if (!seller) return fail();
+
+  const plan = getPlan(planId as Parameters<typeof getPlan>[0]);
+  const now = new Date();
+  const wasInactive = seller.subscriptionStatus === "expired" || seller.subscriptionStatus === "cancelled";
+  const base = seller.subscriptionEndsAt && seller.subscriptionEndsAt > now ? seller.subscriptionEndsAt : now;
+
+  seller.planId = planId as typeof seller.planId;
+  seller.subscriptionStatus = "active";
+  seller.subscriptionStartedAt = seller.subscriptionStartedAt ?? now;
+  seller.subscriptionEndsAt = addBillingPeriod(base);
+  seller.autoRenew = false;
+  await seller.save();
+
+  await Payment.create({
+    sellerId: seller._id,
+    planId,
+    amount: plan.price,
+    method: "card",
+    paidAt: now,
+    notes: "Subscription via Safepay",
+  });
+
+  if (wasInactive && seller.storeId) {
+    await Store.updateOne({ _id: seller.storeId, status: "inactive" }, { status: "active" });
+  }
+
+  res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
+});
+
+/** GET /api/seller/payments — seller's own payment history. */
+export const getMyPayments = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const payments = await Payment.find({ sellerId: seller._id }).sort({ paidAt: -1 });
+  res.json(payments.map((p) => p.toJSON()));
+});
+
+/** GET /api/seller/subscription/status — current subscription details. */
+export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const now = new Date();
+  const endsAt = seller.subscriptionEndsAt;
+  const daysRemaining = endsAt
+    ? Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  res.json({
+    planId: seller.planId,
+    subscriptionStatus: seller.subscriptionStatus,
+    subscriptionEndsAt: endsAt ?? null,
+    autoRenew: seller.autoRenew,
+    daysRemaining,
+    hasCardToken: Boolean(seller.safepayCardToken),
+  });
+});
+
+/** POST /api/seller/subscription/toggle-auto-renew — flip autoRenew flag. */
+export const toggleAutoRenew = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  seller.autoRenew = !seller.autoRenew;
+  await seller.save();
+  res.json({ autoRenew: seller.autoRenew });
+});
+
+/** POST /api/seller/subscription/cancel — cancel at period end. */
+export const cancelSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  seller.autoRenew = false;
+  // Keep status active until endDate — scheduler will expire it
+  if (seller.subscriptionStatus === "active" || seller.subscriptionStatus === "trial") {
+    seller.subscriptionStatus = "cancelled";
+  }
+  await seller.save();
+  res.json({ ok: true, subscriptionStatus: seller.subscriptionStatus, subscriptionEndsAt: seller.subscriptionEndsAt });
 });

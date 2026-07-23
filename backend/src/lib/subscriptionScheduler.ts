@@ -1,23 +1,108 @@
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
-import { GRACE_DAYS } from "./plans";
+import { Payment } from "../models/Payment";
+import { GRACE_DAYS, addBillingPeriod, getPlan } from "./plans";
+import { safepayEnabled } from "./safepay";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** How often the scheduler re-checks subscriptions. */
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // hourly
+const MAX_RETRIES = 3;
 
 /**
- * Move subscriptions through their lifecycle based on the current time:
- *  1. active/trial past their end date  → "expired" (grace period begins)
- *  2. expired past the grace period      → "cancelled" + the shop is hidden
- *
- * Renewing (see sellerController) resets the period and reactivates the shop.
- * Safe to run repeatedly; it only touches rows that have actually lapsed.
+ * Attempt to charge a saved Safepay card token for subscription renewal.
+ * Returns true on success, false on failure.
+ * NOTE: Safepay recurring charge API — uses saved card token.
+ */
+async function chargeCardToken(token: string, amount: number, orderId: string): Promise<boolean> {
+  if (!safepayEnabled) return false;
+  try {
+    const { env } = await import("../config/env");
+    const API_BASE =
+      env.safepayEnv === "production"
+        ? "https://api.getsafepay.com"
+        : "https://sandbox.api.getsafepay.com";
+
+    const res = await fetch(`${API_BASE}/order/payments/v3/recurring`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant_api_key: env.safepayApiKey,
+        customer_token: token,
+        amount: Math.round(amount * 100), // paisa
+        currency: "PKR",
+        order_id: orderId,
+      }),
+    });
+    if (!res.ok) return false;
+    const json = (await res.json()) as { data?: { status?: string } };
+    return json.data?.status === "paid" || json.data?.status === "success";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Main subscription lifecycle processor — runs hourly:
+ * 1. Auto-renew: charge sellers whose nextChargeDate <= now and autoRenew=true
+ * 2. Expire: active/trial past endDate with autoRenew=false
+ * 3. Cancel: expired past grace window → hide shop
  */
 export async function processSubscriptions(): Promise<void> {
   const now = new Date();
 
-  // 1) Lapsed → expired.
+  // ── 1. Auto-renewal ────────────────────────────────────────────────────────
+  const toRenew = await Seller.find({
+    subscriptionStatus: "active",
+    autoRenew: true,
+    safepayCardToken: { $exists: true, $ne: "" },
+    subscriptionEndsAt: { $ne: null, $lte: now },
+  });
+
+  for (const seller of toRenew) {
+    const plan = getPlan(seller.planId);
+    const orderId = `autorenewal_${seller.id}_${Date.now()}`;
+    const success = await chargeCardToken(seller.safepayCardToken!, plan.price, orderId);
+
+    if (success) {
+      const base = seller.subscriptionEndsAt && seller.subscriptionEndsAt > now
+        ? seller.subscriptionEndsAt : now;
+      seller.subscriptionEndsAt = addBillingPeriod(base);
+      seller.retryCount = 0;
+      await seller.save();
+
+      await Payment.create({
+        sellerId: seller._id,
+        planId: seller.planId,
+        amount: plan.price,
+        method: "card",
+        paidAt: now,
+        notes: "Auto-renewal via saved card",
+      });
+      console.log(`  ↳ Auto-renewed: ${seller.email}`);
+    } else {
+      seller.retryCount = (seller.retryCount ?? 0) + 1;
+      if (seller.retryCount >= MAX_RETRIES) {
+        seller.subscriptionStatus = "expired";
+        seller.autoRenew = false;
+        console.log(`  ↳ Auto-renewal failed after ${MAX_RETRIES} retries: ${seller.email}`);
+      } else {
+        console.log(`  ↳ Auto-renewal retry ${seller.retryCount}/${MAX_RETRIES}: ${seller.email}`);
+      }
+      await seller.save();
+    }
+  }
+
+  // ── 2. Expire subscriptions past endDate with autoRenew=false ─────────────
+  await Seller.updateMany(
+    {
+      subscriptionStatus: { $in: ["active", "trial"] },
+      autoRenew: false,
+      subscriptionEndsAt: { $ne: null, $lt: now },
+    },
+    { $set: { subscriptionStatus: "expired" } }
+  );
+
+  // Also expire active subs with no card token and no autoRenew
   await Seller.updateMany(
     {
       subscriptionStatus: { $in: ["active", "trial"] },
@@ -26,7 +111,7 @@ export async function processSubscriptions(): Promise<void> {
     { $set: { subscriptionStatus: "expired" } }
   );
 
-  // 2) Expired beyond the grace window → cancelled, and hide the shop.
+  // ── 3. Cancel + hide shop after grace period ───────────────────────────────
   const graceCutoff = new Date(now.getTime() - GRACE_DAYS * DAY_MS);
   const toCancel = await Seller.find({
     subscriptionStatus: "expired",
@@ -46,7 +131,6 @@ export async function processSubscriptions(): Promise<void> {
   }
 }
 
-/** Start the recurring subscription check (runs once now, then hourly). */
 export function startSubscriptionScheduler(): void {
   processSubscriptions().catch((err) =>
     console.error("Subscription check failed:", err)

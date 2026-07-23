@@ -37,9 +37,6 @@ export interface SafepaySessionInput {
  * error if Safepay rejects the request.
  */
 export async function createSafepaySession(input: SafepaySessionInput): Promise<string> {
-  // Create a payment tracker. The v3 endpoint sets intent + mode so the hosted
-  // checkout has a valid session (the older /order/v1/init leaves it blank,
-  // which makes the checkout show "Session expired").
   const res = await fetch(`${API_BASE}/order/payments/v3/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -48,20 +45,18 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
       intent: "CYBERSOURCE",
       mode: "payment",
       currency: "PKR",
-      // Safepay expects the amount in the minor unit (paisa), so × 100.
       amount: Math.round(input.amount * 100),
     }),
   });
 
   if (!res.ok) {
-    throw new Error(`Safepay init failed (HTTP ${res.status})`);
+    const body = await res.text().catch(() => "");
+    throw new Error(`Safepay tracker init failed (HTTP ${res.status}): ${body}`);
   }
-  const json = (await res.json()) as { data?: { tracker?: { token?: string } } };
+  const json = (await res.json()) as { data?: { tracker?: { token?: string } }; errors?: unknown };
   const token = json.data?.tracker?.token;
-  if (!token) throw new Error("Safepay did not return a checkout token");
+  if (!token) throw new Error(`Safepay did not return a tracker token. Response: ${JSON.stringify(json)}`);
 
-  // The hosted checkout needs a time-based auth token (tbt) or it shows
-  // "Session expired". Get one with the merchant secret.
   const tbtRes = await fetch(`${API_BASE}/client/passport/v1/token`, {
     method: "POST",
     headers: {
@@ -70,11 +65,12 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
     },
   });
   if (!tbtRes.ok) {
-    throw new Error(`Safepay auth (passport) failed (HTTP ${tbtRes.status})`);
+    const body = await tbtRes.text().catch(() => "");
+    throw new Error(`Safepay passport (tbt) failed (HTTP ${tbtRes.status}): ${body}`);
   }
   const tbtJson = (await tbtRes.json()) as { data?: string };
   const tbt = tbtJson.data;
-  if (!tbt) throw new Error("Safepay did not return an auth token");
+  if (!tbt) throw new Error(`Safepay did not return a tbt token. Response: ${JSON.stringify(tbtJson)}`);
 
   const params = new URLSearchParams({
     environment: env.safepayEnv,
