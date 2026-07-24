@@ -8,6 +8,7 @@ export interface IPlanConfig {
   productLimit: number;
   imageLimit: number;
   videoLimit: number;
+  enabled: boolean;
 }
 
 const planConfigSchema = new Schema<IPlanConfig>(
@@ -17,6 +18,7 @@ const planConfigSchema = new Schema<IPlanConfig>(
     productLimit: { type: Number, required: true },
     imageLimit: { type: Number, required: true },
     videoLimit: { type: Number, required: true },
+    enabled: { type: Boolean, default: true },
   },
   baseSchemaOptions
 );

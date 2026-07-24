@@ -258,7 +258,7 @@ export const apiSlice = createApi({
       query: () => "/admin/plan-config",
       providesTags: ["Seller"],
     }),
-    updateAdminPlanConfig: builder.mutation<Plan, { planId: PlanId; price: number; productLimit: number; imageLimit: number; videoLimit: number }>({
+    updateAdminPlanConfig: builder.mutation<Plan, { planId: PlanId; price: number; productLimit: number; imageLimit: number; videoLimit: number; enabled?: boolean }>({
       query: (body) => ({ url: "/admin/plan-config", method: "PATCH", body }),
       invalidatesTags: ["Seller"],
     }),

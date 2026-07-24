@@ -14,6 +14,7 @@ export interface Plan {
   imageLimit: number; // images per product
   videoLimit: number; // videos per product (0 = not allowed)
   highlights?: string[];
+  enabled?: boolean;
 }
 
 export type SubscriptionStatus =

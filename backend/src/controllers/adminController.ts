@@ -229,8 +229,8 @@ export const getPlanConfig = asyncHandler(async (_req: Request, res: Response) =
   const result = Object.values(PLANS).map((plan) => {
     const override = savedById.get(plan.id);
     return override
-      ? { ...plan, price: override.price, productLimit: override.productLimit, imageLimit: override.imageLimit, videoLimit: override.videoLimit }
-      : plan;
+      ? { ...plan, price: override.price, productLimit: override.productLimit, imageLimit: override.imageLimit, videoLimit: override.videoLimit, enabled: override.enabled }
+      : { ...plan, enabled: true };
   });
   res.json(result);
 });
@@ -241,6 +241,7 @@ const planConfigSchema = z.object({
   productLimit: z.number().int().positive(),
   imageLimit: z.number().int().positive(),
   videoLimit: z.number().int().min(0),
+  enabled: z.boolean().optional(),
 });
 
 /** PATCH /api/admin/plan-config — upsert a plan's config. */
@@ -248,7 +249,7 @@ export const updatePlanConfig = asyncHandler(async (req: Request, res: Response)
   const data = planConfigSchema.parse(req.body);
   const config = await PlanConfig.findOneAndUpdate(
     { planId: data.planId },
-    data,
+    { ...data, enabled: data.enabled ?? true },
     { upsert: true, new: true }
   );
   res.json(config.toJSON());
