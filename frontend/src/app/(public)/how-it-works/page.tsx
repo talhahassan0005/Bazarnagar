@@ -268,7 +268,7 @@ export default function HowItWorksPage() {
                   <span className="text-sm text-slate-400">/mo</span>
                 </p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                  {plan.highlights.map((h) => (
+                  {(plan.highlights ?? []).map((h) => (
                     <li key={h} className="flex items-start gap-2">
                       <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
                       {h}
