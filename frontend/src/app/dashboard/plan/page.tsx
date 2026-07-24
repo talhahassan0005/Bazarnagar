@@ -15,9 +15,10 @@ import {
   useSubscriptionCheckoutMutation,
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
+  useGetPublicPlanConfigQuery,
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
-import { PLANS, PLAN_LIST } from "@/lib/constants";
+import { PLANS } from "@/lib/constants";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
 import type { Plan } from "@/lib/types";
 
@@ -74,6 +75,7 @@ export default function PlanPage() {
   const products = useGetMyProductsQuery();
   const sub = useGetSubscriptionStatusQuery();
   const payments = useGetMyPaymentsQuery();
+  const planConfig = useGetPublicPlanConfigQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
@@ -110,7 +112,13 @@ export default function PlanPage() {
     );
   }
 
-  const current = PLANS[seller.data.planId];
+  // Use live DB plan config if available, fall back to hardcoded constants
+  const livePlans = planConfig.data;
+  const livePlanMap = livePlans
+    ? Object.fromEntries(livePlans.map((p) => [p.id, p]))
+    : PLANS;
+  const current = livePlanMap[seller.data.planId] ?? PLANS[seller.data.planId];
+  const planList = livePlans ?? Object.values(PLANS);
   const used = (products.data ?? []).length;
 
   // Use sub.data if available, fall back to seller.data fields
@@ -203,7 +211,7 @@ export default function PlanPage() {
         {isActive ? "Change plan" : "Choose a plan"}
       </h2>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {PLAN_LIST.map((plan) => (
+        {planList.map((plan) => (
           <PlanCard
             key={plan.id}
             plan={plan}

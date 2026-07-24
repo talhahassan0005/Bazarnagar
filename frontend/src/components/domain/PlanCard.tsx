@@ -31,7 +31,11 @@ export function PlanCard({
         <span className="text-sm text-slate-400">/mo</span>
       </p>
       <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-600">
-        {plan.highlights.map((h) => (
+        {(plan.highlights ?? [
+          plan.productLimit >= 1_000_000 ? "Unlimited products" : `${plan.productLimit} products`,
+          `${plan.imageLimit} image${plan.imageLimit !== 1 ? "s" : ""} per product`,
+          ...(plan.videoLimit > 0 ? [`${plan.videoLimit} video${plan.videoLimit !== 1 ? "s" : ""} per product`] : []),
+        ]).map((h) => (
           <li key={h} className="flex items-start gap-2">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
             {h}

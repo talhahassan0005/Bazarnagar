@@ -251,6 +251,9 @@ export const apiSlice = createApi({
     }),
 
     // ── Admin Plan Config ─────────────────────────────────────────────────
+    getPublicPlanConfig: builder.query<Plan[], void>({
+      query: () => "/public/plans",
+    }),
     getAdminPlanConfig: builder.query<Plan[], void>({
       query: () => "/admin/plan-config",
       providesTags: ["Seller"],
@@ -352,4 +355,5 @@ export const {
   useModerateReviewMutation,
   useGetAdminPlanConfigQuery,
   useUpdateAdminPlanConfigMutation,
+  useGetPublicPlanConfigQuery,
 } = apiSlice;

@@ -15,9 +15,11 @@ import {
   safepayCallback,
 } from "../controllers/safepayController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
+import { getPlanConfig } from "../controllers/adminController";
 
 const router = Router();
 
+router.get("/plans", getPlanConfig);
 router.get("/search", searchProducts);
 router.get("/stores", getStores);
 router.get("/stores/:slug", getStoreBySlug);

@@ -13,7 +13,7 @@ export interface Plan {
   productLimit: number;
   imageLimit: number; // images per product
   videoLimit: number; // videos per product (0 = not allowed)
-  highlights: string[];
+  highlights?: string[];
 }
 
 export type SubscriptionStatus =
