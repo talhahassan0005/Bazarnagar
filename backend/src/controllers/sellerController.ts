@@ -387,14 +387,23 @@ export const subscriptionConfirm = asyncHandler(async (req: Request, res: Respon
 
   // In production: verify sig OR verify tracker status via API
   // In sandbox: verify tracker status via Safepay API
+export const subscriptionConfirm = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const { planId, tracker, sig } = z.object({
+    planId: z.enum(["starter", "basic", "growth", "pro"]),
+    tracker: z.string().min(1),
+    sig: z.string().optional(),
+  }).parse(req.body);
+
   if (env.safepayEnv === "production") {
     if (!verifyReturnSignature(tracker, sig)) {
       throw new ApiError(400, "Payment signature verification failed.");
     }
   } else {
-    // Sandbox: call Safepay API to confirm payment state
-    // Skip for dummy tracker (popup closed without redirect)
-    if (tracker !== "sandbox-confirmed") {
+    // Sandbox: verify via Safepay API only if it looks like a real tracker token
+    // orderId format: sub_<id>_<plan>_<ts> — skip API check for these
+    const isOrderId = /^sub_/.test(tracker);
+    if (!isOrderId) {
       const paid = await verifyTrackerPaid(tracker);
       if (!paid) throw new ApiError(400, "Payment not completed. Please try again.");
     }

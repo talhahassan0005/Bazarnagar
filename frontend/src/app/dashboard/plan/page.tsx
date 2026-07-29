@@ -142,40 +142,49 @@ export default function PlanPage() {
   const needsRenewal = isExpiredOrCancelled || isTrial;
 
   async function handleSubscribe(plan: Plan) {
-    let popupClosed = false;
     try {
       const { url, orderId, planId: confirmedPlanId } = await checkout(plan.id).unwrap();
 
-      // Open Safepay in a popup — detect close/redirect back
       const popup = window.open(url, "safepay_checkout", "width=520,height=700,left=200,top=100");
-      if (!popup) {
-        window.location.assign(url);
-        return;
-      }
+      if (!popup) { window.location.assign(url); return; }
 
-      // Wait for popup to close or navigate back to our domain
+      // Poll popup URL — Safepay lands on /embedded/external/complete on success
+      let paymentDone = false;
       let trackerToken: string | null = null;
       let sigToken: string | null = null;
+
       await new Promise<void>((resolve) => {
         const timer = setInterval(() => {
           try {
-            const popupUrl = popup.location.href;
-            if (popupUrl && popupUrl.includes(window.location.hostname)) {
-              const u = new URL(popupUrl);
+            const href = popup.location.href;
+            // Success: Safepay complete page
+            if (href.includes("/external/complete") || href.includes("/complete")) {
+              const u = new URL(href);
               trackerToken = u.searchParams.get("tracker");
               sigToken = u.searchParams.get("sig");
+              paymentDone = true;
               clearInterval(timer);
               popup.close();
               resolve();
               return;
             }
-          } catch { /* cross-origin, still on Safepay */ }
-          if (popup.closed) { clearInterval(timer); popupClosed = true; resolve(); }
+            // Redirected back to our domain (redirect_url path)
+            if (href.includes(window.location.hostname)) {
+              const u = new URL(href);
+              trackerToken = u.searchParams.get("tracker");
+              sigToken = u.searchParams.get("sig");
+              paymentDone = true;
+              clearInterval(timer);
+              popup.close();
+              resolve();
+              return;
+            }
+          } catch { /* cross-origin — still on Safepay, keep polling */ }
+          if (popup.closed) { clearInterval(timer); resolve(); }
         }, 500);
       });
 
-      if (popupClosed && !trackerToken) {
-        // User closed popup without completing — do nothing
+      if (!paymentDone) {
         dispatch(addToast("Payment was cancelled.", "error"));
         return;
       }
@@ -191,8 +200,7 @@ export default function PlanPage() {
       sub.refetch();
       payments.refetch();
     } catch (err) {
-      if (!popupClosed)
-        dispatch(addToast(getErrorMessage(err, "Payment failed or could not be verified."), "error"));
+      dispatch(addToast(getErrorMessage(err, "Payment failed or could not be verified."), "error"));
     }
   }
 
