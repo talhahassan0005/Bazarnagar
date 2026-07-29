@@ -13,6 +13,7 @@ import {
   useGetMyProductsQuery,
   useGetSubscriptionStatusQuery,
   useSubscriptionCheckoutMutation,
+  useSubscriptionConfirmMutation,
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
   useGetPublicPlanConfigQuery,
@@ -77,9 +78,10 @@ export default function PlanPage() {
   const payments = useGetMyPaymentsQuery();
   const planConfig = useGetPublicPlanConfigQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
+  const [confirm] = useSubscriptionConfirmMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
-  // Handle payment gateway return
+  // Handle payment gateway return (full-page redirect fallback)
   useEffect(() => {
     if (sessionStorage.getItem("sub_success")) {
       sessionStorage.removeItem("sub_success");
@@ -140,11 +142,57 @@ export default function PlanPage() {
   const needsRenewal = isExpiredOrCancelled || isTrial;
 
   async function handleSubscribe(plan: Plan) {
+    let popupClosed = false;
     try {
-      const result = await checkout(plan.id).unwrap();
-      if (result.url) window.location.assign(result.url);
+      const { url, orderId, planId: confirmedPlanId } = await checkout(plan.id).unwrap();
+
+      // Open Safepay in a popup — detect close/redirect back
+      const popup = window.open(url, "safepay_checkout", "width=520,height=700,left=200,top=100");
+      if (!popup) {
+        window.location.assign(url);
+        return;
+      }
+
+      // Wait for popup to close or navigate back to our domain
+      let trackerToken: string | null = null;
+      let sigToken: string | null = null;
+      await new Promise<void>((resolve) => {
+        const timer = setInterval(() => {
+          try {
+            const popupUrl = popup.location.href;
+            if (popupUrl && popupUrl.includes(window.location.hostname)) {
+              const u = new URL(popupUrl);
+              trackerToken = u.searchParams.get("tracker");
+              sigToken = u.searchParams.get("sig");
+              clearInterval(timer);
+              popup.close();
+              resolve();
+              return;
+            }
+          } catch { /* cross-origin, still on Safepay */ }
+          if (popup.closed) { clearInterval(timer); popupClosed = true; resolve(); }
+        }, 500);
+      });
+
+      if (popupClosed && !trackerToken) {
+        // User closed popup without completing — do nothing
+        dispatch(addToast("Payment was cancelled.", "error"));
+        return;
+      }
+
+      dispatch(addToast("Verifying payment...", "success"));
+      await confirm({
+        planId: confirmedPlanId as typeof plan.id,
+        tracker: trackerToken ?? orderId,
+        ...(sigToken ? { sig: sigToken } : {}),
+      }).unwrap();
+      dispatch(addToast(`${plan.name} plan activated successfully!`, "success"));
+      seller.refetch();
+      sub.refetch();
+      payments.refetch();
     } catch (err) {
-      dispatch(addToast(getErrorMessage(err, "Could not initiate payment. Please try again."), "error"));
+      if (!popupClosed)
+        dispatch(addToast(getErrorMessage(err, "Payment failed or could not be verified."), "error"));
     }
   }
 

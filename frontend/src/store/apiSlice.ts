@@ -181,9 +181,13 @@ export const apiSlice = createApi({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
     }),
-    subscriptionCheckout: builder.mutation<{ url: string }, PlanId>({
+    subscriptionCheckout: builder.mutation<{ url: string; orderId: string; planId: string }, PlanId>({
       query: (planId) => ({ url: "/seller/subscription/checkout", method: "POST", body: { planId } }),
       invalidatesTags: ["Seller"],
+    }),
+    subscriptionConfirm: builder.mutation<{ ok: boolean; seller: Seller }, { planId: PlanId; tracker: string; sig?: string }>({
+      query: (body) => ({ url: "/seller/subscription/confirm", method: "POST", body }),
+      invalidatesTags: ["Seller", "Payment"],
     }),
     getSubscriptionStatus: builder.query<{
       planId: PlanId;
@@ -340,6 +344,7 @@ export const {
   useBoostProductMutation,
   useChangePlanMutation,
   useSubscriptionCheckoutMutation,
+  useSubscriptionConfirmMutation,
   useGetSubscriptionStatusQuery,
   useToggleAutoRenewMutation,
   useCancelSubscriptionMutation,

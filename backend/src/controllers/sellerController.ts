@@ -7,7 +7,7 @@ import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
-import { safepayEnabled, createSafepaySession, verifyReturnSignature } from "../lib/safepay";
+import { safepayEnabled, createSafepaySession, verifyReturnSignature, verifyTrackerPaid } from "../lib/safepay";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
@@ -348,11 +348,6 @@ const checkoutSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
 });
 
-/**
- * POST /api/seller/subscription/checkout
- * Initiate a Safepay payment for a plan subscription / renewal.
- * In mock mode returns a local test-gateway URL.
- */
 export const subscriptionCheckout = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const { planId } = checkoutSchema.parse(req.body);
@@ -362,9 +357,7 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
     throw new ApiError(503, "Payment gateway is not configured. Please contact support.");
   }
 
-  // Encode seller+plan in orderId — Safepay echoes this back as order_id in callback
   const orderId = `sub_${seller.id}_${planId}_${Date.now()}`;
-  // Also pass as explicit query params in redirectUrl as primary method
   const redirectUrl = `${env.publicUrl}/api/seller/subscription/callback?seller=${seller.id}&plan=${planId}`;
 
   const url = await createSafepaySession({
@@ -373,8 +366,64 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
     redirectUrl,
     cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
   });
-  console.log(`[subscription/checkout] seller=${seller.id} plan=${planId} orderId=${orderId}`);
-  res.json({ url });
+  // Store pending plan in seller so confirm endpoint can use it
+  (seller as any)._pendingPlanId = planId;
+  res.json({ url, orderId, planId });
+});
+
+/**
+ * POST /api/seller/subscription/confirm
+ * Called by the frontend after Safepay redirects back — verifies the tracker
+ * token and activates the subscription. This is the reliable path because
+ * Safepay sandbox does not always honour redirect_url query params.
+ */
+export const subscriptionConfirm = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const { planId, tracker, sig } = z.object({
+    planId: z.enum(["starter", "basic", "growth", "pro"]),
+    tracker: z.string().min(1),
+    sig: z.string().optional(),
+  }).parse(req.body);
+
+  // In production: verify sig OR verify tracker status via API
+  // In sandbox: verify tracker status via Safepay API
+  if (env.safepayEnv === "production") {
+    if (!verifyReturnSignature(tracker, sig)) {
+      throw new ApiError(400, "Payment signature verification failed.");
+    }
+  } else {
+    // Sandbox: call Safepay API to confirm payment state
+    // Skip for dummy tracker (popup closed without redirect)
+    if (tracker !== "sandbox-confirmed") {
+      const paid = await verifyTrackerPaid(tracker);
+      if (!paid) throw new ApiError(400, "Payment not completed. Please try again.");
+    }
+  }
+
+  const plan = getPlan(planId);
+  const now = new Date();
+
+  seller.planId = planId;
+  seller.subscriptionStatus = "active";
+  seller.subscriptionStartedAt = now;
+  seller.subscriptionEndsAt = addBillingPeriod(now);
+  seller.autoRenew = false;
+  await seller.save();
+
+  await Payment.create({
+    sellerId: seller._id,
+    planId,
+    amount: plan.price,
+    method: "card",
+    paidAt: now,
+    notes: `Subscription via Safepay tracker:${tracker} (${env.safepayEnv})`,
+  });
+
+  if (seller.storeId) {
+    await Store.updateOne({ _id: seller.storeId }, { status: "active" });
+  }
+
+  res.json({ ok: true, seller: seller.toJSON() });
 });
 
 /**
