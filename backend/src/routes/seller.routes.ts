@@ -25,6 +25,9 @@ import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
 
+// Public callback — Safepay browser-redirect lands here without a JWT token
+router.get("/subscription/callback", subscriptionCallback);
+
 router.use(authenticate, requireRole("seller"));
 
 router.get("/me", getMe);
@@ -35,7 +38,6 @@ router.patch("/store/payout", updateStorePayout);
 router.patch("/plan", changePlan);
 router.post("/subscription/renew", renewSubscription);
 router.post("/subscription/checkout", subscriptionCheckout);
-router.get("/subscription/callback", subscriptionCallback);
 router.get("/subscription/status", getSubscriptionStatus);
 router.post("/subscription/toggle-auto-renew", toggleAutoRenew);
 router.post("/subscription/cancel", cancelSubscription);

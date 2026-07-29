@@ -91,6 +91,9 @@ export default function PlanPage() {
     if (!p) return;
     if (p === "success") {
       sessionStorage.setItem("sub_success", "1");
+      seller.refetch();
+      sub.refetch();
+      payments.refetch();
       window.history.replaceState({}, "", "/dashboard/plan");
       window.location.reload();
       return;

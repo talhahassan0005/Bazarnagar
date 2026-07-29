@@ -181,8 +181,9 @@ export const apiSlice = createApi({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
     }),
-    subscriptionCheckout: builder.mutation<{ url: string; mock: boolean }, PlanId>({
+    subscriptionCheckout: builder.mutation<{ url: string }, PlanId>({
       query: (planId) => ({ url: "/seller/subscription/checkout", method: "POST", body: { planId } }),
+      invalidatesTags: ["Seller"],
     }),
     getSubscriptionStatus: builder.query<{
       planId: PlanId;
