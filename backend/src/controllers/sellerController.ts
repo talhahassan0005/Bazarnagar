@@ -362,12 +362,18 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
     throw new ApiError(503, "Payment gateway is not configured. Please contact support.");
   }
 
+  // Encode seller+plan in orderId — Safepay echoes this back as order_id in callback
+  const orderId = `sub_${seller.id}_${planId}_${Date.now()}`;
+  // Also pass as explicit query params in redirectUrl as primary method
+  const redirectUrl = `${env.publicUrl}/api/seller/subscription/callback?seller=${seller.id}&plan=${planId}`;
+
   const url = await createSafepaySession({
     amount: plan.price,
-    orderId: `sub_${seller.id}_${planId}_${Date.now()}`,
-    redirectUrl: `${env.publicUrl}/api/seller/subscription/callback?seller=${seller.id}&plan=${planId}`,
+    orderId,
+    redirectUrl,
     cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
   });
+  console.log(`[subscription/checkout] seller=${seller.id} plan=${planId} orderId=${orderId}`);
   res.json({ url });
 });
 
@@ -377,32 +383,40 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
  * When called via fetch (mock gateway) with ?json=1, responds with JSON.
  */
 export const subscriptionCallback = asyncHandler(async (req: Request, res: Response) => {
-  const sellerId = req.query.seller as string;
-  const planId = req.query.plan as string;
   const tracker = req.query.tracker as string | undefined;
   const sig = req.query.sig as string | undefined;
+  console.log(`[subscription/callback] query:`, JSON.stringify(req.query));
 
   const fail = () => res.redirect(`${env.appUrl}/dashboard/plan?payment=failed`);
 
-  if (!sellerId || !planId) return fail();
-
-  // Only enforce signature in production — sandbox Safepay may not send it correctly
   if (env.safepayEnv === "production" && !verifyReturnSignature(tracker, sig)) {
     return fail();
   }
+
+  // Primary: explicit query params from our redirectUrl
+  let sellerId = req.query.seller as string | undefined;
+  let planId = req.query.plan as string | undefined;
+
+  // Fallback: parse from order_id echoed back by Safepay (format: sub_<sellerId>_<planId>_<ts>)
+  if (!sellerId || !planId) {
+    const orderId = (req.query.order_id ?? req.query.orderId) as string | undefined;
+    const match = orderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
+    if (match) { sellerId = match[1]; planId = match[2]; }
+  }
+
+  console.log(`[subscription/callback] resolved seller=${sellerId} plan=${planId}`);
+  if (!sellerId || !planId) return fail();
 
   const seller = await Seller.findById(sellerId);
   if (!seller) return fail();
 
   const plan = getPlan(planId as Parameters<typeof getPlan>[0]);
   const now = new Date();
-  const wasInactive = seller.subscriptionStatus === "expired" || seller.subscriptionStatus === "cancelled";
-  const base = seller.subscriptionEndsAt && seller.subscriptionEndsAt > now ? seller.subscriptionEndsAt : now;
 
   seller.planId = planId as typeof seller.planId;
   seller.subscriptionStatus = "active";
-  seller.subscriptionStartedAt = seller.subscriptionStartedAt ?? now;
-  seller.subscriptionEndsAt = addBillingPeriod(base);
+  seller.subscriptionStartedAt = now;
+  seller.subscriptionEndsAt = addBillingPeriod(now);
   seller.autoRenew = false;
   await seller.save();
 
@@ -415,8 +429,9 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
     notes: `Subscription via Safepay (${env.safepayEnv})`,
   });
 
-  if (wasInactive && seller.storeId) {
-    await Store.updateOne({ _id: seller.storeId, status: "inactive" }, { status: "active" });
+  // Always reactivate store on successful payment
+  if (seller.storeId) {
+    await Store.updateOne({ _id: seller.storeId }, { status: "active" });
   }
 
   res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);

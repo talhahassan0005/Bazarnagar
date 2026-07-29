@@ -13,7 +13,6 @@ import {
   useGetMyProductsQuery,
   useGetSubscriptionStatusQuery,
   useSubscriptionCheckoutMutation,
-  useChangePlanMutation,
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
   useGetPublicPlanConfigQuery,
@@ -78,7 +77,6 @@ export default function PlanPage() {
   const payments = useGetMyPaymentsQuery();
   const planConfig = useGetPublicPlanConfigQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
-  const [changePlan] = useChangePlanMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
   // Handle payment gateway return
@@ -143,21 +141,10 @@ export default function PlanPage() {
 
   async function handleSubscribe(plan: Plan) {
     try {
-      // Try payment checkout first; if gateway not configured, fall back to direct plan change
       const result = await checkout(plan.id).unwrap();
-      if (result.url) {
-        window.location.assign(result.url);
-      }
-    } catch {
-      // Gateway not configured — apply plan directly
-      try {
-        await changePlan(plan.id).unwrap();
-        dispatch(addToast(`Switched to ${plan.name} plan!`, "success"));
-        seller.refetch();
-        sub.refetch();
-      } catch (err) {
-        dispatch(addToast(getErrorMessage(err, "Could not switch plan. Please try again."), "error"));
-      }
+      if (result.url) window.location.assign(result.url);
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Could not initiate payment. Please try again."), "error"));
     }
   }
 

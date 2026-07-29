@@ -8,7 +8,6 @@ import {
   changePlan,
   renewSubscription,
   subscriptionCheckout,
-  subscriptionCallback,
   getSubscriptionStatus,
   toggleAutoRenew,
   cancelSubscription,
@@ -24,9 +23,6 @@ import { getSellerOrders, updateOrderStatus } from "../controllers/orderControll
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
-
-// Public callback — Safepay browser-redirect lands here without a JWT token
-router.get("/subscription/callback", subscriptionCallback);
 
 router.use(authenticate, requireRole("seller"));
 
