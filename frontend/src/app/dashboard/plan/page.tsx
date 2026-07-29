@@ -78,7 +78,7 @@ export default function PlanPage() {
   const payments = useGetMyPaymentsQuery();
   const planConfig = useGetPublicPlanConfigQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
-  const [confirm] = useSubscriptionConfirmMutation();
+  const [confirmPayment] = useSubscriptionConfirmMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
   // Handle payment gateway return (full-page redirect fallback)
@@ -181,7 +181,7 @@ export default function PlanPage() {
       }
 
       dispatch(addToast("Verifying payment...", "success"));
-      await confirm({
+      await confirmPayment({
         planId: confirmedPlanId as typeof plan.id,
         tracker: trackerToken ?? orderId,
         ...(sigToken ? { sig: sigToken } : {}),
