@@ -13,7 +13,6 @@ import {
   useGetMyProductsQuery,
   useGetSubscriptionStatusQuery,
   useSubscriptionCheckoutMutation,
-  useSubscriptionConfirmMutation,
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
   useGetPublicPlanConfigQuery,
@@ -78,7 +77,6 @@ export default function PlanPage() {
   const payments = useGetMyPaymentsQuery();
   const planConfig = useGetPublicPlanConfigQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
-  const [confirmPayment] = useSubscriptionConfirmMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
   // Handle payment gateway return (full-page redirect fallback)
@@ -143,64 +141,11 @@ export default function PlanPage() {
 
   async function handleSubscribe(plan: Plan) {
     try {
-      const { url, orderId, planId: confirmedPlanId } = await checkout(plan.id).unwrap();
-
-      const popup = window.open(url, "safepay_checkout", "width=520,height=700,left=200,top=100");
-      if (!popup) { window.location.assign(url); return; }
-
-      // Listen for postMessage from Safepay (works if Safepay sends it)
-      // AND poll for popup close as fallback
-      const result = await new Promise<"success" | "cancelled">((resolve) => {
-        let resolved = false;
-        function done(r: "success" | "cancelled") {
-          if (resolved) return;
-          resolved = true;
-          window.removeEventListener("message", onMsg);
-          clearInterval(pollTimer);
-          resolve(r);
-        }
-        function onMsg(e: MessageEvent) {
-          if (!String(e.origin).includes("getsafepay.com")) return;
-          const type = String(
-            (e.data as Record<string, unknown>)?.type ??
-            (e.data as Record<string, unknown>)?.event ??
-            (e.data as Record<string, unknown>)?.status ?? ""
-          );
-          if (/paid|success|complete/i.test(type)) done("success");
-          else if (/cancel|fail/i.test(type)) done("cancelled");
-        }
-        window.addEventListener("message", onMsg);
-        // Fallback: show a confirm dialog when popup closes
-        const pollTimer = setInterval(() => {
-          if (!popup.closed) return;
-          clearInterval(pollTimer);
-          window.removeEventListener("message", onMsg);
-          if (resolved) return;
-          // Ask user if payment was completed
-          const paid = window.confirm(
-            "Did you complete the payment on Safepay?\n\nClick OK if payment was successful, Cancel if you did not pay."
-          );
-          resolve(paid ? "success" : "cancelled");
-        }, 500);
-      });
-
-      if (result === "cancelled") {
-        dispatch(addToast("Payment was cancelled.", "error"));
-        return;
-      }
-
-      popup.close();
-      dispatch(addToast("Activating your plan...", "success"));
-      await confirmPayment({
-        planId: confirmedPlanId as typeof plan.id,
-        tracker: orderId,
-      }).unwrap();
-      dispatch(addToast(`${plan.name} plan activated successfully!`, "success"));
-      seller.refetch();
-      sub.refetch();
-      payments.refetch();
+      const { url } = await checkout(plan.id).unwrap();
+      // Full page redirect — most reliable, no popup/postMessage issues
+      window.location.assign(url);
     } catch (err) {
-      dispatch(addToast(getErrorMessage(err, "Payment failed or could not be verified."), "error"));
+      dispatch(addToast(getErrorMessage(err, "Could not initiate payment. Please try again."), "error"));
     }
   }
 

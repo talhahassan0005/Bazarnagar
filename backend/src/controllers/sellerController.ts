@@ -7,7 +7,7 @@ import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
-import { safepayEnabled, createSafepaySession, verifyReturnSignature } from "../lib/safepay";
+import { safepayEnabled, createSafepaySession, verifyReturnSignature, getTrackerOrderId } from "../lib/safepay";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
@@ -408,19 +408,33 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
     return fail();
   }
 
+  // Step 1: try explicit query params (our redirectUrl)
   let sellerId = req.query.seller as string | undefined;
   let planId = req.query.plan as string | undefined;
 
+  // Step 2: try order_id echoed by Safepay in query
   if (!sellerId || !planId) {
-    const orderId = (req.query.order_id ?? req.query.orderId) as string | undefined;
-    const match = orderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
-    if (match) { sellerId = match[1]; planId = match[2]; }
+    const qOrderId = (req.query.order_id ?? req.query.orderId) as string | undefined;
+    const m = qOrderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
+    if (m) { sellerId = m[1]; planId = m[2]; }
+  }
+
+  // Step 3: fetch order_id from Safepay API using tracker
+  if ((!sellerId || !planId) && tracker) {
+    const apiOrderId = await getTrackerOrderId(tracker);
+    const m = apiOrderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
+    if (m) { sellerId = m[1]; planId = m[2]; }
   }
 
   if (!sellerId || !planId) return fail();
 
   const seller = await Seller.findById(sellerId);
   if (!seller) return fail();
+
+  // Prevent double-activation if webhook already processed it
+  if (seller.subscriptionStatus === "active" && seller.planId === planId) {
+    return res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
+  }
 
   const plan = getPlan(planId as Parameters<typeof getPlan>[0]);
   const now = new Date();

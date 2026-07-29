@@ -85,6 +85,26 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
   return `${EMBEDDED_BASE}/?${params.toString()}`;
 }
 
+/** Fetch order_id stored against a tracker from Safepay API. */
+export async function getTrackerOrderId(tracker: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/order/payments/v3/${tracker}`, {
+      headers: { "X-SFPY-MERCHANT-SECRET": env.safepayWebhookSecret },
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      data?: { tracker?: { metadata?: { order_id?: string }; order_id?: string } };
+    };
+    return (
+      json.data?.tracker?.metadata?.order_id ??
+      json.data?.tracker?.order_id ??
+      null
+    );
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Verify the signature Safepay appends when it redirects the customer back:
  * `sig` must equal HMAC-SHA256(tracker, secret). This is how the WooCommerce
