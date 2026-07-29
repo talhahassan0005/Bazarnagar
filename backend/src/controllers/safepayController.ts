@@ -3,6 +3,9 @@ import { z } from "zod";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Order } from "../models/Order";
+import { Seller } from "../models/Seller";
+import { Payment } from "../models/Payment";
+import { getPlan, addBillingPeriod } from "../lib/plans";
 import { env } from "../config/env";
 import { ApiError, asyncHandler } from "../lib/helpers";
 import {
@@ -146,8 +149,38 @@ export const safepayWebhook = asyncHandler(async (req: Request, res: Response) =
   };
   const orderId = event.data?.metadata?.order_id ?? event.data?.order_id;
   const kind = event.type ?? event.event ?? "";
+
   if (orderId && /paid|success|complete/i.test(kind)) {
-    await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid", status: "confirmed" });
+    // Subscription payment: order_id starts with "sub_<sellerId>_<planId>_<ts>"
+    const subMatch = orderId.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
+    if (subMatch) {
+      const [, sellerId, planId] = subMatch;
+      const seller = await Seller.findById(sellerId);
+      if (seller) {
+        const plan = getPlan(planId as Parameters<typeof getPlan>[0]);
+        const now = new Date();
+        seller.planId = planId as typeof seller.planId;
+        seller.subscriptionStatus = "active";
+        seller.subscriptionStartedAt = now;
+        seller.subscriptionEndsAt = addBillingPeriod(now);
+        seller.autoRenew = false;
+        await seller.save();
+        await Payment.create({
+          sellerId: seller._id,
+          planId,
+          amount: plan.price,
+          method: "card",
+          paidAt: now,
+          notes: `Subscription via Safepay webhook (${env.safepayEnv})`,
+        });
+        if (seller.storeId) {
+          await Store.updateOne({ _id: seller.storeId }, { status: "active" });
+        }
+      }
+    } else {
+      // Regular order payment
+      await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid", status: "confirmed" });
+    }
   }
 
   res.json({ received: true });

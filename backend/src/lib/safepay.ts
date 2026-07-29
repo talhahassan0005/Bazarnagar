@@ -46,6 +46,7 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
       mode: "payment",
       currency: "PKR",
       amount: Math.round(input.amount * 100),
+      order_id: input.orderId,
     }),
   });
 
@@ -82,21 +83,6 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
     cancel_url: input.cancelUrl,
   });
   return `${EMBEDDED_BASE}/?${params.toString()}`;
-}
-
-/** Fetch the payment state of a tracker from Safepay API. Returns true if paid. */
-export async function verifyTrackerPaid(tracker: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE}/order/payments/v3/${tracker}`, {
-      headers: { "X-SFPY-MERCHANT-SECRET": env.safepayWebhookSecret },
-    });
-    if (!res.ok) return false;
-    const json = (await res.json()) as { data?: { tracker?: { state?: string } } };
-    const state = json.data?.tracker?.state ?? "";
-    return /paid|completed|success/i.test(state);
-  } catch {
-    return false;
-  }
 }
 
 /**

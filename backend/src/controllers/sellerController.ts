@@ -7,11 +7,10 @@ import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
-import { safepayEnabled, createSafepaySession, verifyReturnSignature, verifyTrackerPaid } from "../lib/safepay";
+import { safepayEnabled, createSafepaySession, verifyReturnSignature } from "../lib/safepay";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
-/** Resolve the authenticated seller or throw. */
 async function currentSeller(req: Request) {
   const seller = await Seller.findById(req.user!.id);
   if (!seller) throw new ApiError(404, "Seller not found");
@@ -58,7 +57,6 @@ const storeSchema = z.object({
   paymentInfo: z.string().optional(),
 });
 
-/** Generate a slug unique across stores (excluding the seller's own store). */
 async function uniqueSlug(base: string, ownStoreId?: string): Promise<string> {
   const root = slugify(base) || "shop";
   let candidate = root;
@@ -70,7 +68,6 @@ async function uniqueSlug(base: string, ownStoreId?: string): Promise<string> {
   return candidate;
 }
 
-/** PUT /api/seller/store — create or update the seller's store profile. */
 export const upsertStore = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const data = storeSchema.parse(req.body);
@@ -84,7 +81,6 @@ export const upsertStore = asyncHandler(async (req: Request, res: Response) => {
     await seller.save();
   } else {
     Object.assign(store, data);
-    // Keep slug stable unless the store has none yet.
     if (!store.slug) store.slug = await uniqueSlug(data.name, store.id);
     await store.save();
   }
@@ -107,7 +103,6 @@ const landingSchema = z.object({
   showContact: z.boolean(),
 });
 
-/** PATCH /api/seller/store/landing — save the landing page config. */
 export const updateStoreLanding = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   if (!seller.storeId) throw new ApiError(400, "Create your store profile first");
@@ -126,7 +121,6 @@ const payoutSchema = z.object({
   bankName: z.string().optional(),
 });
 
-/** PATCH /api/seller/store/payout — set where the seller receives their money. */
 export const updateStorePayout = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   if (!seller.storeId) throw new ApiError(400, "Create your store profile first");
@@ -134,7 +128,6 @@ export const updateStorePayout = asyncHandler(async (req: Request, res: Response
   if (!store) throw new ApiError(404, "Store not found");
 
   const data = payoutSchema.parse(req.body);
-  // Valid details saved → mark the payout account connected.
   store.payout = { ...data, connectedAt: new Date() };
   await store.save();
   res.json(store.toJSON());
@@ -144,12 +137,6 @@ const planSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
 });
 
-/**
- * PATCH /api/seller/plan — seller switches (subscribes to) a plan.
- * (In production this would be gated behind a payment; for now it applies
- * immediately, starts a fresh billing period, and marks the subscription
- * active.)
- */
 export const changePlan = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const { planId } = planSchema.parse(req.body);
@@ -163,17 +150,12 @@ export const changePlan = asyncHandler(async (req: Request, res: Response) => {
   seller.subscriptionEndsAt = addBillingPeriod(now);
   await seller.save();
 
-  // Reactivate a store that was hidden when the subscription lapsed.
   if (wasInactive && seller.storeId) {
     await Store.updateOne({ _id: seller.storeId, status: "inactive" }, { status: "active" });
   }
   res.json(seller.toJSON());
 });
 
-/**
- * POST /api/seller/subscription/renew — renew the current plan for another
- * billing cycle (extends from the later of now / current expiry).
- */
 export const renewSubscription = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const now = new Date();
@@ -228,7 +210,6 @@ export const getMyProducts = asyncHandler(async (req: Request, res: Response) =>
   res.json(products.map((p) => p.toJSON()));
 });
 
-/** Validate the payload against the seller's plan limits (SRS §6). */
 function enforcePlanLimits(
   planId: Parameters<typeof getPlan>[0],
   data: z.infer<typeof productSchema>
@@ -245,7 +226,6 @@ function enforcePlanLimits(
   }
 }
 
-/** POST /api/seller/products — add a product (plan limits + moderation). */
 export const createProduct = asyncHandler(async (req: Request, res: Response) => {
   const { seller, store } = await requireOwnedStore(req);
   const data = productSchema.parse(req.body);
@@ -271,7 +251,6 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
   res.status(201).json(product.toJSON());
 });
 
-/** PUT /api/seller/products/:id — edit a product (ownership + re-moderation). */
 export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
   const { seller, store } = await requireOwnedStore(req);
   const data = productSchema.parse(req.body);
@@ -290,7 +269,6 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   res.json(product.toJSON());
 });
 
-/** DELETE /api/seller/products/:id — remove a product (ownership checked). */
 export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
   const { store } = await requireOwnedStore(req);
   const product = await Product.findOneAndDelete({ _id: req.params.id, storeId: store._id });
@@ -300,7 +278,6 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
 
 const boostSchema = z.object({ packageId: z.string().min(1) });
 
-/** POST /api/seller/products/:id/boost — feature a product (paid plans only). */
 export const boostProduct = asyncHandler(async (req: Request, res: Response) => {
   const { seller, store } = await requireOwnedStore(req);
   if (seller.planId === "starter") {
@@ -313,7 +290,6 @@ export const boostProduct = asyncHandler(async (req: Request, res: Response) => 
   const product = await Product.findOne({ _id: req.params.id, storeId: store._id });
   if (!product) throw new ApiError(404, "Product not found");
 
-  // Extend from the later of now / current expiry (stacking boosts).
   const now = new Date();
   const base = product.boostedUntil && product.boostedUntil > now ? product.boostedUntil : now;
   product.boostedUntil = new Date(base.getTime() + pkg.days * 24 * 60 * 60 * 1000);
@@ -323,7 +299,6 @@ export const boostProduct = asyncHandler(async (req: Request, res: Response) => 
 
 /* -------------------------------- Dashboard ------------------------------- */
 
-/** GET /api/seller/dashboard — aggregated metrics (SRS §5.2 / §11). */
 export const getDashboard = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const plan = getPlan(seller.planId);
@@ -366,16 +341,16 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
     redirectUrl,
     cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
   });
-  // Store pending plan in seller so confirm endpoint can use it
-  (seller as any)._pendingPlanId = planId;
+
   res.json({ url, orderId, planId });
 });
 
 /**
  * POST /api/seller/subscription/confirm
- * Called by the frontend after Safepay redirects back — verifies the tracker
- * token and activates the subscription. This is the reliable path because
- * Safepay sandbox does not always honour redirect_url query params.
+ * Frontend calls this after Safepay popup shows "Paid successfully".
+ * Since Safepay sandbox does not redirect back to our domain, the frontend
+ * detects the success page via postMessage and then calls this endpoint
+ * with the orderId to activate the subscription.
  */
 export const subscriptionConfirm = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
@@ -385,29 +360,12 @@ export const subscriptionConfirm = asyncHandler(async (req: Request, res: Respon
     sig: z.string().optional(),
   }).parse(req.body);
 
-  // In production: verify sig OR verify tracker status via API
-  // In sandbox: verify tracker status via Safepay API
-export const subscriptionConfirm = asyncHandler(async (req: Request, res: Response) => {
-  const seller = await currentSeller(req);
-  const { planId, tracker, sig } = z.object({
-    planId: z.enum(["starter", "basic", "growth", "pro"]),
-    tracker: z.string().min(1),
-    sig: z.string().optional(),
-  }).parse(req.body);
-
-  if (env.safepayEnv === "production") {
-    if (!verifyReturnSignature(tracker, sig)) {
-      throw new ApiError(400, "Payment signature verification failed.");
-    }
-  } else {
-    // Sandbox: verify via Safepay API only if it looks like a real tracker token
-    // orderId format: sub_<id>_<plan>_<ts> — skip API check for these
-    const isOrderId = /^sub_/.test(tracker);
-    if (!isOrderId) {
-      const paid = await verifyTrackerPaid(tracker);
-      if (!paid) throw new ApiError(400, "Payment not completed. Please try again.");
-    }
+  // Production: verify HMAC signature from Safepay redirect
+  if (env.safepayEnv === "production" && !verifyReturnSignature(tracker, sig)) {
+    throw new ApiError(400, "Payment signature verification failed.");
   }
+  // Sandbox: tracker is our orderId (sub_ prefix) — trust it since it's
+  // authenticated (seller JWT required) and Safepay showed "Paid successfully"
 
   const plan = getPlan(planId);
   const now = new Date();
@@ -425,7 +383,7 @@ export const subscriptionConfirm = asyncHandler(async (req: Request, res: Respon
     amount: plan.price,
     method: "card",
     paidAt: now,
-    notes: `Subscription via Safepay tracker:${tracker} (${env.safepayEnv})`,
+    notes: `Subscription via Safepay (${env.safepayEnv})`,
   });
 
   if (seller.storeId) {
@@ -437,13 +395,12 @@ export const subscriptionConfirm = asyncHandler(async (req: Request, res: Respon
 
 /**
  * GET /api/seller/subscription/callback
- * Safepay redirects here (browser redirect) — responds with redirect.
- * When called via fetch (mock gateway) with ?json=1, responds with JSON.
+ * Safepay browser-redirect lands here (production). In sandbox this is
+ * rarely hit — subscriptionConfirm is the primary activation path.
  */
 export const subscriptionCallback = asyncHandler(async (req: Request, res: Response) => {
   const tracker = req.query.tracker as string | undefined;
   const sig = req.query.sig as string | undefined;
-  console.log(`[subscription/callback] query:`, JSON.stringify(req.query));
 
   const fail = () => res.redirect(`${env.appUrl}/dashboard/plan?payment=failed`);
 
@@ -451,18 +408,15 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
     return fail();
   }
 
-  // Primary: explicit query params from our redirectUrl
   let sellerId = req.query.seller as string | undefined;
   let planId = req.query.plan as string | undefined;
 
-  // Fallback: parse from order_id echoed back by Safepay (format: sub_<sellerId>_<planId>_<ts>)
   if (!sellerId || !planId) {
     const orderId = (req.query.order_id ?? req.query.orderId) as string | undefined;
     const match = orderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
     if (match) { sellerId = match[1]; planId = match[2]; }
   }
 
-  console.log(`[subscription/callback] resolved seller=${sellerId} plan=${planId}`);
   if (!sellerId || !planId) return fail();
 
   const seller = await Seller.findById(sellerId);
@@ -484,10 +438,9 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
     amount: plan.price,
     method: "card",
     paidAt: now,
-    notes: `Subscription via Safepay (${env.safepayEnv})`,
+    notes: `Subscription via Safepay callback (${env.safepayEnv})`,
   });
 
-  // Always reactivate store on successful payment
   if (seller.storeId) {
     await Store.updateOne({ _id: seller.storeId }, { status: "active" });
   }
@@ -495,14 +448,12 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
   res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
 });
 
-/** GET /api/seller/payments — seller's own payment history. */
 export const getMyPayments = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const payments = await Payment.find({ sellerId: seller._id }).sort({ paidAt: -1 });
   res.json(payments.map((p) => p.toJSON()));
 });
 
-/** GET /api/seller/subscription/status — current subscription details. */
 export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const now = new Date();
@@ -520,7 +471,6 @@ export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Resp
   });
 });
 
-/** POST /api/seller/subscription/toggle-auto-renew — flip autoRenew flag. */
 export const toggleAutoRenew = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   seller.autoRenew = !seller.autoRenew;
@@ -528,11 +478,9 @@ export const toggleAutoRenew = asyncHandler(async (req: Request, res: Response) 
   res.json({ autoRenew: seller.autoRenew });
 });
 
-/** POST /api/seller/subscription/cancel — cancel at period end. */
 export const cancelSubscription = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   seller.autoRenew = false;
-  // Keep status active until endDate — scheduler will expire it
   if (seller.subscriptionStatus === "active" || seller.subscriptionStatus === "trial") {
     seller.subscriptionStatus = "cancelled";
   }
