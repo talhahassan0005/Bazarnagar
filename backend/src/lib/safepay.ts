@@ -149,9 +149,11 @@ export function verifyReturnSignature(tracker?: string, sig?: string): boolean {
 }
 
 /**
- * Verify a Safepay webhook signature (HMAC-SHA256 of the raw request body).
- * Signed with the per-endpoint "shared secret" from the dashboard's
- * Endpoints page — NOT the merchant secret key from the API page.
+ * Verify a Safepay webhook signature (HMAC-SHA512 of the raw request body —
+ * confirmed from a live test event: the x-sfpy-signature header is 128 hex
+ * chars, i.e. a SHA-512 digest, not SHA-256). Signed with the per-endpoint
+ * "shared secret" from the dashboard's Endpoints page — NOT the merchant
+ * secret key from the API page.
  */
 export function verifySafepaySignature(rawBody: Buffer, signature?: string): boolean {
   if (!env.safepayWebhookSharedSecret || !signature) {
@@ -159,7 +161,7 @@ export function verifySafepaySignature(rawBody: Buffer, signature?: string): boo
     return false;
   }
   const expected = crypto
-    .createHmac("sha256", env.safepayWebhookSharedSecret)
+    .createHmac("sha512", env.safepayWebhookSharedSecret)
     .update(rawBody)
     .digest("hex");
   try {

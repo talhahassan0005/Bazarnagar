@@ -155,20 +155,29 @@ export const safepayWebhook = asyncHandler(async (req: Request, res: Response) =
     throw new ApiError(400, "Webhook signature verification failed");
   }
 
+  // Real shape (confirmed via a live test event delivery):
+  // { data: { type: "payment:created", notification: { state: "PAID",
+  //   tracker, metadata: { order_id } }, ... } }
   const event = JSON.parse(raw.toString()) as {
-    type?: string;
-    event?: string;
-    data?: { order_id?: string; metadata?: { order_id?: string } };
+    data?: {
+      type?: string;
+      notification?: {
+        state?: string;
+        tracker?: string;
+        metadata?: { order_id?: string };
+      };
+    };
   };
-  const orderId = event.data?.metadata?.order_id ?? event.data?.order_id;
-  const kind = event.type ?? event.event ?? "";
+  const orderId = event.data?.notification?.metadata?.order_id;
+  const state = event.data?.notification?.state ?? "";
+  const kind = event.data?.type ?? "";
 
-  console.log(`[safepay] webhook parsed kind="${kind}" orderId=${orderId}`);
+  console.log(`[safepay] webhook parsed kind="${kind}" state="${state}" orderId=${orderId}`);
 
   if (!orderId) {
     console.warn(`[safepay] webhook has no order_id, ignoring: ${raw.toString()}`);
-  } else if (!/paid|succe|complete/i.test(kind)) {
-    console.log(`[safepay] webhook kind "${kind}" not a paid/success/complete event, ignoring orderId=${orderId}`);
+  } else if (!/paid|succe|complete/i.test(state) && !/paid|succe|complete/i.test(kind)) {
+    console.log(`[safepay] webhook state="${state}" kind="${kind}" not paid/success/complete, ignoring orderId=${orderId}`);
   } else {
     // Subscription payment: order_id starts with "sub_<sellerId>_<planId>_<ts>"
     const subMatch = orderId.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
