@@ -144,6 +144,9 @@ export const safepayWebhook = asyncHandler(async (req: Request, res: Response) =
   const raw = req.body as Buffer;
 
   console.log(`[safepay] webhook received, bytes=${raw?.length ?? 0}`);
+  console.log(`[safepay] webhook sig header: ${sig}`);
+  console.log(`[safepay] webhook raw body: ${raw?.toString()}`);
+  console.log(`[safepay] webhook secret len=${env.safepayWebhookSharedSecret.length} prefix=${env.safepayWebhookSharedSecret.slice(0, 6)} suffix=${env.safepayWebhookSharedSecret.slice(-6)}`);
 
   if (!verifySafepaySignature(raw, sig)) {
     console.error(`[safepay] webhook rejected — signature verification failed`);
