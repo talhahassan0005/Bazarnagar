@@ -149,20 +149,28 @@ export function verifyReturnSignature(tracker?: string, sig?: string): boolean {
 }
 
 /**
- * Verify a Safepay webhook signature (HMAC-SHA512 of the raw request body —
- * confirmed from a live test event: the x-sfpy-signature header is 128 hex
- * chars, i.e. a SHA-512 digest, not SHA-256). Signed with the per-endpoint
- * "shared secret" from the dashboard's Endpoints page — NOT the merchant
- * secret key from the API page.
+ * Verify a Safepay webhook signature. Confirmed against the official
+ * @sfpy/node-sdk source (dist/resources/verify.js) and a live test-event
+ * delivery: it's HMAC-SHA512, keyed with the per-endpoint "shared secret"
+ * from the dashboard's Endpoints page (NOT the merchant secret key from the
+ * API page), computed over `JSON.stringify(parsedBody.data)` — i.e. only the
+ * inner "data" object re-serialized, not the raw top-level request body.
  */
 export function verifySafepaySignature(rawBody: Buffer, signature?: string): boolean {
   if (!env.safepayWebhookSharedSecret || !signature) {
     console.warn(`[safepay] verifySafepaySignature missing input hasSecret=${Boolean(env.safepayWebhookSharedSecret)} signature=${signature}`);
     return false;
   }
+  let dataString: string;
+  try {
+    dataString = JSON.stringify(JSON.parse(rawBody.toString()).data);
+  } catch (err) {
+    console.error(`[safepay] verifySafepaySignature: body is not valid JSON:`, err);
+    return false;
+  }
   const expected = crypto
     .createHmac("sha512", env.safepayWebhookSharedSecret)
-    .update(rawBody)
+    .update(dataString)
     .digest("hex");
   try {
     const ok = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
