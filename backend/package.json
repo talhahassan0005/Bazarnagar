@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "seed": "tsx src/db/seed.ts",
     "seed:banners": "tsx src/db/seed-banners.ts",
+    "seed:starter-stores": "tsx src/db/seed-starter-stores.ts",
     "backfill:coords": "tsx src/db/backfill-coords.ts",
     "add:products": "tsx src/db/add-products.ts"
   },
