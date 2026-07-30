@@ -92,6 +92,9 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
     order_id: input.orderId,
     redirect_url: input.redirectUrl,
     cancel_url: input.cancelUrl,
+    // The official SDK's checkout builder defaults this to false — without
+    // it, Safepay may not fire a webhook for this specific transaction at all.
+    webhooks: "true",
   });
   const checkoutUrl = `${EMBEDDED_BASE}/?${params.toString()}`;
   console.log(`[safepay] checkout url ready order_id=${input.orderId} tracker=${token}`);
