@@ -335,6 +335,8 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
   const orderId = `sub_${seller.id}_${planId}_${Date.now()}`;
   const redirectUrl = `${env.publicUrl}/api/seller/subscription/callback?seller=${seller.id}&plan=${planId}`;
 
+  console.log(`[subscription] checkout start sellerId=${seller.id} planId=${planId} orderId=${orderId} redirectUrl=${redirectUrl}`);
+
   const url = await createSafepaySession({
     amount: plan.price,
     orderId,
@@ -342,6 +344,7 @@ export const subscriptionCheckout = asyncHandler(async (req: Request, res: Respo
     cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
   });
 
+  console.log(`[subscription] checkout session created sellerId=${seller.id} orderId=${orderId}`);
   res.json({ url, orderId, planId });
 });
 
@@ -360,8 +363,11 @@ export const subscriptionConfirm = asyncHandler(async (req: Request, res: Respon
     sig: z.string().optional(),
   }).parse(req.body);
 
+  console.log(`[subscription] confirm called sellerId=${seller.id} planId=${planId} tracker=${tracker}`);
+
   // Production: verify HMAC signature from Safepay redirect
   if (env.safepayEnv === "production" && !verifyReturnSignature(tracker, sig)) {
+    console.error(`[subscription] confirm rejected — signature verification failed sellerId=${seller.id} tracker=${tracker}`);
     throw new ApiError(400, "Payment signature verification failed.");
   }
   // Sandbox: tracker is our orderId (sub_ prefix) — trust it since it's
@@ -390,6 +396,7 @@ export const subscriptionConfirm = asyncHandler(async (req: Request, res: Respon
     await Store.updateOne({ _id: seller.storeId }, { status: "active" });
   }
 
+  console.log(`[subscription] confirm activated sellerId=${seller.id} planId=${planId} endsAt=${seller.subscriptionEndsAt?.toISOString()}`);
   res.json({ ok: true, seller: seller.toJSON() });
 });
 
@@ -402,44 +409,54 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
   const tracker = req.query.tracker as string | undefined;
   const sig = req.query.sig as string | undefined;
 
-  const fail = () => res.redirect(`${env.appUrl}/dashboard/plan?payment=failed`);
+  console.log(`[subscription] callback hit query=${JSON.stringify(req.query)}`);
+
+  const fail = (reason: string) => {
+    console.error(`[subscription] callback failed: ${reason} query=${JSON.stringify(req.query)}`);
+    return res.redirect(`${env.appUrl}/dashboard/plan?payment=failed`);
+  };
 
   if (env.safepayEnv === "production" && !verifyReturnSignature(tracker, sig)) {
-    return fail();
+    return fail("signature verification failed");
   }
 
   // Step 1: try explicit query params (our redirectUrl)
   let sellerId = req.query.seller as string | undefined;
-  let planId = req.query.plan as string | undefined;
+  let planIdRaw = req.query.plan as string | undefined;
 
   // Step 2: try order_id echoed by Safepay in query
-  if (!sellerId || !planId) {
+  if (!sellerId || !planIdRaw) {
     const qOrderId = (req.query.order_id ?? req.query.orderId) as string | undefined;
     const m = qOrderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
-    if (m) { sellerId = m[1]; planId = m[2]; }
+    if (m) { sellerId = m[1]; planIdRaw = m[2]; }
   }
 
   // Step 3: fetch order_id from Safepay API using tracker
-  if ((!sellerId || !planId) && tracker) {
+  if ((!sellerId || !planIdRaw) && tracker) {
     const apiOrderId = await getTrackerOrderId(tracker);
     const m = apiOrderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
-    if (m) { sellerId = m[1]; planId = m[2]; }
+    if (m) { sellerId = m[1]; planIdRaw = m[2]; }
   }
 
-  if (!sellerId || !planId) return fail();
+  if (!sellerId || !planIdRaw) return fail("could not resolve sellerId/planId from query, order_id, or tracker lookup");
+
+  const planIdResult = z.enum(["starter", "basic", "growth", "pro"]).safeParse(planIdRaw);
+  if (!planIdResult.success) return fail(`resolved planId "${planIdRaw}" is not a valid plan`);
+  const planId = planIdResult.data;
 
   const seller = await Seller.findById(sellerId);
-  if (!seller) return fail();
+  if (!seller) return fail(`seller not found for sellerId=${sellerId}`);
 
   // Prevent double-activation if webhook already processed it
   if (seller.subscriptionStatus === "active" && seller.planId === planId) {
+    console.log(`[subscription] callback: already active sellerId=${sellerId} planId=${planId} (webhook likely already handled it)`);
     return res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
   }
 
-  const plan = getPlan(planId as Parameters<typeof getPlan>[0]);
+  const plan = getPlan(planId);
   const now = new Date();
 
-  seller.planId = planId as typeof seller.planId;
+  seller.planId = planId;
   seller.subscriptionStatus = "active";
   seller.subscriptionStartedAt = now;
   seller.subscriptionEndsAt = addBillingPeriod(now);
@@ -459,6 +476,7 @@ export const subscriptionCallback = asyncHandler(async (req: Request, res: Respo
     await Store.updateOne({ _id: seller.storeId }, { status: "active" });
   }
 
+  console.log(`[subscription] callback activated sellerId=${sellerId} planId=${planId} endsAt=${seller.subscriptionEndsAt?.toISOString()}`);
   res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
 });
 

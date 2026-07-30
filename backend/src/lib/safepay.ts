@@ -37,6 +37,8 @@ export interface SafepaySessionInput {
  * error if Safepay rejects the request.
  */
 export async function createSafepaySession(input: SafepaySessionInput): Promise<string> {
+  console.log(`[safepay] creating session (env=${env.safepayEnv}) order_id=${input.orderId} amount=${input.amount} redirect_url=${input.redirectUrl}`);
+
   const res = await fetch(`${API_BASE}/order/payments/v3/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -52,11 +54,16 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    console.error(`[safepay] tracker init failed (HTTP ${res.status}) order_id=${input.orderId}: ${body}`);
     throw new Error(`Safepay tracker init failed (HTTP ${res.status}): ${body}`);
   }
   const json = (await res.json()) as { data?: { tracker?: { token?: string } }; errors?: unknown };
   const token = json.data?.tracker?.token;
-  if (!token) throw new Error(`Safepay did not return a tracker token. Response: ${JSON.stringify(json)}`);
+  if (!token) {
+    console.error(`[safepay] no tracker token in init response order_id=${input.orderId}: ${JSON.stringify(json)}`);
+    throw new Error(`Safepay did not return a tracker token. Response: ${JSON.stringify(json)}`);
+  }
+  console.log(`[safepay] tracker created order_id=${input.orderId} tracker=${token}`);
 
   const tbtRes = await fetch(`${API_BASE}/client/passport/v1/token`, {
     method: "POST",
@@ -67,11 +74,15 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
   });
   if (!tbtRes.ok) {
     const body = await tbtRes.text().catch(() => "");
+    console.error(`[safepay] passport (tbt) failed (HTTP ${tbtRes.status}) tracker=${token}: ${body}`);
     throw new Error(`Safepay passport (tbt) failed (HTTP ${tbtRes.status}): ${body}`);
   }
   const tbtJson = (await tbtRes.json()) as { data?: string };
   const tbt = tbtJson.data;
-  if (!tbt) throw new Error(`Safepay did not return a tbt token. Response: ${JSON.stringify(tbtJson)}`);
+  if (!tbt) {
+    console.error(`[safepay] no tbt token in passport response tracker=${token}: ${JSON.stringify(tbtJson)}`);
+    throw new Error(`Safepay did not return a tbt token. Response: ${JSON.stringify(tbtJson)}`);
+  }
 
   const params = new URLSearchParams({
     environment: env.safepayEnv,
@@ -82,7 +93,9 @@ export async function createSafepaySession(input: SafepaySessionInput): Promise<
     redirect_url: input.redirectUrl,
     cancel_url: input.cancelUrl,
   });
-  return `${EMBEDDED_BASE}/?${params.toString()}`;
+  const checkoutUrl = `${EMBEDDED_BASE}/?${params.toString()}`;
+  console.log(`[safepay] checkout url ready order_id=${input.orderId} tracker=${token}`);
+  return checkoutUrl;
 }
 
 /** Fetch order_id stored against a tracker from Safepay API. */
@@ -91,16 +104,22 @@ export async function getTrackerOrderId(tracker: string): Promise<string | null>
     const res = await fetch(`${API_BASE}/order/payments/v3/${tracker}`, {
       headers: { "X-SFPY-MERCHANT-SECRET": env.safepayWebhookSecret },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[safepay] getTrackerOrderId lookup failed (HTTP ${res.status}) tracker=${tracker}: ${body}`);
+      return null;
+    }
     const json = (await res.json()) as {
       data?: { tracker?: { metadata?: { order_id?: string }; order_id?: string } };
     };
+    console.log(`[safepay] getTrackerOrderId response tracker=${tracker}: ${JSON.stringify(json)}`);
     return (
       json.data?.tracker?.metadata?.order_id ??
       json.data?.tracker?.order_id ??
       null
     );
-  } catch {
+  } catch (err) {
+    console.error(`[safepay] getTrackerOrderId threw tracker=${tracker}:`, err);
     return null;
   }
 }
@@ -111,28 +130,40 @@ export async function getTrackerOrderId(tracker: string): Promise<string | null>
  * plugin validates a completed payment.
  */
 export function verifyReturnSignature(tracker?: string, sig?: string): boolean {
-  if (!env.safepayWebhookSecret || !tracker || !sig) return false;
+  if (!env.safepayWebhookSecret || !tracker || !sig) {
+    console.warn(`[safepay] verifyReturnSignature missing input hasSecret=${Boolean(env.safepayWebhookSecret)} tracker=${tracker} sig=${sig}`);
+    return false;
+  }
   const expected = crypto
     .createHmac("sha256", env.safepayWebhookSecret)
     .update(tracker)
     .digest("hex");
   try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig));
-  } catch {
+    const ok = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig));
+    if (!ok) console.warn(`[safepay] verifyReturnSignature mismatch tracker=${tracker} expected=${expected} got=${sig}`);
+    return ok;
+  } catch (err) {
+    console.error(`[safepay] verifyReturnSignature threw tracker=${tracker}:`, err);
     return false;
   }
 }
 
 /** Verify a Safepay webhook signature (HMAC-SHA256 of the raw request body). */
 export function verifySafepaySignature(rawBody: Buffer, signature?: string): boolean {
-  if (!env.safepayWebhookSecret || !signature) return false;
+  if (!env.safepayWebhookSecret || !signature) {
+    console.warn(`[safepay] verifySafepaySignature missing input hasSecret=${Boolean(env.safepayWebhookSecret)} signature=${signature}`);
+    return false;
+  }
   const expected = crypto
     .createHmac("sha256", env.safepayWebhookSecret)
     .update(rawBody)
     .digest("hex");
   try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-  } catch {
+    const ok = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    if (!ok) console.warn(`[safepay] verifySafepaySignature mismatch expected=${expected} got=${signature}`);
+    return ok;
+  } catch (err) {
+    console.error(`[safepay] verifySafepaySignature threw:`, err);
     return false;
   }
 }

@@ -45,7 +45,9 @@ export function createApp() {
 
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
-  if (!env.isProd) app.use(morgan("dev"));
+  // Always log requests (including production) — without this there is no way
+  // to see whether Safepay ever actually calls back into the server at all.
+  app.use(morgan(env.isProd ? "combined" : "dev"));
 
   // Serve uploaded images statically.
   app.use("/uploads", express.static(UPLOAD_DIR));

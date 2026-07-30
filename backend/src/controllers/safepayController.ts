@@ -127,10 +127,14 @@ export const safepayCallback = asyncHandler(async (req: Request, res: Response) 
   const tracker = req.query.tracker as string | undefined;
   const sig = req.query.sig as string | undefined;
 
+  console.log(`[safepay] order callback hit query=${JSON.stringify(req.query)}`);
+
   if (orderId && verifyReturnSignature(tracker, sig)) {
     await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid", status: "confirmed" });
+    console.log(`[safepay] order callback confirmed orderId=${orderId}`);
     return res.redirect(`${env.appUrl}/checkout/success?order=${orderId}`);
   }
+  console.error(`[safepay] order callback failed orderId=${orderId} query=${JSON.stringify(req.query)}`);
   res.redirect(`${env.appUrl}/cart?payment=failed`);
 });
 
@@ -138,7 +142,11 @@ export const safepayCallback = asyncHandler(async (req: Request, res: Response) 
 export const safepayWebhook = asyncHandler(async (req: Request, res: Response) => {
   const sig = req.headers["x-sfpy-signature"] as string | undefined;
   const raw = req.body as Buffer;
+
+  console.log(`[safepay] webhook received, bytes=${raw?.length ?? 0}`);
+
   if (!verifySafepaySignature(raw, sig)) {
+    console.error(`[safepay] webhook rejected — signature verification failed`);
     throw new ApiError(400, "Webhook signature verification failed");
   }
 
@@ -150,13 +158,21 @@ export const safepayWebhook = asyncHandler(async (req: Request, res: Response) =
   const orderId = event.data?.metadata?.order_id ?? event.data?.order_id;
   const kind = event.type ?? event.event ?? "";
 
-  if (orderId && /paid|success|complete/i.test(kind)) {
+  console.log(`[safepay] webhook parsed kind="${kind}" orderId=${orderId}`);
+
+  if (!orderId) {
+    console.warn(`[safepay] webhook has no order_id, ignoring: ${raw.toString()}`);
+  } else if (!/paid|succe|complete/i.test(kind)) {
+    console.log(`[safepay] webhook kind "${kind}" not a paid/success/complete event, ignoring orderId=${orderId}`);
+  } else {
     // Subscription payment: order_id starts with "sub_<sellerId>_<planId>_<ts>"
     const subMatch = orderId.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
     if (subMatch) {
       const [, sellerId, planId] = subMatch;
       const seller = await Seller.findById(sellerId);
-      if (seller) {
+      if (!seller) {
+        console.error(`[safepay] webhook: seller not found sellerId=${sellerId} orderId=${orderId}`);
+      } else {
         const plan = getPlan(planId as Parameters<typeof getPlan>[0]);
         const now = new Date();
         seller.planId = planId as typeof seller.planId;
@@ -176,10 +192,12 @@ export const safepayWebhook = asyncHandler(async (req: Request, res: Response) =
         if (seller.storeId) {
           await Store.updateOne({ _id: seller.storeId }, { status: "active" });
         }
+        console.log(`[safepay] webhook activated subscription sellerId=${sellerId} planId=${planId} endsAt=${seller.subscriptionEndsAt?.toISOString()}`);
       }
     } else {
       // Regular order payment
-      await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid", status: "confirmed" });
+      const updated = await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid", status: "confirmed" });
+      console.log(`[safepay] webhook confirmed order orderId=${orderId} found=${Boolean(updated)}`);
     }
   }
 

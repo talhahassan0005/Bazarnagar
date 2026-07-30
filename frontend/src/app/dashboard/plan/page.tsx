@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CreditCard, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban } from "lucide-react";
 import { Button, Card, CardBody, CardHeader, Skeleton } from "@/components/ui";
@@ -66,6 +66,14 @@ function StatusBanner({ status, endsAt, daysRemaining }: {
   return null;
 }
 
+// How long to keep polling after a checkout redirect before giving up and
+// falling back to the manual "Check payment status" button. Safepay doesn't
+// always redirect the browser back after payment (e.g. in sandbox mode), so
+// this is what actually picks up an activation that only landed via webhook.
+const PENDING_PAYMENT_POLL_MS = 4000;
+const PENDING_PAYMENT_TIMEOUT_MS = 3 * 60 * 1000;
+const PENDING_PAYMENT_KEY = "sub_pending_payment";
+
 export default function PlanPage() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
@@ -79,6 +87,39 @@ export default function PlanPage() {
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function clearPendingPoll() {
+    if (pollTimer.current) clearInterval(pollTimer.current);
+    pollTimer.current = null;
+    sessionStorage.removeItem(PENDING_PAYMENT_KEY);
+    setCheckingPayment(false);
+  }
+
+  function startPendingPoll(startedAt: number) {
+    setCheckingPayment(true);
+    if (pollTimer.current) clearInterval(pollTimer.current);
+    pollTimer.current = setInterval(() => {
+      if (Date.now() - startedAt > PENDING_PAYMENT_TIMEOUT_MS) {
+        clearPendingPoll();
+        return;
+      }
+      seller.refetch();
+      sub.refetch();
+    }, PENDING_PAYMENT_POLL_MS);
+  }
+
+  async function handleManualCheck() {
+    const [s] = await Promise.all([sub.refetch(), seller.refetch(), payments.refetch()]);
+    if (s.data?.subscriptionStatus === "active") {
+      dispatch(addToast("Payment confirmed! Your subscription is now active.", "success"));
+      clearPendingPoll();
+    } else {
+      dispatch(addToast("Still not confirmed yet. If you completed payment, please wait a moment and try again, or contact support.", "info"));
+    }
+  }
+
   // Handle payment gateway return (full-page redirect fallback)
   useEffect(() => {
     if (sessionStorage.getItem("sub_success")) {
@@ -89,6 +130,7 @@ export default function PlanPage() {
     if (!p) return;
     if (p === "success") {
       sessionStorage.setItem("sub_success", "1");
+      clearPendingPoll();
       seller.refetch();
       sub.refetch();
       payments.refetch();
@@ -101,6 +143,40 @@ export default function PlanPage() {
     router.replace("/dashboard/plan");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fallback: Safepay doesn't always redirect the browser back to us (e.g. in
+  // sandbox mode it can leave the customer on its own success page). If we
+  // redirected out for a payment and never got a `?payment=` query back,
+  // poll subscription status in the background so the UI catches up as soon
+  // as the backend (webhook or callback) actually activates the plan.
+  useEffect(() => {
+    const raw = sessionStorage.getItem(PENDING_PAYMENT_KEY);
+    if (!raw) return;
+    try {
+      const { startedAt } = JSON.parse(raw) as { startedAt: number };
+      if (Date.now() - startedAt > PENDING_PAYMENT_TIMEOUT_MS) {
+        sessionStorage.removeItem(PENDING_PAYMENT_KEY);
+        return;
+      }
+      startPendingPoll(startedAt);
+    } catch {
+      sessionStorage.removeItem(PENDING_PAYMENT_KEY);
+    }
+    return () => {
+      if (pollTimer.current) clearInterval(pollTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Stop polling as soon as the subscription actually shows active.
+  useEffect(() => {
+    if (!checkingPayment) return;
+    if (sub.data?.subscriptionStatus === "active" || seller.data?.subscriptionStatus === "active") {
+      dispatch(addToast("Payment confirmed! Your subscription is now active.", "success"));
+      clearPendingPoll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sub.data, seller.data, checkingPayment]);
 
   // Wait only for seller + products — sub status is optional (has its own fallback)
   if (seller.isLoading || products.isLoading || !seller.data) {
@@ -142,6 +218,9 @@ export default function PlanPage() {
   async function handleSubscribe(plan: Plan) {
     try {
       const { url } = await checkout(plan.id).unwrap();
+      // Remember that a payment is pending so that if Safepay never redirects
+      // the browser back here, we still detect activation via polling.
+      sessionStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({ planId: plan.id, startedAt: Date.now() }));
       // Full page redirect — most reliable, no popup/postMessage issues
       window.location.assign(url);
     } catch (err) {
@@ -166,8 +245,36 @@ export default function PlanPage() {
       <PageHeader title="Plan & billing" description="Manage your subscription and product limits." />
 
       <Card className="mb-6">
-        <CardHeader title="Current subscription" />
+        <CardHeader
+          title="Current subscription"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              loading={seller.isFetching || sub.isFetching}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+              onClick={handleManualCheck}
+            >
+              Refresh status
+            </Button>
+          }
+        />
         <CardBody className="space-y-4">
+          {checkingPayment && (
+            <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+              <div className="flex-1">
+                <span>Confirming your payment… this can take a minute. Please don&apos;t close this page.</span>
+                <button
+                  type="button"
+                  onClick={handleManualCheck}
+                  className="ml-2 font-medium underline underline-offset-2"
+                >
+                  Check now
+                </button>
+              </div>
+            </div>
+          )}
           <StatusBanner status={status} endsAt={endsAt} daysRemaining={daysRemaining} />
 
           <div className="grid gap-6 sm:grid-cols-2">
