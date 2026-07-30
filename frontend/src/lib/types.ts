@@ -269,6 +269,19 @@ export interface CreateOrderInput {
   items: { productId: string; quantity: number }[];
 }
 
+/* --------------------------------- Banners --------------------------------- */
+
+/** Admin-managed banner ad shown on free (starter) plan shop pages. */
+export interface Banner {
+  id: string;
+  title?: string;
+  imageUrl: string;
+  linkUrl?: string;
+  active: boolean;
+  order: number;
+  createdAt: string;
+}
+
 export interface DashboardMetrics {
   productsUsed: number;
   productLimit: number;

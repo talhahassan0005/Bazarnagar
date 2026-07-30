@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="260" viewBox="0 0 1400 260">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b3a5b"/>
+      <stop offset="100%" stop-color="#0e1d2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="260" fill="url(#bg1)"/>
+  <circle cx="1230" cy="60" r="120" fill="#e85d2c" opacity="0.14"/>
+  <circle cx="1330" cy="200" r="80" fill="#e85d2c" opacity="0.10"/>
+  <circle cx="120" cy="220" r="90" fill="#ffffff" opacity="0.05"/>
+  <text x="70" y="108" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">Discover more shops on</text>
+  <text x="70" y="158" font-family="Segoe UI, Arial, sans-serif" font-size="46" font-weight="800" fill="#ffffff">Bazaar<tspan fill="#e85d2c">nagar</tspan></text>
+  <text x="70" y="196" font-family="Segoe UI, Arial, sans-serif" font-size="21" fill="#c9d6e3">Trusted sellers across Pakistan — clothing, electronics, cosmetics &amp; more.</text>
+  <g>
+    <rect x="70" y="210" width="176" height="40" rx="20" fill="#e85d2c"/>
+    <text x="158" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#ffffff" text-anchor="middle">Explore Shops →</text>
+  </g>
+</svg>

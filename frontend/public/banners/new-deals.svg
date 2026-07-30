@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="260" viewBox="0 0 1400 260">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e85d2c"/>
+      <stop offset="100%" stop-color="#ab3a17"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="260" fill="url(#bg2)"/>
+  <circle cx="1250" cy="50" r="130" fill="#ffffff" opacity="0.10"/>
+  <circle cx="1360" cy="210" r="70" fill="#1b3a5b" opacity="0.18"/>
+  <circle cx="100" cy="230" r="90" fill="#ffffff" opacity="0.06"/>
+  <text x="70" y="108" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">New deals, every day on</text>
+  <text x="70" y="158" font-family="Segoe UI, Arial, sans-serif" font-size="46" font-weight="800" fill="#ffffff">Bazaar<tspan fill="#0e1d2e">nagar</tspan></text>
+  <text x="70" y="196" font-family="Segoe UI, Arial, sans-serif" font-size="21" fill="#ffe8dc">Fashion, gadgets, beauty &amp; more — straight from local sellers.</text>
+  <g>
+    <rect x="70" y="210" width="188" height="40" rx="20" fill="#1b3a5b"/>
+    <text x="164" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#ffffff" text-anchor="middle">Start Shopping →</text>
+  </g>
+</svg>

@@ -15,6 +15,12 @@ import {
   updatePlanConfig,
 } from "../controllers/adminController";
 import { getAllReviews, moderateReview } from "../controllers/reviewController";
+import {
+  getAllBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+} from "../controllers/bannerController";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
@@ -44,5 +50,10 @@ router.patch("/reviews/:id", moderateReview);
 
 router.get("/plan-config", getPlanConfig);
 router.patch("/plan-config", updatePlanConfig);
+
+router.get("/banners", getAllBanners);
+router.post("/banners", createBanner);
+router.patch("/banners/:id", updateBanner);
+router.delete("/banners/:id", deleteBanner);
 
 export default router;

@@ -16,10 +16,12 @@ import {
 } from "../controllers/safepayController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
 import { getPlanConfig } from "../controllers/adminController";
+import { getActiveBanners } from "../controllers/bannerController";
 
 const router = Router();
 
 router.get("/plans", getPlanConfig);
+router.get("/banners", getActiveBanners);
 router.get("/search", searchProducts);
 router.get("/stores", getStores);
 router.get("/stores/:slug", getStoreBySlug);

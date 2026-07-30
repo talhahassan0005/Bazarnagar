@@ -4,6 +4,7 @@ import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
 import { setSellerSession, setAdminSession, logout as logoutAction } from "@/store/authSlice";
 import type {
   AdminReview,
+  Banner,
   CreateOrderInput,
   DashboardMetrics,
   ModerationStatus,
@@ -51,7 +52,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -267,6 +268,28 @@ export const apiSlice = createApi({
       query: (body) => ({ url: "/admin/plan-config", method: "PATCH", body }),
       invalidatesTags: ["Seller"],
     }),
+
+    // ── Banners ───────────────────────────────────────────────────────────
+    getActiveBanners: builder.query<Banner[], void>({
+      query: () => "/public/banners",
+      providesTags: ["Banner"],
+    }),
+    getAllBanners: builder.query<Banner[], void>({
+      query: () => "/admin/banners",
+      providesTags: ["Banner"],
+    }),
+    createBanner: builder.mutation<Banner, Partial<Banner>>({
+      query: (body) => ({ url: "/admin/banners", method: "POST", body }),
+      invalidatesTags: ["Banner"],
+    }),
+    updateBanner: builder.mutation<Banner, { id: string; values: Partial<Banner> }>({
+      query: ({ id, values }) => ({ url: `/admin/banners/${id}`, method: "PATCH", body: values }),
+      invalidatesTags: ["Banner"],
+    }),
+    deleteBanner: builder.mutation<{ ok: boolean }, string>({
+      query: (id) => ({ url: `/admin/banners/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Banner"],
+    }),
   }),
 });
 
@@ -362,4 +385,9 @@ export const {
   useGetAdminPlanConfigQuery,
   useUpdateAdminPlanConfigMutation,
   useGetPublicPlanConfigQuery,
+  useGetActiveBannersQuery,
+  useGetAllBannersQuery,
+  useCreateBannerMutation,
+  useUpdateBannerMutation,
+  useDeleteBannerMutation,
 } = apiSlice;

@@ -11,6 +11,7 @@ import {
   Star,
   CreditCard,
   Settings,
+  Megaphone,
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import type { NavItem } from "./SidebarNav";
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },
   { label: "Plan Settings", href: "/admin/plan-settings", icon: Settings },
+  { label: "Banner Ads", href: "/admin/banners", icon: Megaphone },
 ];
 
 /** Admin panel chrome (sidebar + header) with an auth guard. */
