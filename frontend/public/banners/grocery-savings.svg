@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="260" viewBox="0 0 1400 260">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d7a4f"/>
+      <stop offset="100%" stop-color="#0a5c3c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="260" fill="url(#bg3)"/>
+  <circle cx="1240" cy="55" r="120" fill="#ffffff" opacity="0.08"/>
+  <circle cx="1340" cy="205" r="75" fill="#e85d2c" opacity="0.16"/>
+  <circle cx="110" cy="225" r="90" fill="#ffffff" opacity="0.05"/>
+  <text x="70" y="108" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">Save more on everyday groceries</text>
+  <text x="70" y="158" font-family="Segoe UI, Arial, sans-serif" font-size="46" font-weight="800" fill="#ffffff">on Bazaar<tspan fill="#e85d2c">nagar</tspan></text>
+  <text x="70" y="196" font-family="Segoe UI, Arial, sans-serif" font-size="21" fill="#d7ecdf">Rice, atta, oil &amp; daily essentials from trusted local stores.</text>
+  <g>
+    <rect x="70" y="210" width="190" height="40" rx="20" fill="#e85d2c"/>
+    <text x="165" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#ffffff" text-anchor="middle">Shop Groceries →</text>
+  </g>
+</svg>

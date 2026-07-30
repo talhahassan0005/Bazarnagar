@@ -270,8 +270,8 @@ export const apiSlice = createApi({
     }),
 
     // ── Banners ───────────────────────────────────────────────────────────
-    getActiveBanners: builder.query<Banner[], void>({
-      query: () => "/public/banners",
+    getActiveBanners: builder.query<Banner[], string | undefined>({
+      query: (category) => ({ url: "/public/banners", params: category ? { category } : {} }),
       providesTags: ["Banner"],
     }),
     getAllBanners: builder.query<Banner[], void>({

@@ -11,7 +11,7 @@ import type { Store } from "@/lib/types";
  */
 export function ShopBanner({ store }: { store: Store }) {
   const isStarter = store.planId === "starter";
-  const { data: banners } = useGetActiveBannersQuery(undefined, { skip: !isStarter });
+  const { data: banners } = useGetActiveBannersQuery(store.category, { skip: !isStarter });
 
   // Pick one banner at random when multiple are active — stable per mount.
   const banner = useMemo(() => {

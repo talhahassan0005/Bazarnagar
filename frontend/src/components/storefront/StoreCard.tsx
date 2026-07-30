@@ -22,7 +22,7 @@ export function StoreCard({ store, distanceKm }: { store: Store; distanceKm?: nu
 
       <div className="flex flex-1 flex-col px-4 pb-4">
         {/* Logo overlapping the cover */}
-        <span className="-mt-8 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-brand-600 text-lg font-bold text-white shadow">
+        <span className="-mt-8 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-brand-600 text-2xl font-bold uppercase text-white shadow">
           {store.logoUrl ? (
             <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
           ) : (

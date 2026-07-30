@@ -277,6 +277,8 @@ export interface Banner {
   title?: string;
   imageUrl: string;
   linkUrl?: string;
+  /** Target a specific store category (case-insensitive). Empty = shown on every store. */
+  category?: string;
   active: boolean;
   order: number;
   createdAt: string;

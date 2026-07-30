@@ -7,12 +7,14 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { connectDB } from "./connect";
+import { env } from "../config/env";
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 
 const img = (seed: string) => `https://picsum.photos/seed/${seed}/800/800`;
 const cover = (seed: string) => `https://picsum.photos/seed/${seed}/1600/500`;
+const logo = (slug: string) => `${env.appUrl.replace(/\/$/, "")}/logos/${slug}.svg`;
 const PASSWORD = "password123";
 
 interface SeedProduct {
@@ -175,31 +177,29 @@ async function run() {
   const oneYear = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
 
   let created = 0;
+  let updated = 0;
   for (const s of STORES) {
     const email = `${s.slug.replace(/-/g, ".")}@bazaarnagar.test`;
-    const existing = await Seller.findOne({ email });
-    if (existing) {
-      console.log(`Skipping ${s.name} — seller already exists (${email})`);
-      continue;
+    let seller = await Seller.findOne({ email });
+    const isNewSeller = !seller;
+    if (!seller) {
+      seller = await Seller.create({
+        name: s.name,
+        phone: s.whatsapp,
+        email,
+        passwordHash,
+        status: "active",
+        planId: "starter",
+        subscriptionStatus: "active",
+        subscriptionStartedAt: now,
+        subscriptionEndsAt: oneYear,
+      });
     }
 
-    const seller = await Seller.create({
-      name: s.name,
-      phone: s.whatsapp,
-      email,
-      passwordHash,
-      status: "active",
-      planId: "starter",
-      subscriptionStatus: "active",
-      subscriptionStartedAt: now,
-      subscriptionEndsAt: oneYear,
-    });
-
-    const store = await Store.create({
+    const storeFields = {
       sellerId: seller._id,
       name: s.name,
-      slug: s.slug,
-      logoUrl: img(`${s.slug}-logo`),
+      logoUrl: logo(s.slug),
       coverUrl: cover(`${s.slug}-cover`),
       description: s.desc,
       category: s.category,
@@ -220,49 +220,60 @@ async function run() {
         heroImageUrl: cover(`${s.slug}-hero`),
         primaryCtaLabel: "Browse products",
         showFeatured: true,
-        featuredProductIds: [],
+        featuredProductIds: [] as string[],
         showAbout: true,
         aboutTitle: `Why shop with ${s.name}`,
         aboutText: s.desc,
         showContact: true,
       },
-      status: "active",
-      views: Math.floor(Math.random() * 200) + 20,
-      whatsappClicks: Math.floor(Math.random() * 20) + 1,
-    });
+      status: "active" as const,
+    };
 
-    seller.storeId = store._id as typeof seller.storeId;
-    await seller.save();
-
-    const productDocs = await Product.create(
-      s.products.map((p) => ({
-        storeId: store._id,
-        name: p.name,
-        category: s.category,
-        price: p.price,
-        discountPrice: p.discountPrice,
-        images: [img(p.imgSeed), img(`${p.imgSeed}-2`)],
-        description: p.description,
-        tags: p.tags,
-        stockStatus: "in_stock" as const,
-        status: "active" as const,
-        negotiable: p.negotiable ?? false,
-        condition: "new" as const,
-        deliveryAvailable: true,
-        moderationStatus: "approved" as const,
-        views: Math.floor(Math.random() * 80),
-        whatsappClicks: Math.floor(Math.random() * 10),
-      }))
+    let store = await Store.findOneAndUpdate(
+      { slug: s.slug },
+      { $set: storeFields, $setOnInsert: { views: Math.floor(Math.random() * 200) + 20, whatsappClicks: Math.floor(Math.random() * 20) + 1 } },
+      { upsert: true, new: true }
     );
 
-    store.landing!.featuredProductIds = productDocs.slice(0, 2).map((p) => p.id);
-    await store.save();
+    if (isNewSeller) {
+      seller.storeId = store._id as typeof seller.storeId;
+      await seller.save();
+    }
 
-    console.log(`✓ ${s.name} — /store/${s.slug}  (${productDocs.length} products; login: ${email} / ${PASSWORD})`);
-    created++;
+    const existingProducts = await Product.countDocuments({ storeId: store._id });
+    let productCount = existingProducts;
+    if (existingProducts === 0) {
+      const productDocs = await Product.create(
+        s.products.map((p) => ({
+          storeId: store!._id,
+          name: p.name,
+          category: s.category,
+          price: p.price,
+          discountPrice: p.discountPrice,
+          images: [img(p.imgSeed), img(`${p.imgSeed}-2`)],
+          description: p.description,
+          tags: p.tags,
+          stockStatus: "in_stock" as const,
+          status: "active" as const,
+          negotiable: p.negotiable ?? false,
+          condition: "new" as const,
+          deliveryAvailable: true,
+          moderationStatus: "approved" as const,
+          views: Math.floor(Math.random() * 80),
+          whatsappClicks: Math.floor(Math.random() * 10),
+        }))
+      );
+      store.landing!.featuredProductIds = productDocs.slice(0, 2).map((p) => p.id);
+      await store.save();
+      productCount = productDocs.length;
+    }
+
+    console.log(`${isNewSeller ? "✓ Created" : "↻ Updated"} ${s.name} — /store/${s.slug}  (${productCount} products; login: ${email} / ${PASSWORD})`);
+    if (isNewSeller) created++;
+    else updated++;
   }
 
-  console.log(`\nDone — ${created} new starter-plan store(s) created.`);
+  console.log(`\nDone — ${created} created, ${updated} updated.`);
   await mongoose.disconnect();
   process.exit(0);
 }

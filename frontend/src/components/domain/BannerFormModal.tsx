@@ -26,6 +26,7 @@ export function BannerFormModal({
   const [title, setTitle] = useState(banner?.title ?? "");
   const [imageUrl, setImageUrl] = useState(banner?.imageUrl ?? "");
   const [linkUrl, setLinkUrl] = useState(banner?.linkUrl ?? "");
+  const [category, setCategory] = useState(banner?.category ?? "");
   const [order, setOrder] = useState(String(banner?.order ?? 0));
   const [active, setActive] = useState(banner?.active ?? true);
   const [error, setError] = useState("");
@@ -41,6 +42,7 @@ export function BannerFormModal({
       title: title.trim() || undefined,
       imageUrl,
       linkUrl: linkUrl.trim() || undefined,
+      category: category.trim() || undefined,
       order: Number(order) || 0,
       active,
     };
@@ -99,6 +101,13 @@ export function BannerFormModal({
           placeholder="https://…"
           value={linkUrl}
           onChange={(e) => setLinkUrl(e.target.value)}
+        />
+        <Input
+          label="Category"
+          hint="Only shown on shops in this category (e.g. Electronics). Leave blank to show on every shop."
+          placeholder="e.g. Electronics"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
         />
         <Input
           label="Order"

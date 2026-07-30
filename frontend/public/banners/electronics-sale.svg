@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="260" viewBox="0 0 1400 260">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b3a5b"/>
+      <stop offset="100%" stop-color="#3a6ea5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="260" fill="url(#bg4)"/>
+  <circle cx="1250" cy="50" r="130" fill="#e85d2c" opacity="0.14"/>
+  <circle cx="1350" cy="210" r="80" fill="#ffffff" opacity="0.08"/>
+  <circle cx="100" cy="230" r="90" fill="#ffffff" opacity="0.05"/>
+  <text x="70" y="108" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">Gadgets &amp; electronics on sale</text>
+  <text x="70" y="158" font-family="Segoe UI, Arial, sans-serif" font-size="46" font-weight="800" fill="#ffffff">on Bazaar<tspan fill="#e85d2c">nagar</tspan></text>
+  <text x="70" y="196" font-family="Segoe UI, Arial, sans-serif" font-size="21" fill="#d6e6f5">Mobile accessories, chargers &amp; smart gadgets — genuine quality.</text>
+  <g>
+    <rect x="70" y="210" width="200" height="40" rx="20" fill="#e85d2c"/>
+    <text x="170" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#ffffff" text-anchor="middle">Shop Electronics →</text>
+  </g>
+</svg>

@@ -55,6 +55,7 @@ export default function AdminBannersPage() {
         </div>
       ),
     },
+    { header: "Category", hideOnMobile: true, cell: (b) => b.category || "All shops" },
     { header: "Order", hideOnMobile: true, cell: (b) => b.order },
     {
       header: "Status",

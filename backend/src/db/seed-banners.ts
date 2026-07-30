@@ -1,6 +1,7 @@
 /**
- * Seeds two starter banner ads if none exist yet. Safe to run against a live
- * database — unlike seed.ts, this never deletes existing data. Run with:
+ * Seeds starter banner ads (2 generic + 2 category-targeted) by upserting on
+ * title, so it's safe to re-run any time to pick up newly added banners
+ * without duplicating existing ones. Never deletes existing data. Run with:
  * `npx tsx src/db/seed-banners.ts`
  */
 import mongoose from "mongoose";
@@ -10,33 +11,51 @@ import { Banner } from "../models/Banner";
 
 async function seedBanners() {
   await connectDB();
-
-  const existing = await Banner.countDocuments();
-  if (existing > 0) {
-    console.log(`Banner collection already has ${existing} document(s) — skipping seed.`);
-    await mongoose.disconnect();
-    process.exit(0);
-  }
-
   const base = env.appUrl.replace(/\/$/, "");
-  await Banner.create([
+
+  const banners = [
     {
       title: "Discover more shops",
       imageUrl: `${base}/banners/discover-shops.svg`,
       linkUrl: "/shops",
-      active: true,
       order: 0,
     },
     {
       title: "New deals every day",
       imageUrl: `${base}/banners/new-deals.svg`,
       linkUrl: "/search",
-      active: true,
       order: 1,
     },
-  ]);
+    {
+      title: "Grocery savings",
+      imageUrl: `${base}/banners/grocery-savings.svg`,
+      linkUrl: "/search?category=Grocery",
+      category: "Grocery",
+      order: 2,
+    },
+    {
+      title: "Electronics sale",
+      imageUrl: `${base}/banners/electronics-sale.svg`,
+      linkUrl: "/search?category=Electronics",
+      category: "Electronics",
+      order: 3,
+    },
+  ];
 
-  console.log("✓ Seeded 2 starter banner ads");
+  let created = 0;
+  let updated = 0;
+  for (const b of banners) {
+    const existing = await Banner.findOne({ title: b.title });
+    await Banner.findOneAndUpdate(
+      { title: b.title },
+      { $setOnInsert: { active: true }, $set: b },
+      { upsert: true, new: true }
+    );
+    if (existing) updated++;
+    else created++;
+  }
+
+  console.log(`✓ Banners seeded — ${created} created, ${updated} updated (4 total).`);
   await mongoose.disconnect();
   process.exit(0);
 }

@@ -3,10 +3,22 @@ import { z } from "zod";
 import { Banner } from "../models/Banner";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
-/** GET /api/public/banners — active banner ads, for free-plan shop pages. */
-export const getActiveBanners = asyncHandler(async (_req: Request, res: Response) => {
-  const banners = await Banner.find({ active: true }).sort({ order: 1, createdAt: -1 });
-  res.json(banners.map((b) => b.toJSON()));
+/**
+ * GET /api/public/banners — active banner ads, for free-plan shop pages.
+ * Optional ?category= narrows to banners targeting that store category
+ * (case-insensitive) plus untargeted ("all categories") banners.
+ */
+export const getActiveBanners = asyncHandler(async (req: Request, res: Response) => {
+  const category = (req.query.category as string | undefined)?.trim();
+  const all = await Banner.find({ active: true }).sort({ order: 1, createdAt: -1 });
+
+  if (!category) {
+    return res.json(all.map((b) => b.toJSON()));
+  }
+  const relevant = all.filter(
+    (b) => !b.category || b.category.trim().toLowerCase() === category.toLowerCase()
+  );
+  res.json(relevant.map((b) => b.toJSON()));
 });
 
 /** GET /api/admin/banners — all banner ads (active + inactive). */
@@ -19,6 +31,7 @@ const bannerSchema = z.object({
   title: z.string().trim().optional(),
   imageUrl: z.string().min(1, "Image is required"),
   linkUrl: z.string().trim().optional(),
+  category: z.string().trim().optional(),
   active: z.boolean().optional(),
   order: z.number().int().optional(),
 });
