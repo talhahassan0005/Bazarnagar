@@ -144,6 +144,11 @@ export const safepayWebhook = asyncHandler(async (req: Request, res: Response) =
   const raw = req.body as Buffer;
 
   console.log(`[safepay] webhook received, bytes=${raw?.length ?? 0}`);
+  // TEMPORARY debug logging — Safepay's exact header name/signature format and
+  // payload shape aren't documented anywhere we have access to, so log
+  // everything until verification is confirmed working, then remove.
+  console.log(`[safepay] webhook headers: ${JSON.stringify(req.headers)}`);
+  console.log(`[safepay] webhook raw body: ${raw?.toString()}`);
 
   if (!verifySafepaySignature(raw, sig)) {
     console.error(`[safepay] webhook rejected — signature verification failed`);
