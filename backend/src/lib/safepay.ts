@@ -148,14 +148,18 @@ export function verifyReturnSignature(tracker?: string, sig?: string): boolean {
   }
 }
 
-/** Verify a Safepay webhook signature (HMAC-SHA256 of the raw request body). */
+/**
+ * Verify a Safepay webhook signature (HMAC-SHA256 of the raw request body).
+ * Signed with the per-endpoint "shared secret" from the dashboard's
+ * Endpoints page — NOT the merchant secret key from the API page.
+ */
 export function verifySafepaySignature(rawBody: Buffer, signature?: string): boolean {
-  if (!env.safepayWebhookSecret || !signature) {
-    console.warn(`[safepay] verifySafepaySignature missing input hasSecret=${Boolean(env.safepayWebhookSecret)} signature=${signature}`);
+  if (!env.safepayWebhookSharedSecret || !signature) {
+    console.warn(`[safepay] verifySafepaySignature missing input hasSecret=${Boolean(env.safepayWebhookSharedSecret)} signature=${signature}`);
     return false;
   }
   const expected = crypto
-    .createHmac("sha256", env.safepayWebhookSecret)
+    .createHmac("sha256", env.safepayWebhookSharedSecret)
     .update(rawBody)
     .digest("hex");
   try {

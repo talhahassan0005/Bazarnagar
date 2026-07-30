@@ -18,7 +18,15 @@ export const env = {
   // Safepay (Pakistan aggregator: EasyPaisa + JazzCash + card). Leave the API
   // key blank to run in mock/sandbox mode (a local test gateway).
   safepayApiKey: process.env.SAFEPAY_API_KEY ?? "",
+  // Merchant secret key (dashboard "API" page) — used to authenticate
+  // server-to-server API calls (passport/tbt token, tracker lookup) and the
+  // browser return-redirect signature.
   safepayWebhookSecret: process.env.SAFEPAY_WEBHOOK_SECRET ?? "",
+  // Per-endpoint "shared secret" (dashboard "Endpoints" page → View shared
+  // secret) — this, NOT the merchant secret key above, is what Safepay uses
+  // to HMAC-sign webhook payloads. Falls back to safepayWebhookSecret if unset.
+  safepayWebhookSharedSecret:
+    process.env.SAFEPAY_WEBHOOK_SHARED_SECRET || process.env.SAFEPAY_WEBHOOK_SECRET || "",
   safepayEnv: (process.env.SAFEPAY_ENV ?? "sandbox") as "sandbox" | "production",
   adminEmail: process.env.ADMIN_EMAIL ?? "admin@bazaarnagar.com",
   adminPassword: process.env.ADMIN_PASSWORD ?? "admin123",
