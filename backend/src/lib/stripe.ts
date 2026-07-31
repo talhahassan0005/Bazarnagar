@@ -18,6 +18,7 @@ export interface OrderCheckoutInput {
   amount: number; // major currency units (e.g. dollars)
   orderId: string;
   productName: string;
+  customerEmail?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -28,6 +29,7 @@ export async function createOrderCheckoutSession(input: OrderCheckoutInput): Pro
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
+    customer_email: input.customerEmail,
     line_items: [
       {
         price_data: {

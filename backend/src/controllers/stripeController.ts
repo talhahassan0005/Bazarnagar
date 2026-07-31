@@ -16,6 +16,7 @@ const checkoutSchema = z.object({
   storeId: z.string().min(1),
   customerName: z.string().min(2),
   customerPhone: z.string().min(6),
+  customerEmail: z.string().email("Enter a valid email to receive your payment receipt"),
   customerAddress: z.string().min(3),
   customerCity: z.string().min(1),
   note: z.string().optional(),
@@ -63,6 +64,7 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
     storeId: store._id,
     customerName: data.customerName,
     customerPhone: data.customerPhone,
+    customerEmail: data.customerEmail,
     customerAddress: data.customerAddress,
     customerCity: data.customerCity,
     note: data.note,
@@ -79,6 +81,7 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
       amount: total,
       orderId: order.id,
       productName: `Bazaarnagar order at ${store.name}`,
+      customerEmail: data.customerEmail,
       successUrl: `${env.appUrl}/checkout/success?order=${order.id}`,
       cancelUrl: `${env.appUrl}/cart?payment=cancelled`,
     });

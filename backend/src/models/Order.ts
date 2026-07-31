@@ -23,6 +23,7 @@ export interface OrderDoc extends Document {
   storeId: Types.ObjectId;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerAddress: string;
   customerCity: string;
   note?: string;
@@ -50,6 +51,7 @@ const orderSchema = new Schema<OrderDoc>(
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     customerName: { type: String, required: true, trim: true },
     customerPhone: { type: String, required: true, trim: true },
+    customerEmail: { type: String, trim: true, lowercase: true },
     customerAddress: { type: String, required: true },
     customerCity: { type: String, required: true },
     note: String,

@@ -65,6 +65,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     customerName: "",
     customerPhone: "",
+    customerEmail: "",
     customerAddress: "",
     customerCity: "",
     note: "",
@@ -121,6 +122,11 @@ export default function CheckoutPage() {
     // Card payment (Stripe) → create the order and redirect to the secure
     // gateway (or the local test gateway in mock mode).
     if (isOnline && singleStore) {
+      // Stripe needs an email to send the payment receipt to.
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail.trim())) {
+        dispatch(addToast("Enter a valid email to receive your payment receipt.", "error"));
+        return;
+      }
       // In hosted (live) mode the card details are entered on Stripe's page,
       // so we only validate the inline test fields in mock mode.
       if (!hosted) {
@@ -297,6 +303,16 @@ export default function CheckoutPage() {
               placeholder="0300-1234567"
               value={form.customerPhone}
               onChange={(e) => set("customerPhone", e.target.value)}
+            />
+            <Input
+              label="Email address"
+              type="email"
+              required={isOnline}
+              hint={isOnline ? "Your payment receipt is sent here." : "Optional — for order updates."}
+              placeholder="you@example.com"
+              className="sm:col-span-2"
+              value={form.customerEmail}
+              onChange={(e) => set("customerEmail", e.target.value)}
             />
             <Select
               label="City"

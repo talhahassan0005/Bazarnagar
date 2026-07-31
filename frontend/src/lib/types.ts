@@ -247,6 +247,7 @@ export interface Order {
   storeId: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerAddress: string;
   customerCity: string;
   note?: string;
@@ -263,6 +264,7 @@ export interface CreateOrderInput {
   storeId: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerAddress: string;
   customerCity: string;
   note?: string;
