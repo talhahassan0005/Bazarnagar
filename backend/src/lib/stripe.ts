@@ -8,6 +8,10 @@ import { env } from "../config/env";
  */
 export const stripeEnabled = Boolean(env.stripeSecretKey);
 
+console.log(
+  `[stripe] init secretKey len=${env.stripeSecretKey.length} prefix=${env.stripeSecretKey.slice(0, 12)} suffix=${env.stripeSecretKey.slice(-6)} enabled=${stripeEnabled}`
+);
+
 export const stripe = new Stripe(env.stripeSecretKey || "sk_test_mock_key_not_configured");
 
 export interface OrderCheckoutInput {
