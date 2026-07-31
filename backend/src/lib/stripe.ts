@@ -25,7 +25,7 @@ export interface OrderCheckoutInput {
 
 /** Create a Stripe Checkout Session for a one-time order payment. */
 export async function createOrderCheckoutSession(input: OrderCheckoutInput): Promise<string> {
-  console.log(`[stripe] creating order checkout session order_id=${input.orderId} amount=${input.amount}`);
+  console.log(`[stripe] creating order checkout session order_id=${input.orderId} amount=${input.amount} customerEmail=${input.customerEmail ?? "(none)"}`);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
