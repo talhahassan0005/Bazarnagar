@@ -245,6 +245,9 @@ export interface OrderItem {
 export interface Order {
   id: string;
   storeId: string;
+  /** Present on order-history lookups (joined server-side). */
+  storeName?: string;
+  storeSlug?: string;
   customerName: string;
   customerPhone: string;
   customerEmail?: string;

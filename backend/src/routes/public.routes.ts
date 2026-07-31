@@ -7,7 +7,7 @@ import {
   searchProducts,
   trackWhatsappClick,
 } from "../controllers/publicController";
-import { createOrder } from "../controllers/orderController";
+import { createOrder, getOrdersByIds } from "../controllers/orderController";
 import {
   createStripeCheckout,
   mockConfirmOrder,
@@ -30,6 +30,7 @@ router.post("/products/:id/whatsapp-click", trackWhatsappClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
 router.post("/orders", createOrder);
+router.get("/orders/by-ids", getOrdersByIds);
 router.get("/payment-config", getPaymentConfig);
 router.post("/stripe/checkout", createStripeCheckout);
 router.post("/stripe/mock-confirm", mockConfirmOrder);

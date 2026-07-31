@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Info, Search, Store as StoreIcon } from "lucide-react";
+import { Info, PackageSearch, Search, Store as StoreIcon } from "lucide-react";
 import { Logo } from "./Logo";
 import { CartLink } from "./CartLink";
 import { Button } from "@/components/ui";
@@ -40,6 +40,12 @@ export function PublicNavbar() {
           >
             About
           </Link>
+          <Link
+            href="/orders"
+            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 sm:inline-flex"
+          >
+            My Orders
+          </Link>
 
           {/* Mobile icons */}
           <Link
@@ -62,6 +68,13 @@ export function PublicNavbar() {
             aria-label="About"
           >
             <Info className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/orders"
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 sm:hidden"
+            aria-label="My Orders"
+          >
+            <PackageSearch className="h-5 w-5" />
           </Link>
 
           <CartLink />

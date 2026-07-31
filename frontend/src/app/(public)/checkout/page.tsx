@@ -22,6 +22,7 @@ import {
 } from "@/store/apiSlice";
 import { CITIES } from "@/lib/constants";
 import { formatPrice, getErrorMessage, toWhatsAppNumber } from "@/lib/utils";
+import { rememberOrder } from "@/lib/orderHistory";
 import type { CartItem, Order } from "@/lib/types";
 
 interface StoreGroup {
@@ -145,6 +146,7 @@ export default function CheckoutPage() {
             quantity: i.quantity,
           })),
         }).unwrap();
+        rememberOrder(orderId);
         if (mock) {
           // Mock/test mode: details were entered inline above, so confirm the
           // payment directly and go to the success page.
@@ -173,6 +175,7 @@ export default function CheckoutPage() {
           items: g.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         }).unwrap();
         orders.push(order);
+        rememberOrder(order.id);
       }
       setPlaced({ groups, orders });
       dispatch(clearCart());

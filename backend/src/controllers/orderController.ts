@@ -71,6 +71,36 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json(order.toJSON());
 });
 
+const OBJECT_ID_RE = /^[a-f0-9]{24}$/i;
+
+/**
+ * GET /api/public/orders/by-ids?ids=<comma-separated order ids> — a guest's
+ * order history. Deliberately NOT looked up by phone/email (that would let
+ * anyone browse a stranger's orders and delivery address just by knowing
+ * their phone number). Instead the browser remembers its own order ids
+ * locally after checkout and asks for exactly those — nobody else can see
+ * them without already knowing the (unguessable) order id.
+ */
+export const getOrdersByIds = asyncHandler(async (req: Request, res: Response) => {
+  const raw = (req.query.ids as string | undefined) ?? "";
+  const ids = [...new Set(raw.split(",").map((s) => s.trim()).filter((s) => OBJECT_ID_RE.test(s)))].slice(0, 50);
+  if (ids.length === 0) return res.json([]);
+
+  const orders = await Order.find({ _id: { $in: ids } }).sort({ createdAt: -1 });
+
+  const storeIds = [...new Set(orders.map((o) => o.storeId.toString()))];
+  const stores = await Store.find({ _id: { $in: storeIds } }).select("name slug");
+  const storeById = new Map(stores.map((s) => [s.id, s]));
+
+  res.json(
+    orders.map((o) => ({
+      ...o.toJSON(),
+      storeName: storeById.get(o.storeId.toString())?.name ?? "Shop",
+      storeSlug: storeById.get(o.storeId.toString())?.slug ?? "",
+    }))
+  );
+});
+
 /** Resolve the authenticated seller's store or throw. */
 async function sellerStoreId(req: Request) {
   const seller = await Seller.findById(req.user!.id);

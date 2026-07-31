@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useAppDispatch } from "@/store/hooks";
 import { clearCart } from "@/store/cartSlice";
+import { rememberOrder } from "@/lib/orderHistory";
 
 /** Shown after a successful online payment (Stripe redirect / mock confirm). */
 export default function CheckoutSuccessPage() {
@@ -16,7 +17,9 @@ export default function CheckoutSuccessPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setOrderId(params.get("order"));
+    const id = params.get("order");
+    setOrderId(id);
+    if (id) rememberOrder(id);
     dispatch(clearCart());
   }, [dispatch]);
 

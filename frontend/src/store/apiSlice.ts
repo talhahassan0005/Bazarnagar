@@ -113,6 +113,10 @@ export const apiSlice = createApi({
       query: (body) => ({ url: "/public/orders", method: "POST", body }),
       invalidatesTags: ["Order"],
     }),
+    getOrdersByIds: builder.query<Order[], string[]>({
+      query: (ids) => ({ url: "/public/orders/by-ids", params: { ids: ids.join(",") } }),
+      providesTags: ["Order"],
+    }),
     stripeCheckout: builder.mutation<{ url: string; orderId: string; mock: boolean }, CreateOrderInput>({
       query: (body) => ({ url: "/public/stripe/checkout", method: "POST", body }),
       invalidatesTags: ["Order"],
@@ -345,6 +349,7 @@ export const {
   useGetProductReviewsQuery,
   useCreateReviewMutation,
   useCreateOrderMutation,
+  useGetOrdersByIdsQuery,
   useStripeCheckoutMutation,
   useStripeMockConfirmMutation,
   useGetPaymentConfigQuery,
