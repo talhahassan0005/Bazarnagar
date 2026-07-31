@@ -67,9 +67,8 @@ function StatusBanner({ status, endsAt, daysRemaining }: {
 }
 
 // How long to keep polling after a checkout redirect before giving up and
-// falling back to the manual "Check payment status" button. Safepay doesn't
-// always redirect the browser back after payment (e.g. in sandbox mode), so
-// this is what actually picks up an activation that only landed via webhook.
+// falling back to the manual "Check payment status" button. This catches any
+// brief race between the Stripe redirect and the webhook actually landing.
 const PENDING_PAYMENT_POLL_MS = 4000;
 const PENDING_PAYMENT_TIMEOUT_MS = 3 * 60 * 1000;
 const PENDING_PAYMENT_KEY = "sub_pending_payment";
@@ -144,11 +143,10 @@ export default function PlanPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fallback: Safepay doesn't always redirect the browser back to us (e.g. in
-  // sandbox mode it can leave the customer on its own success page). If we
-  // redirected out for a payment and never got a `?payment=` query back,
-  // poll subscription status in the background so the UI catches up as soon
-  // as the backend (webhook or callback) actually activates the plan.
+  // Fallback: if we redirected out for a payment and never got a `?payment=`
+  // query back (e.g. the tab was closed and reopened), poll subscription
+  // status in the background so the UI catches up as soon as the webhook
+  // actually activates the plan.
   useEffect(() => {
     const raw = sessionStorage.getItem(PENDING_PAYMENT_KEY);
     if (!raw) return;
@@ -218,8 +216,9 @@ export default function PlanPage() {
   async function handleSubscribe(plan: Plan) {
     try {
       const { url } = await checkout(plan.id).unwrap();
-      // Remember that a payment is pending so that if Safepay never redirects
-      // the browser back here, we still detect activation via polling.
+      // Remember that a payment is pending so that even if the browser
+      // redirect back is delayed or interrupted, we still detect activation
+      // via polling.
       sessionStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({ planId: plan.id, startedAt: Date.now() }));
       // Full page redirect — most reliable, no popup/postMessage issues
       window.location.assign(url);
@@ -336,7 +335,7 @@ export default function PlanPage() {
       </div>
 
       <p className="mt-4 text-center text-xs text-slate-400">
-        Payments processed securely via Safepay · EasyPaisa · JazzCash · Card. Cancel anytime — access continues until period end.
+        Payments processed securely via Stripe · Card. Cancel anytime — access continues until period end.
       </p>
 
       {payments.data && payments.data.length > 0 && (

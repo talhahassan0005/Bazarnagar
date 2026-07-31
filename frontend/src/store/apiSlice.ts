@@ -113,12 +113,12 @@ export const apiSlice = createApi({
       query: (body) => ({ url: "/public/orders", method: "POST", body }),
       invalidatesTags: ["Order"],
     }),
-    safepayCheckout: builder.mutation<{ url: string; orderId: string; mock: boolean }, CreateOrderInput>({
-      query: (body) => ({ url: "/public/safepay/checkout", method: "POST", body }),
+    stripeCheckout: builder.mutation<{ url: string; orderId: string; mock: boolean }, CreateOrderInput>({
+      query: (body) => ({ url: "/public/stripe/checkout", method: "POST", body }),
       invalidatesTags: ["Order"],
     }),
-    safepayMockConfirm: builder.mutation<Order, string>({
-      query: (orderId) => ({ url: "/public/safepay/mock-confirm", method: "POST", body: { orderId } }),
+    stripeMockConfirm: builder.mutation<Order, string>({
+      query: (orderId) => ({ url: "/public/stripe/mock-confirm", method: "POST", body: { orderId } }),
       invalidatesTags: ["Order"],
     }),
     getPaymentConfig: builder.query<{ hosted: boolean }, void>({
@@ -185,10 +185,6 @@ export const apiSlice = createApi({
     subscriptionCheckout: builder.mutation<{ url: string; orderId: string; planId: string }, PlanId>({
       query: (planId) => ({ url: "/seller/subscription/checkout", method: "POST", body: { planId } }),
       invalidatesTags: ["Seller"],
-    }),
-    subscriptionConfirm: builder.mutation<{ ok: boolean; seller: Seller }, { planId: PlanId; tracker: string; sig?: string }>({
-      query: (body) => ({ url: "/seller/subscription/confirm", method: "POST", body }),
-      invalidatesTags: ["Seller", "Payment"],
     }),
     getSubscriptionStatus: builder.query<{
       planId: PlanId;
@@ -349,8 +345,8 @@ export const {
   useGetProductReviewsQuery,
   useCreateReviewMutation,
   useCreateOrderMutation,
-  useSafepayCheckoutMutation,
-  useSafepayMockConfirmMutation,
+  useStripeCheckoutMutation,
+  useStripeMockConfirmMutation,
   useGetPaymentConfigQuery,
   useGetSellerOrdersQuery,
   useUpdateOrderStatusMutation,
@@ -367,7 +363,6 @@ export const {
   useBoostProductMutation,
   useChangePlanMutation,
   useSubscriptionCheckoutMutation,
-  useSubscriptionConfirmMutation,
   useGetSubscriptionStatusQuery,
   useToggleAutoRenewMutation,
   useCancelSubscriptionMutation,

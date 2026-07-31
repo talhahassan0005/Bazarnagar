@@ -7,7 +7,7 @@ import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getBoostPackage } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
-import { safepayEnabled, createSafepaySession, verifyReturnSignature, getTrackerOrderId } from "../lib/safepay";
+import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
@@ -323,161 +323,34 @@ const checkoutSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
 });
 
+/**
+ * POST /api/seller/subscription/checkout
+ * Creates a Stripe Checkout Session for the chosen plan. Activation happens
+ * via the /api/webhooks/stripe webhook (server-to-server, does not depend on
+ * the browser redirect) — success_url is purely for the return-to-app UX.
+ */
 export const subscriptionCheckout = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const { planId } = checkoutSchema.parse(req.body);
   const plan = getPlan(planId);
 
-  if (!safepayEnabled) {
+  if (!stripeEnabled) {
     throw new ApiError(503, "Payment gateway is not configured. Please contact support.");
   }
 
-  const orderId = `sub_${seller.id}_${planId}_${Date.now()}`;
-  const redirectUrl = `${env.publicUrl}/api/seller/subscription/callback?seller=${seller.id}&plan=${planId}`;
+  console.log(`[subscription] checkout start sellerId=${seller.id} planId=${planId}`);
 
-  console.log(`[subscription] checkout start sellerId=${seller.id} planId=${planId} orderId=${orderId} redirectUrl=${redirectUrl}`);
-
-  const url = await createSafepaySession({
+  const { url, sessionId } = await createSubscriptionCheckoutSession({
     amount: plan.price,
-    orderId,
-    redirectUrl,
+    sellerId: seller.id,
+    planId,
+    customerEmail: seller.email,
+    successUrl: `${env.appUrl}/dashboard/plan?payment=success`,
     cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
   });
 
-  console.log(`[subscription] checkout session created sellerId=${seller.id} orderId=${orderId}`);
-  res.json({ url, orderId, planId });
-});
-
-/**
- * POST /api/seller/subscription/confirm
- * Frontend calls this after Safepay popup shows "Paid successfully".
- * Since Safepay sandbox does not redirect back to our domain, the frontend
- * detects the success page via postMessage and then calls this endpoint
- * with the orderId to activate the subscription.
- */
-export const subscriptionConfirm = asyncHandler(async (req: Request, res: Response) => {
-  const seller = await currentSeller(req);
-  const { planId, tracker, sig } = z.object({
-    planId: z.enum(["starter", "basic", "growth", "pro"]),
-    tracker: z.string().min(1),
-    sig: z.string().optional(),
-  }).parse(req.body);
-
-  console.log(`[subscription] confirm called sellerId=${seller.id} planId=${planId} tracker=${tracker}`);
-
-  // Production: verify HMAC signature from Safepay redirect
-  if (env.safepayEnv === "production" && !verifyReturnSignature(tracker, sig)) {
-    console.error(`[subscription] confirm rejected — signature verification failed sellerId=${seller.id} tracker=${tracker}`);
-    throw new ApiError(400, "Payment signature verification failed.");
-  }
-  // Sandbox: tracker is our orderId (sub_ prefix) — trust it since it's
-  // authenticated (seller JWT required) and Safepay showed "Paid successfully"
-
-  const plan = getPlan(planId);
-  const now = new Date();
-
-  seller.planId = planId;
-  seller.subscriptionStatus = "active";
-  seller.subscriptionStartedAt = now;
-  seller.subscriptionEndsAt = addBillingPeriod(now);
-  seller.autoRenew = false;
-  await seller.save();
-
-  await Payment.create({
-    sellerId: seller._id,
-    planId,
-    amount: plan.price,
-    method: "card",
-    paidAt: now,
-    notes: `Subscription via Safepay (${env.safepayEnv})`,
-  });
-
-  if (seller.storeId) {
-    await Store.updateOne({ _id: seller.storeId }, { status: "active" });
-  }
-
-  console.log(`[subscription] confirm activated sellerId=${seller.id} planId=${planId} endsAt=${seller.subscriptionEndsAt?.toISOString()}`);
-  res.json({ ok: true, seller: seller.toJSON() });
-});
-
-/**
- * GET /api/seller/subscription/callback
- * Safepay browser-redirect lands here (production). In sandbox this is
- * rarely hit — subscriptionConfirm is the primary activation path.
- */
-export const subscriptionCallback = asyncHandler(async (req: Request, res: Response) => {
-  const tracker = req.query.tracker as string | undefined;
-  const sig = req.query.sig as string | undefined;
-
-  console.log(`[subscription] callback hit query=${JSON.stringify(req.query)}`);
-
-  const fail = (reason: string) => {
-    console.error(`[subscription] callback failed: ${reason} query=${JSON.stringify(req.query)}`);
-    return res.redirect(`${env.appUrl}/dashboard/plan?payment=failed`);
-  };
-
-  if (env.safepayEnv === "production" && !verifyReturnSignature(tracker, sig)) {
-    return fail("signature verification failed");
-  }
-
-  // Step 1: try explicit query params (our redirectUrl)
-  let sellerId = req.query.seller as string | undefined;
-  let planIdRaw = req.query.plan as string | undefined;
-
-  // Step 2: try order_id echoed by Safepay in query
-  if (!sellerId || !planIdRaw) {
-    const qOrderId = (req.query.order_id ?? req.query.orderId) as string | undefined;
-    const m = qOrderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
-    if (m) { sellerId = m[1]; planIdRaw = m[2]; }
-  }
-
-  // Step 3: fetch order_id from Safepay API using tracker
-  if ((!sellerId || !planIdRaw) && tracker) {
-    const apiOrderId = await getTrackerOrderId(tracker);
-    const m = apiOrderId?.match(/^sub_([a-f0-9]+)_([a-z]+)_\d+$/i);
-    if (m) { sellerId = m[1]; planIdRaw = m[2]; }
-  }
-
-  if (!sellerId || !planIdRaw) return fail("could not resolve sellerId/planId from query, order_id, or tracker lookup");
-
-  const planIdResult = z.enum(["starter", "basic", "growth", "pro"]).safeParse(planIdRaw);
-  if (!planIdResult.success) return fail(`resolved planId "${planIdRaw}" is not a valid plan`);
-  const planId = planIdResult.data;
-
-  const seller = await Seller.findById(sellerId);
-  if (!seller) return fail(`seller not found for sellerId=${sellerId}`);
-
-  // Prevent double-activation if webhook already processed it
-  if (seller.subscriptionStatus === "active" && seller.planId === planId) {
-    console.log(`[subscription] callback: already active sellerId=${sellerId} planId=${planId} (webhook likely already handled it)`);
-    return res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
-  }
-
-  const plan = getPlan(planId);
-  const now = new Date();
-
-  seller.planId = planId;
-  seller.subscriptionStatus = "active";
-  seller.subscriptionStartedAt = now;
-  seller.subscriptionEndsAt = addBillingPeriod(now);
-  seller.autoRenew = false;
-  await seller.save();
-
-  await Payment.create({
-    sellerId: seller._id,
-    planId,
-    amount: plan.price,
-    method: "card",
-    paidAt: now,
-    notes: `Subscription via Safepay callback (${env.safepayEnv})`,
-  });
-
-  if (seller.storeId) {
-    await Store.updateOne({ _id: seller.storeId }, { status: "active" });
-  }
-
-  console.log(`[subscription] callback activated sellerId=${sellerId} planId=${planId} endsAt=${seller.subscriptionEndsAt?.toISOString()}`);
-  res.redirect(`${env.appUrl}/dashboard/plan?payment=success`);
+  console.log(`[subscription] checkout session created sellerId=${seller.id} session=${sessionId}`);
+  res.json({ url, orderId: sessionId, planId });
 });
 
 export const getMyPayments = asyncHandler(async (req: Request, res: Response) => {
@@ -499,7 +372,7 @@ export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Resp
     subscriptionEndsAt: endsAt ?? null,
     autoRenew: seller.autoRenew,
     daysRemaining,
-    hasCardToken: Boolean(seller.safepayCardToken),
+    hasCardToken: Boolean(seller.stripePaymentMethodId),
   });
 });
 

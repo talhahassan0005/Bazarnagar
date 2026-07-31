@@ -2,44 +2,11 @@ import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Payment } from "../models/Payment";
 import { GRACE_DAYS, addBillingPeriod, getPlan } from "./plans";
-import { safepayEnabled } from "./safepay";
+import { chargeSavedCard } from "./stripe";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // hourly
 const MAX_RETRIES = 3;
-
-/**
- * Attempt to charge a saved Safepay card token for subscription renewal.
- * Returns true on success, false on failure.
- * NOTE: Safepay recurring charge API — uses saved card token.
- */
-async function chargeCardToken(token: string, amount: number, orderId: string): Promise<boolean> {
-  if (!safepayEnabled) return false;
-  try {
-    const { env } = await import("../config/env");
-    const API_BASE =
-      env.safepayEnv === "production"
-        ? "https://api.getsafepay.com"
-        : "https://sandbox.api.getsafepay.com";
-
-    const res = await fetch(`${API_BASE}/order/payments/v3/recurring`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        merchant_api_key: env.safepayApiKey,
-        customer_token: token,
-        amount: Math.round(amount * 100), // paisa
-        currency: "PKR",
-        order_id: orderId,
-      }),
-    });
-    if (!res.ok) return false;
-    const json = (await res.json()) as { data?: { status?: string } };
-    return json.data?.status === "paid" || json.data?.status === "success";
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Main subscription lifecycle processor — runs hourly:
@@ -54,14 +21,19 @@ export async function processSubscriptions(): Promise<void> {
   const toRenew = await Seller.find({
     subscriptionStatus: "active",
     autoRenew: true,
-    safepayCardToken: { $exists: true, $ne: "" },
+    stripeCustomerId: { $exists: true, $ne: "" },
+    stripePaymentMethodId: { $exists: true, $ne: "" },
     subscriptionEndsAt: { $ne: null, $lte: now },
   });
 
   for (const seller of toRenew) {
     const plan = getPlan(seller.planId);
-    const orderId = `autorenewal_${seller.id}_${Date.now()}`;
-    const success = await chargeCardToken(seller.safepayCardToken!, plan.price, orderId);
+    const success = await chargeSavedCard(
+      seller.stripeCustomerId!,
+      seller.stripePaymentMethodId!,
+      plan.price,
+      `Bazaarnagar ${seller.planId} plan renewal`
+    );
 
     if (success) {
       const base = seller.subscriptionEndsAt && seller.subscriptionEndsAt > now

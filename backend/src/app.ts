@@ -5,7 +5,7 @@ import { env } from "./config/env";
 import routes from "./routes";
 import { UPLOAD_DIR } from "./middleware/upload";
 import { notFound, errorHandler } from "./middleware/error";
-import { safepayWebhook } from "./controllers/safepayController";
+import { stripeWebhook } from "./controllers/stripeController";
 
 // Origins explicitly allowed via CLIENT_ORIGIN (comma-separated supported).
 const allowedOrigins = new Set(
@@ -35,18 +35,18 @@ export function createApp() {
       },
     })
   );
-  // The Safepay webhook needs the RAW body for signature verification — mount
+  // The Stripe webhook needs the RAW body for signature verification — mount
   // it before the JSON body parser.
   app.post(
-    "/api/webhooks/safepay",
+    "/api/webhooks/stripe",
     express.raw({ type: "application/json" }),
-    safepayWebhook
+    stripeWebhook
   );
 
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
-  // Always log requests (including production) — without this there is no way
-  // to see whether Safepay ever actually calls back into the server at all.
+  // Always log requests (including production) — useful for confirming the
+  // payment gateway is actually reaching the server.
   app.use(morgan(env.isProd ? "combined" : "dev"));
 
   // Serve uploaded images statically.

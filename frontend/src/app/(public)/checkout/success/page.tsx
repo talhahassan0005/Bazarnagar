@@ -7,7 +7,7 @@ import { Button } from "@/components/ui";
 import { useAppDispatch } from "@/store/hooks";
 import { clearCart } from "@/store/cartSlice";
 
-/** Shown after a successful online payment (Safepay redirect / mock confirm). */
+/** Shown after a successful online payment (Stripe redirect / mock confirm). */
 export default function CheckoutSuccessPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();

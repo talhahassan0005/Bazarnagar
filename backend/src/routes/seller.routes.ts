@@ -8,7 +8,6 @@ import {
   changePlan,
   renewSubscription,
   subscriptionCheckout,
-  subscriptionConfirm,
   getSubscriptionStatus,
   toggleAutoRenew,
   cancelSubscription,
@@ -35,7 +34,6 @@ router.patch("/store/payout", updateStorePayout);
 router.patch("/plan", changePlan);
 router.post("/subscription/renew", renewSubscription);
 router.post("/subscription/checkout", subscriptionCheckout);
-router.post("/subscription/confirm", subscriptionConfirm);
 router.get("/subscription/status", getSubscriptionStatus);
 router.post("/subscription/toggle-auto-renew", toggleAutoRenew);
 router.post("/subscription/cancel", cancelSubscription);

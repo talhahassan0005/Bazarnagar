@@ -166,7 +166,7 @@ const payoutCardSchema = z.object({
   brand: z.string().min(1),
 });
 
-/** POST /api/admin/payout-card — save Safepay card token as admin payout destination. */
+/** POST /api/admin/payout-card — save card token as admin payout destination. */
 export const setPayoutCard = asyncHandler(async (req: Request, res: Response) => {
   const data = payoutCardSchema.parse(req.body);
   const admin = await Admin.findById(req.user!.id);

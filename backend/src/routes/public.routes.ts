@@ -9,11 +9,10 @@ import {
 } from "../controllers/publicController";
 import { createOrder } from "../controllers/orderController";
 import {
-  createSafepayCheckout,
-  mockConfirmSafepay,
+  createStripeCheckout,
+  mockConfirmOrder,
   getPaymentConfig,
-  safepayCallback,
-} from "../controllers/safepayController";
+} from "../controllers/stripeController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
 import { getPlanConfig } from "../controllers/adminController";
 import { getActiveBanners } from "../controllers/bannerController";
@@ -32,8 +31,7 @@ router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
 router.post("/orders", createOrder);
 router.get("/payment-config", getPaymentConfig);
-router.post("/safepay/checkout", createSafepayCheckout);
-router.post("/safepay/mock-confirm", mockConfirmSafepay);
-router.get("/safepay/callback", safepayCallback);
+router.post("/stripe/checkout", createStripeCheckout);
+router.post("/stripe/mock-confirm", mockConfirmOrder);
 
 export default router;

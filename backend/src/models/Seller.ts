@@ -23,7 +23,9 @@ export interface SellerDoc extends Document {
   subscriptionEndsAt?: Date;
   autoRenew: boolean;
   retryCount: number;
-  safepayCardToken?: string;
+  /** Saved Stripe customer + payment method, used for off-session auto-renewal charges. */
+  stripeCustomerId?: string;
+  stripePaymentMethodId?: string;
   storeId: Types.ObjectId | null;
   createdAt: Date;
   comparePassword(plain: string): Promise<boolean>;
@@ -54,7 +56,8 @@ const sellerSchema = new Schema<SellerDoc>(
     subscriptionEndsAt: { type: Date, index: true },
     autoRenew: { type: Boolean, default: false },
     retryCount: { type: Number, default: 0 },
-    safepayCardToken: { type: String },
+    stripeCustomerId: { type: String },
+    stripePaymentMethodId: { type: String },
     storeId: { type: Schema.Types.ObjectId, ref: "Store", default: null },
   },
   baseSchemaOptions
