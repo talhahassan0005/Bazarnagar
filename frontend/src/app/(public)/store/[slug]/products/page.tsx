@@ -19,7 +19,7 @@ export default function StoreCatalogPage() {
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <Skeleton className="h-36 rounded-none sm:h-48" />
           <div className="space-y-3 px-4 pb-5 pt-3 sm:px-6">
-            <Skeleton className="-mt-14 h-20 w-20 rounded-2xl" />
+            <Skeleton className="h-20 w-20 rounded-2xl" />
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-full max-w-md" />
           </div>

@@ -62,7 +62,9 @@ export default function PublicStorePage() {
     return (
       <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
         <StoreHeader store={store.data} />
-        <ShopBanner store={store.data} />
+        <div className="mt-6">
+          <ShopBanner store={store.data} />
+        </div>
         <div className="mt-6">
           <StoreCatalog store={store.data} />
         </div>
@@ -73,7 +75,9 @@ export default function PublicStorePage() {
   return (
     <>
       <StoreLandingHero store={store.data} landing={landing} />
-      <ShopBanner store={store.data} />
+      <div className="mx-auto mt-6 w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <ShopBanner store={store.data} />
+      </div>
       {landing.showFeatured && (
         <FeaturedProducts store={store.data} landing={landing} products={featured} />
       )}

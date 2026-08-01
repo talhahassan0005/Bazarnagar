@@ -25,10 +25,10 @@ export function StoreHeader({ store }: { store: Store }) {
         )}
       </div>
 
-      <div className="px-4 pb-5 sm:px-6">
-        <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="px-4 pb-5 pt-4 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
-            <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-brand-600 text-2xl font-bold text-white shadow">
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-100 bg-brand-600 text-2xl font-bold text-white shadow-sm">
               {store.logoUrl ? (
                 <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
               ) : (

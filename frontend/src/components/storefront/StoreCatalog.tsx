@@ -5,6 +5,7 @@ import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { EmptyState, ProductGridSkeleton } from "@/components/ui";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { CategoryChips } from "@/components/domain/CategoryChips";
+import { ShopBanner, ShopBannerVertical } from "@/components/storefront/ShopBanner";
 import { useGetStoreProductsQuery } from "@/store/apiSlice";
 import { isBoosted } from "@/lib/utils";
 import type { Store } from "@/lib/types";
@@ -126,65 +127,83 @@ export function StoreCatalog({ store }: { store: Store }) {
       {/* Catalog top anchor */}
       <div ref={catalogTopRef} />
 
-      {/* Search + inline category chips */}
-      <div ref={searchBarRef} className="sticky top-16 z-20 space-y-3 bg-slate-50/90 py-2 backdrop-blur-sm">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search this shop…"
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-          />
-        </div>
-        {groupedCategories.length > 1 && (
-          <CategoryChips categories={groupedCategories} value={activeCategory} onChange={handleCategoryClick} />
-        )}
-      </div>
+      <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
+        <div className="min-w-0">
+          {/* Search + inline category chips */}
+          <div ref={searchBarRef} className="sticky top-16 z-20 space-y-3 bg-slate-50/90 py-2 backdrop-blur-sm">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search this shop…"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              />
+            </div>
+            {groupedCategories.length > 1 && (
+              <CategoryChips categories={groupedCategories} value={activeCategory} onChange={handleCategoryClick} />
+            )}
+          </div>
 
-      {/* Products */}
-      <div className="mt-4">
-        {products.isLoading || products.isUninitialized ? (
-          <ProductGridSkeleton />
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={<Search className="h-6 w-6" />}
-            title="No products found"
-            description="Try a different search or category."
-          />
-        ) : showGrouped ? (
-          /* ── Grouped by category (no pagination — sections act as navigation) ── */
-          <div className="space-y-10">
-            {groupedCategories.map((cat) => (
-              <div key={cat} ref={(el) => { sectionRefs.current[cat] = el; }}>
-                <h2 className="mb-4 border-b border-slate-100 pb-2 text-base font-semibold text-slate-700">
-                  {cat}
-                  <span className="ml-2 text-xs font-normal text-slate-400">
-                    ({grouped.get(cat)!.length})
-                  </span>
-                </h2>
+          {/* Products */}
+          <div className="mt-4">
+            {products.isLoading || products.isUninitialized ? (
+              <ProductGridSkeleton />
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                icon={<Search className="h-6 w-6" />}
+                title="No products found"
+                description="Try a different search or category."
+              />
+            ) : showGrouped ? (
+              /* ── Grouped by category (no pagination — sections act as navigation) ── */
+              <div className="space-y-10">
+                {groupedCategories.map((cat) => (
+                  <div key={cat} ref={(el) => { sectionRefs.current[cat] = el; }}>
+                    <h2 className="mb-4 border-b border-slate-100 pb-2 text-base font-semibold text-slate-700">
+                      {cat}
+                      <span className="ml-2 text-xs font-normal text-slate-400">
+                        ({grouped.get(cat)!.length})
+                      </span>
+                    </h2>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                      {grouped.get(cat)!.map((p, i) => (
+                        <ProductCard key={p.id} product={p} store={store} index={i} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* ── Flat paginated grid (search active or single category) ── */
+              <>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                  {grouped.get(cat)!.map((p, i) => (
+                  {paginated.map((p, i) => (
                     <ProductCard key={p.id} product={p} store={store} index={i} />
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* ── Flat paginated grid (search active or single category) ── */
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {paginated.map((p, i) => (
-                <ProductCard key={p.id} product={p} store={store} index={i} />
-              ))}
-            </div>
 
-            {totalPages > 1 && (
-              <Pagination page={page} totalPages={totalPages} onChange={goToPage} />
+                {totalPages > 1 && (
+                  <Pagination page={page} totalPages={totalPages} onChange={goToPage} />
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+
+          {/* Bottom banner, after all products */}
+          {!products.isLoading && !products.isUninitialized && filtered.length > 0 && (
+            <div className="mt-10">
+              <ShopBanner store={store} />
+            </div>
+          )}
+        </div>
+
+        {/* Right-side vertical ad — desktop only */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-20">
+            <ShopBannerVertical store={store} />
+          </div>
+        </aside>
       </div>
     </>
   );
