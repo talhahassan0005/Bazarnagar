@@ -282,11 +282,11 @@ export const apiSlice = createApi({
       query: () => "/admin/banners",
       providesTags: ["Banner"],
     }),
-    createBanner: builder.mutation<Banner, Partial<Banner>>({
+    createBanner: builder.mutation<Banner, Partial<Omit<Banner, "placement">> & { placement?: BannerPlacement | "" }>({
       query: (body) => ({ url: "/admin/banners", method: "POST", body }),
       invalidatesTags: ["Banner"],
     }),
-    updateBanner: builder.mutation<Banner, { id: string; values: Partial<Banner> }>({
+    updateBanner: builder.mutation<Banner, { id: string; values: Partial<Omit<Banner, "placement">> & { placement?: BannerPlacement | "" } }>({
       query: ({ id, values }) => ({ url: `/admin/banners/${id}`, method: "PATCH", body: values }),
       invalidatesTags: ["Banner"],
     }),

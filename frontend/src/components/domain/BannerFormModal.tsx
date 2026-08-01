@@ -51,7 +51,7 @@ export function BannerFormModal({
       imageUrl,
       linkUrl: linkUrl.trim() || undefined,
       category: category.trim() || undefined,
-      placement: placement || "",
+      placement,
       order: Number(order) || 0,
       active,
     };
@@ -117,6 +117,13 @@ export function BannerFormModal({
           placeholder="e.g. Electronics"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
+        />
+        <Select
+          label="Placement"
+          hint="Which slot on the shop page this banner is allowed to show in."
+          value={placement}
+          onChange={(e) => setPlacement(e.target.value as BannerPlacement | "")}
+          options={PLACEMENT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
         />
         <Input
           label="Order"

@@ -56,6 +56,18 @@ export default function AdminBannersPage() {
       ),
     },
     { header: "Category", hideOnMobile: true, cell: (b) => b.category || "All shops" },
+    {
+      header: "Placement",
+      hideOnMobile: true,
+      cell: (b) =>
+        b.placement === "top"
+          ? "Top"
+          : b.placement === "bottom"
+            ? "Bottom"
+            : b.placement === "sidebar"
+              ? "Sidebar"
+              : "Anywhere",
+    },
     { header: "Order", hideOnMobile: true, cell: (b) => b.order },
     {
       header: "Status",

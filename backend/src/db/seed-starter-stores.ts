@@ -68,6 +68,7 @@ const STORES: SeedStore[] = [
       { name: "Iodized Salt 800g", price: 90, description: "Fine iodized table salt, 800g pack.", tags: ["salt", "grocery"], imgSeed: "kirana-salt" },
       { name: "Red Chili Powder 200g", price: 260, description: "Freshly ground red chili powder.", tags: ["spices", "chili", "grocery"], imgSeed: "kirana-chili" },
       { name: "Assorted Spice Pack (5 items)", price: 780, discountPrice: 699, description: "Turmeric, coriander, cumin, garam masala & black pepper set.", tags: ["spices", "masala", "grocery"], imgSeed: "kirana-spices" },
+      { name: "Basmati Chickpeas (Chana) 1kg", price: 480, description: "Whole white chickpeas, 1kg pack.", tags: ["chana", "grocery", "pulses"], imgSeed: "kirana-chana" },
     ],
   },
   {
@@ -200,6 +201,27 @@ const STORES: SeedStore[] = [
   },
 ];
 
+/**
+ * Top up products for stores that already exist (from the original seed.ts)
+ * but only have a couple of products — found by slug, never created fresh.
+ */
+const EXISTING_STORE_TOPUPS: { slug: string; category: string; products: SeedProduct[] }[] = [
+  {
+    slug: "sana-cosmetics",
+    category: "Cosmetics",
+    products: [
+      { name: "Compact Powder", price: 850, description: "Lightweight oil-control compact powder.", tags: ["compact", "powder", "makeup"], imgSeed: "sana-compact" },
+      { name: "Kajal Eyeliner Pencil", price: 350, description: "Smudge-proof kohl kajal pencil.", tags: ["kajal", "eyeliner", "makeup"], imgSeed: "sana-kajal", negotiable: true },
+      { name: "Makeup Setting Spray", price: 1100, description: "Long-lasting makeup setting spray, all-day wear.", tags: ["setting spray", "makeup"], imgSeed: "sana-settingspray" },
+      { name: "Lip Gloss Set (3 pcs)", price: 650, discountPrice: 549, description: "Glossy tinted lip gloss set, 3 shades.", tags: ["lip gloss", "makeup", "set"], imgSeed: "sana-lipgloss" },
+      { name: "Liquid Foundation", price: 1350, description: "Full-coverage liquid foundation, multiple shades.", tags: ["foundation", "makeup"], imgSeed: "sana-foundation" },
+      { name: "Blush On", price: 700, description: "Silky matte blush for a natural flush.", tags: ["blush", "makeup"], imgSeed: "sana-blush" },
+      { name: "Makeup Remover Wipes (25 pcs)", price: 450, description: "Gentle makeup remover wipes, pack of 25.", tags: ["remover", "wipes", "skincare"], imgSeed: "sana-wipes" },
+      { name: "Sunscreen SPF 50", price: 950, description: "Broad-spectrum SPF 50 sunscreen, lightweight formula.", tags: ["sunscreen", "skincare", "spf"], imgSeed: "sana-sunscreen" },
+    ],
+  },
+];
+
 async function run() {
   await connectDB();
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
@@ -305,6 +327,46 @@ async function run() {
     console.log(`${isNewSeller ? "✓ Created" : "↻ Updated"} ${s.name} — /store/${s.slug}  (${allProducts.length} products, +${missing.length} new; login: ${email} / ${PASSWORD})`);
     if (isNewSeller) created++;
     else updated++;
+  }
+
+  // Top up existing stores (not created by this script) with more products.
+  for (const t of EXISTING_STORE_TOPUPS) {
+    const store = await Store.findOne({ slug: t.slug });
+    if (!store) {
+      console.log(`Skipping top-up for ${t.slug} — store not found.`);
+      continue;
+    }
+
+    const existingNames = new Set(
+      (await Product.find({ storeId: store._id }).select("name")).map((p) => p.name)
+    );
+    const missing = t.products.filter((p) => !existingNames.has(p.name));
+
+    if (missing.length > 0) {
+      await Product.create(
+        missing.map((p) => ({
+          storeId: store._id,
+          name: p.name,
+          category: t.category,
+          price: p.price,
+          discountPrice: p.discountPrice,
+          images: [img(p.imgSeed), img(`${p.imgSeed}-2`)],
+          description: p.description,
+          tags: p.tags,
+          stockStatus: "in_stock" as const,
+          status: "active" as const,
+          negotiable: p.negotiable ?? false,
+          condition: "new" as const,
+          deliveryAvailable: true,
+          moderationStatus: "approved" as const,
+          views: Math.floor(Math.random() * 80),
+          whatsappClicks: Math.floor(Math.random() * 10),
+        }))
+      );
+    }
+
+    const totalProducts = await Product.countDocuments({ storeId: store._id });
+    console.log(`↻ Topped up ${t.slug} — ${totalProducts} products, +${missing.length} new`);
   }
 
   console.log(`\nDone — ${created} created, ${updated} updated.`);
