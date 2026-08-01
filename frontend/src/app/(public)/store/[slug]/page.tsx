@@ -11,7 +11,7 @@ import { StoreAbout } from "@/components/storefront/StoreAbout";
 import { StoreContact } from "@/components/storefront/StoreContact";
 import { useGetStoreBySlugQuery, useGetStoreProductsQuery } from "@/store/apiSlice";
 import { resolveLanding } from "@/lib/landing";
-import { ShopBanner } from "@/components/storefront/ShopBanner";
+import { StorefrontAdLayout } from "@/components/storefront/StorefrontAdLayout";
 
 export default function PublicStorePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -63,9 +63,6 @@ export default function PublicStorePage() {
       <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
         <StoreHeader store={store.data} />
         <div className="mt-6">
-          <ShopBanner store={store.data} />
-        </div>
-        <div className="mt-6">
           <StoreCatalog store={store.data} />
         </div>
       </div>
@@ -75,12 +72,13 @@ export default function PublicStorePage() {
   return (
     <>
       <StoreLandingHero store={store.data} landing={landing} />
-      <div className="mx-auto mt-6 w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        <ShopBanner store={store.data} />
-      </div>
-      {landing.showFeatured && (
-        <FeaturedProducts store={store.data} landing={landing} products={featured} />
-      )}
+      <section className="mx-auto w-full max-w-[1600px] px-4 py-14 sm:px-6 lg:px-8">
+        <StorefrontAdLayout store={store.data}>
+          {landing.showFeatured && (
+            <FeaturedProducts store={store.data} landing={landing} products={featured} />
+          )}
+        </StorefrontAdLayout>
+      </section>
       {landing.showAbout && <StoreAbout landing={landing} />}
       {landing.showContact && <StoreContact store={store.data} landing={landing} />}
     </>
