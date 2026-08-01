@@ -72,7 +72,7 @@ export function ShopBannerVertical({ store }: { store: Store }) {
 
   if (!banner) {
     return (
-      <div className="flex h-full min-h-[280px] w-full flex-col items-center justify-center rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 p-4 text-center text-sm text-amber-800">
+      <div className="flex h-72 w-full flex-col items-center justify-center rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 p-4 text-center text-sm text-amber-800">
         <span className="font-medium">Sponsored</span>
         <p className="mt-2">
           Discover more shops on{" "}
@@ -84,16 +84,18 @@ export function ShopBannerVertical({ store }: { store: Store }) {
     );
   }
 
+  // Source creatives are wide (landscape) banners — center-crop into a tall
+  // card here rather than letting them shrink to a squished sliver.
   const image = (
     <img
       src={banner.imageUrl}
       alt={banner.title || "Sponsored"}
-      className="block w-full rounded-2xl object-contain"
+      className="block h-72 w-full rounded-2xl object-cover"
     />
   );
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/60 p-2">
+    <div className="relative w-full overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/60">
       <span className="absolute left-3 top-3 z-10 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
         Sponsored
       </span>
