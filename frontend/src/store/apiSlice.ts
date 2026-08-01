@@ -5,6 +5,7 @@ import { setSellerSession, setAdminSession, logout as logoutAction } from "@/sto
 import type {
   AdminReview,
   Banner,
+  BannerPlacement,
   CreateOrderInput,
   DashboardMetrics,
   ModerationStatus,
@@ -270,8 +271,11 @@ export const apiSlice = createApi({
     }),
 
     // ── Banners ───────────────────────────────────────────────────────────
-    getActiveBanners: builder.query<Banner[], string | undefined>({
-      query: (category) => ({ url: "/public/banners", params: category ? { category } : {} }),
+    getActiveBanners: builder.query<Banner[], { category?: string; placement?: BannerPlacement }>({
+      query: ({ category, placement }) => ({
+        url: "/public/banners",
+        params: { ...(category ? { category } : {}), ...(placement ? { placement } : {}) },
+      }),
       providesTags: ["Banner"],
     }),
     getAllBanners: builder.query<Banner[], void>({

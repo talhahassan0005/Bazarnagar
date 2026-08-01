@@ -7,17 +7,19 @@ import { ApiError, asyncHandler } from "../lib/helpers";
  * GET /api/public/banners — active banner ads, for free-plan shop pages.
  * Optional ?category= narrows to banners targeting that store category
  * (case-insensitive) plus untargeted ("all categories") banners.
+ * Optional ?placement= (top|bottom|sidebar) narrows to banners assigned to
+ * that slot plus unassigned ("any slot") banners.
  */
 export const getActiveBanners = asyncHandler(async (req: Request, res: Response) => {
   const category = (req.query.category as string | undefined)?.trim();
+  const placement = (req.query.placement as string | undefined)?.trim();
   const all = await Banner.find({ active: true }).sort({ order: 1, createdAt: -1 });
 
-  if (!category) {
-    return res.json(all.map((b) => b.toJSON()));
-  }
-  const relevant = all.filter(
-    (b) => !b.category || b.category.trim().toLowerCase() === category.toLowerCase()
-  );
+  const relevant = all.filter((b) => {
+    const categoryOk = !category || !b.category || b.category.trim().toLowerCase() === category.toLowerCase();
+    const placementOk = !placement || !b.placement || b.placement === placement;
+    return categoryOk && placementOk;
+  });
   res.json(relevant.map((b) => b.toJSON()));
 });
 
@@ -32,6 +34,8 @@ const bannerSchema = z.object({
   imageUrl: z.string().min(1, "Image is required"),
   linkUrl: z.string().trim().optional(),
   category: z.string().trim().optional(),
+  // "" (from the admin form's "Anywhere" option) clears the field.
+  placement: z.enum(["top", "bottom", "sidebar"]).optional().or(z.literal("")),
   active: z.boolean().optional(),
   order: z.number().int().optional(),
 });
@@ -41,6 +45,7 @@ export const createBanner = asyncHandler(async (req: Request, res: Response) => 
   const data = bannerSchema.parse(req.body);
   const banner = await Banner.create({
     ...data,
+    placement: data.placement || undefined,
     active: data.active ?? true,
     order: data.order ?? 0,
   });
@@ -51,8 +56,13 @@ const updateBannerSchema = bannerSchema.partial();
 
 /** PATCH /api/admin/banners/:id — update a banner ad. */
 export const updateBanner = asyncHandler(async (req: Request, res: Response) => {
-  const data = updateBannerSchema.parse(req.body);
-  const banner = await Banner.findByIdAndUpdate(req.params.id, data, { new: true });
+  const { placement, ...data } = updateBannerSchema.parse(req.body);
+  const update: Record<string, unknown> = { ...data };
+  if (placement !== undefined) {
+    if (placement === "") update.$unset = { placement: "" };
+    else update.placement = placement;
+  }
+  const banner = await Banner.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!banner) throw new ApiError(404, "Banner not found");
   res.json(banner.toJSON());
 });

@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input, Modal, Toggle } from "@/components/ui";
+import { Button, Input, Modal, Select, Toggle } from "@/components/ui";
 import { ImageUpload } from "@/components/domain/ImageUpload";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { useCreateBannerMutation, useUpdateBannerMutation } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
-import type { Banner } from "@/lib/types";
+import type { Banner, BannerPlacement } from "@/lib/types";
+
+const PLACEMENT_OPTIONS: { value: BannerPlacement | ""; label: string }[] = [
+  { value: "", label: "Anywhere (top, bottom or sidebar)" },
+  { value: "top", label: "Top banner only" },
+  { value: "bottom", label: "Bottom banner only" },
+  { value: "sidebar", label: "Vertical sidebar card only" },
+];
 
 /** Admin modal to create or edit a banner ad. */
 export function BannerFormModal({
@@ -27,6 +34,7 @@ export function BannerFormModal({
   const [imageUrl, setImageUrl] = useState(banner?.imageUrl ?? "");
   const [linkUrl, setLinkUrl] = useState(banner?.linkUrl ?? "");
   const [category, setCategory] = useState(banner?.category ?? "");
+  const [placement, setPlacement] = useState<BannerPlacement | "">(banner?.placement ?? "");
   const [order, setOrder] = useState(String(banner?.order ?? 0));
   const [active, setActive] = useState(banner?.active ?? true);
   const [error, setError] = useState("");
@@ -43,6 +51,7 @@ export function BannerFormModal({
       imageUrl,
       linkUrl: linkUrl.trim() || undefined,
       category: category.trim() || undefined,
+      placement: placement || "",
       order: Number(order) || 0,
       active,
     };

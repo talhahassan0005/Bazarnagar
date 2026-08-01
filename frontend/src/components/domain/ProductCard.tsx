@@ -37,7 +37,7 @@ export function ProductCard({
         animationDelay: `${Math.min(index, 11) * 55}ms`,
       }}
     >
-      <Link href={href} className="relative block aspect-square overflow-hidden bg-slate-100">
+      <Link href={href} className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
         <ProductImage
           src={product.images[0]}
           alt={product.name}

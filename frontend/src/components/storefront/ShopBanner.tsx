@@ -2,14 +2,17 @@
 
 import { useMemo } from "react";
 import { useGetActiveBannersQuery } from "@/store/apiSlice";
-import type { Banner, Store } from "@/lib/types";
+import type { Banner, BannerPlacement, Store } from "@/lib/types";
 
-/** Shared: fetch active banners for a store (skipped unless on the free plan). */
-function useActiveBanner(store: Store): Banner | null {
+/** Shared: fetch active banners for a store + slot (skipped unless on the free plan). */
+function useActiveBanner(store: Store, placement: BannerPlacement): Banner | null {
   const isStarter = store.planId === "starter";
-  const { data: banners } = useGetActiveBannersQuery(store.category, { skip: !isStarter });
+  const { data: banners } = useGetActiveBannersQuery(
+    { category: store.category, placement },
+    { skip: !isStarter }
+  );
 
-  // Pick one banner at random when multiple are active — stable per mount.
+  // Pick one banner at random when multiple are eligible — stable per mount.
   return useMemo(() => {
     if (!isStarter || !banners || banners.length === 0) return null;
     return banners[Math.floor(Math.random() * banners.length)]!;
@@ -21,8 +24,8 @@ function useActiveBanner(store: Store): Banner | null {
  * stores. Sourced from admin-managed banners (`/admin/banners`); if none are
  * configured yet, falls back to a generic "discover more shops" placeholder.
  */
-export function ShopBanner({ store }: { store: Store }) {
-  const banner = useActiveBanner(store);
+export function ShopBanner({ store, placement }: { store: Store; placement: "top" | "bottom" }) {
+  const banner = useActiveBanner(store, placement);
   if (store.planId !== "starter") return null;
 
   if (!banner) {
@@ -67,12 +70,12 @@ export function ShopBanner({ store }: { store: Store }) {
  * a tall card next to the product grid on free (starter) plan shop pages.
  */
 export function ShopBannerVertical({ store }: { store: Store }) {
-  const banner = useActiveBanner(store);
+  const banner = useActiveBanner(store, "sidebar");
   if (store.planId !== "starter") return null;
 
   if (!banner) {
     return (
-      <div className="flex h-[440px] w-full flex-col items-center justify-center rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 p-4 text-center text-sm text-amber-800">
+      <div className="flex h-[380px] w-full flex-col items-center justify-center rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 p-4 text-center text-sm text-amber-800">
         <span className="font-medium">Sponsored</span>
         <p className="mt-2">
           Discover more shops on{" "}
@@ -90,7 +93,7 @@ export function ShopBannerVertical({ store }: { store: Store }) {
     <img
       src={banner.imageUrl}
       alt={banner.title || "Sponsored"}
-      className="block h-[440px] w-full rounded-2xl object-cover"
+      className="block h-[380px] w-full rounded-2xl object-cover"
     />
   );
 

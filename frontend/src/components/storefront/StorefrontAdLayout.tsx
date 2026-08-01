@@ -15,10 +15,10 @@ export function StorefrontAdLayout({ store, children }: { store: Store; children
   return (
     <>
       <div className="mb-6">
-        <ShopBanner store={store} />
+        <ShopBanner store={store} placement="top" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0">{children}</div>
         <aside className="hidden lg:block">
           <div className="sticky top-20">
@@ -28,7 +28,7 @@ export function StorefrontAdLayout({ store, children }: { store: Store; children
       </div>
 
       <div className="mt-10">
-        <ShopBanner store={store} />
+        <ShopBanner store={store} placement="bottom" />
       </div>
     </>
   );

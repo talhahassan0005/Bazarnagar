@@ -1,6 +1,8 @@
 import { Schema, model, type Document } from "mongoose";
 import { baseSchemaOptions } from "./_base";
 
+export type BannerPlacement = "top" | "bottom" | "sidebar";
+
 /** Admin-managed banner ad shown on free (starter) plan shop pages. */
 export interface BannerDoc extends Document {
   title?: string;
@@ -8,6 +10,8 @@ export interface BannerDoc extends Document {
   linkUrl?: string;
   /** Target a specific store category (case-insensitive). Empty = shown on every store. */
   category?: string;
+  /** Which slot this banner shows in. Empty = eligible for every slot. */
+  placement?: BannerPlacement;
   active: boolean;
   order: number;
 }
@@ -18,6 +22,7 @@ const bannerSchema = new Schema<BannerDoc>(
     imageUrl: { type: String, required: true },
     linkUrl: { type: String, trim: true },
     category: { type: String, trim: true },
+    placement: { type: String, enum: ["top", "bottom", "sidebar"] },
     active: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },

@@ -276,6 +276,8 @@ export interface CreateOrderInput {
 
 /* --------------------------------- Banners --------------------------------- */
 
+export type BannerPlacement = "top" | "bottom" | "sidebar";
+
 /** Admin-managed banner ad shown on free (starter) plan shop pages. */
 export interface Banner {
   id: string;
@@ -284,6 +286,8 @@ export interface Banner {
   linkUrl?: string;
   /** Target a specific store category (case-insensitive). Empty = shown on every store. */
   category?: string;
+  /** Which slot this banner shows in. Empty = eligible for every slot. */
+  placement?: BannerPlacement;
   active: boolean;
   order: number;
   createdAt: string;
