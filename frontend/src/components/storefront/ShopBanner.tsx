@@ -72,7 +72,7 @@ export function ShopBannerVertical({ store }: { store: Store }) {
 
   if (!banner) {
     return (
-      <div className="flex h-72 w-full flex-col items-center justify-center rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 p-4 text-center text-sm text-amber-800">
+      <div className="flex h-[440px] w-full flex-col items-center justify-center rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 p-4 text-center text-sm text-amber-800">
         <span className="font-medium">Sponsored</span>
         <p className="mt-2">
           Discover more shops on{" "}
@@ -90,7 +90,7 @@ export function ShopBannerVertical({ store }: { store: Store }) {
     <img
       src={banner.imageUrl}
       alt={banner.title || "Sponsored"}
-      className="block h-72 w-full rounded-2xl object-cover"
+      className="block h-[440px] w-full rounded-2xl object-cover"
     />
   );
 

@@ -49,10 +49,6 @@ export function FeaturedProducts({
               <ProductCard key={p.id} product={p} store={store} />
             ))}
           </div>
-
-          <div className="mt-10">
-            <ShopBanner store={store} />
-          </div>
         </div>
 
         {/* Right-side vertical ad — desktop only */}
@@ -61,6 +57,11 @@ export function FeaturedProducts({
             <ShopBannerVertical store={store} />
           </div>
         </aside>
+      </div>
+
+      {/* Bottom banner — full width, matching the top banner */}
+      <div className="mt-10">
+        <ShopBanner store={store} />
       </div>
     </section>
   );

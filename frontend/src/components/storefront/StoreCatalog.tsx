@@ -189,13 +189,6 @@ export function StoreCatalog({ store }: { store: Store }) {
               </>
             )}
           </div>
-
-          {/* Bottom banner, after all products */}
-          {!products.isLoading && !products.isUninitialized && filtered.length > 0 && (
-            <div className="mt-10">
-              <ShopBanner store={store} />
-            </div>
-          )}
         </div>
 
         {/* Right-side vertical ad — desktop only */}
@@ -205,6 +198,13 @@ export function StoreCatalog({ store }: { store: Store }) {
           </div>
         </aside>
       </div>
+
+      {/* Bottom banner, after all products — full width, matching the top banner */}
+      {!products.isLoading && !products.isUninitialized && filtered.length > 0 && (
+        <div className="mt-10">
+          <ShopBanner store={store} />
+        </div>
+      )}
     </>
   );
 }
