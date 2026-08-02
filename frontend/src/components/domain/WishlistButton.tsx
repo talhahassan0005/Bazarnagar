@@ -27,7 +27,7 @@ export function WishlistButton({ productId, className = "" }: { productId: strin
     e.preventDefault();
     e.stopPropagation();
     if (!isCustomer) {
-      router.push("/account/login");
+      router.push("/login");
       return;
     }
     try {

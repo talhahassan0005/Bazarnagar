@@ -69,7 +69,7 @@ export default function LandingPage() {
               orders directly on WhatsApp — no website, no app, no code.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Button href="/signup" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+              <Button href="/signup?role=seller" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
                 Create your store
               </Button>
               <Button href="/store/ayesha-boutique" size="lg" variant="outline">
@@ -174,7 +174,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <Button
-                  href="/signup"
+                  href="/signup?role=seller"
                   variant={popular ? "accent" : "outline"}
                   fullWidth
                   className="mt-6"
@@ -198,7 +198,7 @@ export default function LandingPage() {
           </p>
           <div className="relative mt-6 flex justify-center">
             <Link
-              href="/signup"
+              href="/signup?role=seller"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-medium text-brand-800 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
             >
               Create your free store <ArrowRight className="h-4 w-4" />

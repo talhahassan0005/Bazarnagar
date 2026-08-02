@@ -1,29 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
-import { useLoginSellerMutation } from "@/store/apiSlice";
+import { useLoginSellerMutation, useLoginCustomerMutation } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const [loginSeller, { isLoading }] = useLoginSellerMutation();
+  const [role, setRole] = useState<AuthRole>(
+    searchParams.get("role") === "seller" ? "seller" : "customer"
+  );
+
+  const [loginSeller, { isLoading: sellerLoading }] = useLoginSellerMutation();
+  const [loginCustomer, { isLoading: customerLoading }] = useLoginCustomerMutation();
+  const isLoading = sellerLoading || customerLoading;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await loginSeller({ email, password }).unwrap();
-      // token saved + authSlice updated automatically by the auth listener
-      dispatch(addToast("Welcome back!", "success"));
-      router.push("/dashboard");
+      if (role === "seller") {
+        await loginSeller({ email, password }).unwrap();
+        dispatch(addToast("Welcome back!", "success"));
+        router.push("/dashboard");
+      } else {
+        await loginCustomer({ email, password }).unwrap();
+        dispatch(addToast("Welcome back!", "success"));
+        router.push("/orders");
+      }
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Login failed"), "error"));
     }
@@ -32,10 +45,15 @@ export default function LoginPage() {
   return (
     <AuthCard
       title="Welcome back"
-      subtitle="Log in to manage your shop and products."
-      footer={{ text: "New to Bazaarnagar?", linkText: "Create a store", href: "/signup" }}
+      subtitle={role === "seller" ? "Log in to manage your shop and products." : "Log in to see your orders and wishlist."}
+      footer={{
+        text: "New to Bazaarnagar?",
+        linkText: role === "seller" ? "Create a store" : "Create an account",
+        href: `/signup?role=${role}`,
+      }}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <RoleToggle role={role} onChange={setRole} />
+      <form onSubmit={onSubmit} className="mt-4 space-y-4">
         <Input
           type="email"
           label="Email"
@@ -55,14 +73,13 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <div className="mt-1.5 flex justify-end">
-            <Link
-              href="/forgot-password"
-              className="text-sm font-medium text-brand-700 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          {role === "seller" && (
+            <div className="mt-1.5 flex justify-end">
+              <a href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">
+                Forgot password?
+              </a>
+            </div>
+          )}
         </div>
         <Button type="submit" fullWidth disabled={isLoading}>
           {isLoading ? "Logging in…" : "Log in"}

@@ -1,18 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
-import { useSignupSellerMutation } from "@/store/apiSlice";
+import { useSignupSellerMutation, useSignupCustomerMutation } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const [signupSeller, { isLoading }] = useSignupSellerMutation();
+  const [role, setRole] = useState<AuthRole>(
+    searchParams.get("role") === "seller" ? "seller" : "customer"
+  );
+
+  const [signupSeller, { isLoading: sellerLoading }] = useSignupSellerMutation();
+  const [signupCustomer, { isLoading: customerLoading }] = useSignupCustomerMutation();
+  const isLoading = sellerLoading || customerLoading;
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -21,10 +30,15 @@ export default function SignupPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await signupSeller({ name, phone, email, password }).unwrap();
-      // token saved + authSlice updated automatically by the auth listener
-      dispatch(addToast("Account created — let's set up your store.", "success"));
-      router.push("/dashboard/store");
+      if (role === "seller") {
+        await signupSeller({ name, phone, email, password }).unwrap();
+        dispatch(addToast("Account created — let's set up your store.", "success"));
+        router.push("/dashboard/store");
+      } else {
+        await signupCustomer({ name, phone, email, password }).unwrap();
+        dispatch(addToast("Account created!", "success"));
+        router.push("/orders");
+      }
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Signup failed"), "error"));
     }
@@ -32,13 +46,18 @@ export default function SignupPage() {
 
   return (
     <AuthCard
-      title="Create your store"
-      subtitle="Sign up to start selling on Bazaarnagar."
-      footer={{ text: "Already have an account?", linkText: "Log in", href: "/login" }}
+      title={role === "seller" ? "Create your store" : "Create your account"}
+      subtitle={
+        role === "seller"
+          ? "Sign up to start selling on Bazaarnagar."
+          : "Track your orders and save products you like."
+      }
+      footer={{ text: "Already have an account?", linkText: "Log in", href: `/login?role=${role}` }}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <RoleToggle role={role} onChange={setRole} />
+      <form onSubmit={onSubmit} className="mt-4 space-y-4">
         <Input
-          label="Seller name"
+          label={role === "seller" ? "Seller name" : "Full name"}
           placeholder="Ayesha Khan"
           required
           value={name}

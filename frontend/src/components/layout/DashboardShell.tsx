@@ -38,7 +38,7 @@ export function DashboardShell({
   const handleLogout = () => {
     clearToken();
     dispatch(logout());
-    router.push(homeHref.startsWith("/admin") ? "/admin/login" : "/login");
+    router.push(homeHref.startsWith("/admin") ? "/admin/login" : "/login?role=seller");
   };
 
   const sidebar = (

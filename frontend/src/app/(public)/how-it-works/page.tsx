@@ -177,7 +177,7 @@ export default function HowItWorksPage() {
           product catalog and orders — in under 10 minutes.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button href="/signup" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+          <Button href="/signup?role=seller" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
             Create your free store
           </Button>
           <Button href="/search" size="lg" variant="outline">
@@ -288,7 +288,7 @@ export default function HowItWorksPage() {
                   )}
                 </ul>
                 <Button
-                  href="/signup"
+                  href="/signup?role=seller"
                   variant={popular ? "accent" : "outline"}
                   fullWidth
                   className="mt-6"
@@ -333,7 +333,7 @@ export default function HowItWorksPage() {
           </p>
           <div className="relative mt-6 flex justify-center">
             <Link
-              href="/signup"
+              href="/signup?role=seller"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-medium text-brand-800 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
             >
               Create your free store <ArrowRight className="h-4 w-4" />

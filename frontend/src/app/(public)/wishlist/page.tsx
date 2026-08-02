@@ -30,7 +30,7 @@ export default function WishlistPage() {
             icon={<Heart className="h-6 w-6" />}
             title="Log in to see your wishlist"
             description="Save products while you browse and find them here later."
-            action={<Button href="/account/login">Log in</Button>}
+            action={<Button href="/login">Log in</Button>}
           />
         ) : !products || products.length === 0 ? (
           <EmptyState

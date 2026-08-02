@@ -35,8 +35,8 @@ export function Footer() {
               <li><Link href="/search" className="transition-colors hover:text-brand-700">Browse products</Link></li>
               <li><Link href="/shops" className="transition-colors hover:text-brand-700">Browse shops</Link></li>
               <li><Link href="/orders" className="transition-colors hover:text-brand-700">Track my orders</Link></li>
-              <li><Link href="/signup" className="transition-colors hover:text-brand-700">Become a seller</Link></li>
-              <li><Link href="/login" className="transition-colors hover:text-brand-700">Seller login</Link></li>
+              <li><Link href="/signup?role=seller" className="transition-colors hover:text-brand-700">Become a seller</Link></li>
+              <li><Link href="/login?role=seller" className="transition-colors hover:text-brand-700">Seller login</Link></li>
             </ul>
           </div>
 
