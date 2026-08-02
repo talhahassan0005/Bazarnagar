@@ -100,7 +100,7 @@ const FEATURES = [
 const FAQS = [
   {
     q: "Is Bazaarnagar free to use?",
-    a: "Yes. The Starter plan is free and lets you list up to 5 products with 1 image each. Paid plans (Basic, Growth, Pro) unlock unlimited products, more images, videos and advanced features.",
+    a: "Yes. The Free plan lets you list up to 50 products with 4 images each. Paid packages (Package 1, 2 and 3) unlock more products — up to 100, 200 or 500 — with up to 8 images per product.",
   },
   {
     q: "Do I need a website or technical skills?",
@@ -120,11 +120,11 @@ const FAQS = [
   },
   {
     q: "What are Boosted / Featured products?",
-    a: "Boosting pays to promote a specific product for 7, 15 or 30 days. Boosted products sort first in search results and your shop catalog, and show a ★ Featured badge. Available on Basic, Growth and Pro plans.",
+    a: "Boosting pays to promote a specific product for 7, 15 or 30 days. Boosted products sort first in search results and your shop catalog, and show a ★ Featured badge. Available on Package 1, 2 and 3.",
   },
   {
     q: "Why do I see ads on my shop page?",
-    a: "Shops on the free Starter plan show a small Bazaarnagar banner ad. Upgrading to any paid plan removes the banner permanently.",
+    a: "Shops on the Free plan show a small Bazaarnagar banner ad. Upgrading to any paid package removes the banner permanently.",
   },
   {
     q: "Can I have more than one shop?",

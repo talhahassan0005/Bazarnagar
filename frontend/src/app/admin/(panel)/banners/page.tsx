@@ -103,7 +103,7 @@ export default function AdminBannersPage() {
     <>
       <PageHeader
         title="Banner Ads"
-        description="Banner ads shown on the shop page of sellers on the free (Starter) plan."
+        description="Banner ads shown on the shop page of sellers on the Free plan."
         action={
           <Button size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditing("new")}>
             Add banner

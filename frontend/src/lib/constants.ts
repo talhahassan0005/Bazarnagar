@@ -3,43 +3,43 @@ import type { ModerationStatus, Plan, PlanId } from "./types";
 /** A product limit at/above this counts as "unlimited" (paid plans). */
 export const UNLIMITED = 1_000_000;
 
-/** Subscription plans (SRS §6). */
+/** Subscription plans. */
 export const PLANS: Record<PlanId, Plan> = {
   starter: {
     id: "starter",
-    name: "Starter",
-    price: 100,
-    productLimit: 5,
-    imageLimit: 1,
+    name: "Free",
+    price: 0,
+    productLimit: 50,
+    imageLimit: 4,
     videoLimit: 0,
-    highlights: ["5 products", "1 image per product", "Public shop link"],
+    highlights: ["50 products", "4 images per product", "Public shop link"],
   },
   basic: {
     id: "basic",
-    name: "Basic",
+    name: "Package 1",
     price: 500,
-    productLimit: UNLIMITED,
-    imageLimit: 3,
+    productLimit: 100,
+    imageLimit: 8,
     videoLimit: 0,
-    highlights: ["Unlimited products", "3 images per product", "Public product search"],
+    highlights: ["100 products", "8 images per product", "Public product search"],
   },
   growth: {
     id: "growth",
-    name: "Growth",
+    name: "Package 2",
     price: 1000,
-    productLimit: UNLIMITED,
-    imageLimit: 5,
-    videoLimit: 1,
-    highlights: ["Unlimited products", "5 images per product", "1 video per product"],
+    productLimit: 200,
+    imageLimit: 8,
+    videoLimit: 0,
+    highlights: ["200 products", "8 images per product", "Public product search"],
   },
   pro: {
     id: "pro",
-    name: "Pro",
+    name: "Package 3",
     price: 5000,
-    productLimit: UNLIMITED,
+    productLimit: 500,
     imageLimit: 8,
-    videoLimit: 2,
-    highlights: ["Unlimited products", "8 images per product", "2 videos per product"],
+    videoLimit: 0,
+    highlights: ["500 products", "8 images per product", "Public product search"],
   },
 };
 
