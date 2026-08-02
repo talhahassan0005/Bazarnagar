@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useAppDispatch } from "./hooks";
-import { authResolved, setAdminSession, setSellerSession } from "./authSlice";
+import { authResolved, setAdminSession, setCustomerSession, setSellerSession } from "./authSlice";
 import { hydrateCart, loadCart } from "./cartSlice";
 import { clearToken, getToken } from "@/lib/api";
 import { apiSlice } from "./apiSlice";
@@ -30,6 +30,7 @@ export function SessionBootstrap() {
         if ("data" in result && result.data) {
           const me = result.data;
           if (me.role === "seller") dispatch(setSellerSession(me.seller));
+          else if (me.role === "customer") dispatch(setCustomerSession(me.customer));
           else dispatch(setAdminSession({ name: me.admin.name }));
         } else {
           clearToken();

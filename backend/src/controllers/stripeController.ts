@@ -67,6 +67,7 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
 
   const order = await Order.create({
     storeId: store._id,
+    customerId: req.user?.role === "customer" ? req.user.id : undefined,
     customerName: data.customerName,
     customerPhone: data.customerPhone,
     customerEmail: data.customerEmail,

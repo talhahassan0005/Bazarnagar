@@ -62,6 +62,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 
   const order = await Order.create({
     storeId: store._id,
+    customerId: req.user?.role === "customer" ? req.user.id : undefined,
     customerName: data.customerName,
     customerPhone: data.customerPhone,
     customerEmail: data.customerEmail || undefined,
@@ -93,6 +94,23 @@ export const getOrdersByIds = asyncHandler(async (req: Request, res: Response) =
   if (ids.length === 0) return res.json([]);
 
   const orders = await Order.find({ _id: { $in: ids } }).sort({ createdAt: -1 });
+
+  const storeIds = [...new Set(orders.map((o) => o.storeId.toString()))];
+  const stores = await Store.find({ _id: { $in: storeIds } }).select("name slug");
+  const storeById = new Map(stores.map((s) => [s.id, s]));
+
+  res.json(
+    orders.map((o) => ({
+      ...o.toJSON(),
+      storeName: storeById.get(o.storeId.toString())?.name ?? "Shop",
+      storeSlug: storeById.get(o.storeId.toString())?.slug ?? "",
+    }))
+  );
+});
+
+/** GET /api/customer/orders — order history for the logged-in customer. */
+export const getMyOrdersCustomer = asyncHandler(async (req: Request, res: Response) => {
+  const orders = await Order.find({ customerId: req.user!.id }).sort({ createdAt: -1 });
 
   const storeIds = [...new Set(orders.map((o) => o.storeId.toString()))];
   const stores = await Store.find({ _id: { $in: storeIds } }).select("name slug");

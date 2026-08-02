@@ -1,7 +1,7 @@
 import jwt, { type SignOptions } from "jsonwebtoken";
 import { env } from "../config/env";
 
-export type AuthRole = "seller" | "admin";
+export type AuthRole = "seller" | "admin" | "customer";
 
 export interface TokenPayload {
   sub: string;

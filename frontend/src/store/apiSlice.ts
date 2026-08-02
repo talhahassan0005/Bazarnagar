@@ -1,12 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { type UnknownAction, type ThunkDispatch, type TypedStartListening } from "@reduxjs/toolkit";
 import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
-import { setSellerSession, setAdminSession, logout as logoutAction } from "@/store/authSlice";
+import { setSellerSession, setAdminSession, setCustomerSession, logout as logoutAction } from "@/store/authSlice";
 import type {
   AdminReview,
   Banner,
   BannerPlacement,
   CreateOrderInput,
+  Customer,
   DashboardMetrics,
   ManualPaymentSettings,
   ModerationStatus,
@@ -36,10 +37,12 @@ import type {
 
 export interface SellerAuthResponse { token: string; seller: Seller }
 export interface AdminAuthResponse { token: string; admin: { id: string; name: string; email: string } }
+export interface CustomerAuthResponse { token: string; customer: Customer }
 
 type MeResponse =
   | { role: "seller"; seller: Seller; store: Store | null }
-  | { role: "admin"; admin: { id: string; name: string; email: string } };
+  | { role: "admin"; admin: { id: string; name: string; email: string } }
+  | { role: "customer"; customer: Customer };
 
 /* ── Base query with auth header ────────────────────────────────────────── */
 
@@ -57,7 +60,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -72,6 +75,12 @@ export const apiSlice = createApi({
     }),
     getMe: builder.query<MeResponse, void>({
       query: () => "/auth/me",
+    }),
+    loginCustomer: builder.mutation<CustomerAuthResponse, { email: string; password: string }>({
+      query: (body) => ({ url: "/auth/customer/login", method: "POST", body }),
+    }),
+    signupCustomer: builder.mutation<CustomerAuthResponse, { name: string; phone: string; email: string; password: string }>({
+      query: (body) => ({ url: "/auth/customer/signup", method: "POST", body }),
     }),
 
     // ── Public / customer ─────────────────────────────────────────────────
@@ -140,6 +149,24 @@ export const apiSlice = createApi({
     updateOrderStatus: builder.mutation<Order, { id: string; status: OrderStatus }>({
       query: ({ id, status }) => ({ url: `/seller/orders/${id}/status`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Order"],
+    }),
+
+    // ── Customer account ─────────────────────────────────────────────────
+    getMyOrdersCustomer: builder.query<Order[], void>({
+      query: () => "/customer/orders",
+      providesTags: ["Order"],
+    }),
+    getWishlist: builder.query<ProductWithStore[], void>({
+      query: () => "/customer/wishlist",
+      providesTags: ["Wishlist"],
+    }),
+    addToWishlist: builder.mutation<{ ok: boolean }, string>({
+      query: (productId) => ({ url: "/customer/wishlist", method: "POST", body: { productId } }),
+      invalidatesTags: ["Wishlist"],
+    }),
+    removeFromWishlist: builder.mutation<{ ok: boolean }, string>({
+      query: (productId) => ({ url: `/customer/wishlist/${productId}`, method: "DELETE" }),
+      invalidatesTags: ["Wishlist"],
     }),
 
     // ── Seller ────────────────────────────────────────────────────────────
@@ -363,6 +390,22 @@ export function setupAuthListeners(startListening: AppStartListening) {
       api.dispatch(setSellerSession(action.payload));
     },
   });
+
+  startListening({
+    matcher: apiSlice.endpoints.loginCustomer.matchFulfilled,
+    effect: (action, api) => {
+      setToken(action.payload.token);
+      api.dispatch(setCustomerSession(action.payload.customer));
+    },
+  });
+
+  startListening({
+    matcher: apiSlice.endpoints.signupCustomer.matchFulfilled,
+    effect: (action, api) => {
+      setToken(action.payload.token);
+      api.dispatch(setCustomerSession(action.payload.customer));
+    },
+  });
 }
 
 /* ── Exports ────────────────────────────────────────────────────────────── */
@@ -371,6 +414,8 @@ export const {
   useLoginSellerMutation,
   useSignupSellerMutation,
   useLoginAdminMutation,
+  useLoginCustomerMutation,
+  useSignupCustomerMutation,
   useGetMeQuery,
   useTrackWhatsappClickMutation,
   useGetPublicStoresQuery,
@@ -387,6 +432,10 @@ export const {
   useGetPaymentConfigQuery,
   useGetSellerOrdersQuery,
   useUpdateOrderStatusMutation,
+  useGetMyOrdersCustomerQuery,
+  useGetWishlistQuery,
+  useAddToWishlistMutation,
+  useRemoveFromWishlistMutation,
   useGetSellerQuery,
   useGetMyStoreQuery,
   useGetMyProductsQuery,

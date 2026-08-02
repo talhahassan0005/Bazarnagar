@@ -16,6 +16,7 @@ import {
 import { getProductReviews, createReview } from "../controllers/reviewController";
 import { getPlanConfig } from "../controllers/adminController";
 import { getActiveBanners } from "../controllers/bannerController";
+import { optionalAuthenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -29,10 +30,10 @@ router.get("/products/:id", getProduct);
 router.post("/products/:id/whatsapp-click", trackWhatsappClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
-router.post("/orders", createOrder);
+router.post("/orders", optionalAuthenticate, createOrder);
 router.get("/orders/by-ids", getOrdersByIds);
 router.get("/payment-config", getPaymentConfig);
-router.post("/stripe/checkout", createStripeCheckout);
+router.post("/stripe/checkout", optionalAuthenticate, createStripeCheckout);
 router.post("/stripe/mock-confirm", mockConfirmOrder);
 
 export default router;

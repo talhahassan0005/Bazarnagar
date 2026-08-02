@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { PackageSearch } from "lucide-react";
 import { Card, EmptyState, Skeleton, Button } from "@/components/ui";
-import { useGetOrdersByIdsQuery } from "@/store/apiSlice";
+import { useGetOrdersByIdsQuery, useGetMyOrdersCustomerQuery } from "@/store/apiSlice";
+import { useAppSelector } from "@/store/hooks";
 import { getRememberedOrderIds } from "@/lib/orderHistory";
 import { formatPrice } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/lib/types";
@@ -72,17 +73,26 @@ function OrderCard({ order }: { order: Order }) {
 }
 
 export default function MyOrdersPage() {
+  const role = useAppSelector((s) => s.auth.role);
+  const authReady = useAppSelector((s) => s.auth.ready);
+  const isCustomer = role === "customer";
+
   const [orderIds, setOrderIds] = useState<string[] | null>(null);
 
   useEffect(() => {
     setOrderIds(getRememberedOrderIds());
   }, []);
 
-  const { data: orders, isFetching, refetch } = useGetOrdersByIdsQuery(orderIds ?? [], {
-    skip: !orderIds || orderIds.length === 0,
+  const guestQuery = useGetOrdersByIdsQuery(orderIds ?? [], {
+    skip: !authReady || isCustomer || !orderIds || orderIds.length === 0,
   });
+  const accountQuery = useGetMyOrdersCustomerQuery(undefined, { skip: !authReady || !isCustomer });
 
-  const loading = orderIds === null || isFetching;
+  const { orders, isFetching, refetch } = isCustomer
+    ? { orders: accountQuery.data, isFetching: accountQuery.isFetching, refetch: accountQuery.refetch }
+    : { orders: guestQuery.data, isFetching: guestQuery.isFetching, refetch: guestQuery.refetch };
+
+  const loading = !authReady || orderIds === null || isFetching;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
@@ -90,10 +100,12 @@ export default function MyOrdersPage() {
         <div>
           <h1 className="text-2xl font-bold text-brand-900">My orders</h1>
           <p className="mt-1 text-sm text-slate-500">
-            No account needed — this remembers orders placed from this browser only.
+            {isCustomer
+              ? "Every order placed with your account."
+              : "No account needed — this remembers orders placed from this browser only."}
           </p>
         </div>
-        {orderIds && orderIds.length > 0 && (
+        {orders && orders.length > 0 && (
           <Button size="sm" variant="outline" onClick={() => refetch()} loading={isFetching}>
             Refresh
           </Button>
@@ -108,11 +120,15 @@ export default function MyOrdersPage() {
           </>
         )}
 
-        {!loading && (!orderIds || orderIds.length === 0) && (
+        {!loading && (!orders || orders.length === 0) && (
           <EmptyState
             icon={<PackageSearch className="h-6 w-6" />}
             title="No orders yet"
-            description="Orders you place will show up here automatically — on this device."
+            description={
+              isCustomer
+                ? "Orders you place with your account will show up here."
+                : "Orders you place will show up here automatically — on this device."
+            }
             action={<Button href="/search">Browse products</Button>}
           />
         )}
@@ -120,7 +136,8 @@ export default function MyOrdersPage() {
         {!loading && orders && orders.length > 0 && (
           <>
             <p className="text-sm text-slate-500">
-              {orders.length} order{orders.length === 1 ? "" : "s"} from this device.
+              {orders.length} order{orders.length === 1 ? "" : "s"}
+              {isCustomer ? "" : " from this device"}.
             </p>
             {orders.map((order) => (
               <OrderCard key={order.id} order={order} />

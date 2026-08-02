@@ -69,6 +69,7 @@ export default function CheckoutPage() {
   const { data: payConfig } = useGetPaymentConfigQuery();
   const hosted = Boolean(payConfig?.hosted);
 
+  const customer = useAppSelector((s) => s.auth.customer);
   const [form, setForm] = useState({
     customerName: "",
     customerPhone: "",
@@ -79,6 +80,18 @@ export default function CheckoutPage() {
   });
   const set = (key: keyof typeof form, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  // Prefill from the logged-in customer's account (once, doesn't overwrite edits).
+  useEffect(() => {
+    if (!customer) return;
+    setForm((f) => ({
+      ...f,
+      customerName: f.customerName || customer.name,
+      customerPhone: f.customerPhone || customer.phone,
+      customerEmail: f.customerEmail || customer.email,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer?.id]);
 
   // Inline payment-detail fields (test/demo — in production these come from
   // Stripe's secure hosted checkout, never stored by us).

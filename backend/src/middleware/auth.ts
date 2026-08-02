@@ -37,6 +37,19 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
   }
 }
 
+/** Verifies the JWT and attaches `req.user` if present/valid; never rejects. */
+export function optionalAuthenticate(req: Request, _res: Response, next: NextFunction) {
+  const token = readToken(req);
+  if (!token) return next();
+  try {
+    const payload = verifyToken(token);
+    req.user = { id: payload.sub, role: payload.role };
+  } catch {
+    // ignore invalid/expired token — request proceeds as a guest
+  }
+  next();
+}
+
 /** Requires the authenticated user to have one of the given roles. */
 export function requireRole(...roles: AuthRole[]) {
   return (req: Request, _res: Response, next: NextFunction) => {

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { Seller } from "../models/Seller";
 import { Admin } from "../models/Admin";
+import { Customer } from "../models/Customer";
 import { Store } from "../models/Store";
 import { signToken } from "../lib/jwt";
 import { addTrialPeriod } from "../lib/plans";
@@ -67,6 +68,33 @@ export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
   res.json({ token, admin: admin.toJSON() });
 });
 
+/** POST /api/auth/customer/signup — register a new customer (buyer). */
+export const signupCustomer = asyncHandler(async (req: Request, res: Response) => {
+  const data = signupSchema.parse(req.body);
+  const passwordHash = await bcrypt.hash(data.password, 10);
+
+  const customer = await Customer.create({
+    name: data.name,
+    phone: data.phone,
+    email: data.email,
+    passwordHash,
+  });
+
+  const token = signToken({ sub: customer.id, role: "customer" });
+  res.status(201).json({ token, customer: customer.toJSON() });
+});
+
+/** POST /api/auth/customer/login — customer login. */
+export const loginCustomer = asyncHandler(async (req: Request, res: Response) => {
+  const data = loginSchema.parse(req.body);
+  const customer = await Customer.findOne({ email: data.email });
+  if (!customer || !(await customer.comparePassword(data.password))) {
+    throw new ApiError(401, "Invalid email or password");
+  }
+  const token = signToken({ sub: customer.id, role: "customer" });
+  res.json({ token, customer: customer.toJSON() });
+});
+
 /** GET /api/auth/me — current authenticated identity. */
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw new ApiError(401, "Authentication required");
@@ -74,6 +102,11 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
     const admin = await Admin.findById(req.user.id);
     if (!admin) throw new ApiError(404, "Admin not found");
     return res.json({ role: "admin", admin: admin.toJSON() });
+  }
+  if (req.user.role === "customer") {
+    const customer = await Customer.findById(req.user.id);
+    if (!customer) throw new ApiError(404, "Customer not found");
+    return res.json({ role: "customer", customer: customer.toJSON() });
   }
   const seller = await Seller.findById(req.user.id);
   if (!seller) throw new ApiError(404, "Seller not found");

@@ -241,6 +241,17 @@ export interface ManualPaymentSettings {
   instructions?: string;
 }
 
+/* --------------------------------- Customer -------------------------------- */
+
+/** A buyer account — separate from Seller/Admin. */
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  createdAt: string;
+}
+
 /* ---------------------------------- Cart ---------------------------------- */
 
 /** A line in the browser-side cart (no customer accounts). */

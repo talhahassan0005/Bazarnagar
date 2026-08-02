@@ -21,6 +21,8 @@ export interface OrderItem {
 
 export interface OrderDoc extends Document {
   storeId: Types.ObjectId;
+  /** Set when the order was placed by a logged-in customer account. */
+  customerId?: Types.ObjectId;
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
@@ -53,6 +55,7 @@ const orderItemSchema = new Schema<OrderItem>(
 const orderSchema = new Schema<OrderDoc>(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
+    customerId: { type: Schema.Types.ObjectId, ref: "Customer", index: true },
     customerName: { type: String, required: true, trim: true },
     customerPhone: { type: String, required: true, trim: true },
     customerEmail: { type: String, trim: true, lowercase: true },

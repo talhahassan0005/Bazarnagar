@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui";
 import { ProductImage } from "./ProductImage";
 import { StockBadge, DeliveryBadge } from "./StatusBadges";
 import { WhatsAppButton } from "./WhatsAppButton";
+import { WishlistButton } from "./WishlistButton";
 import { AddToCartButton } from "@/components/storefront/CartButtons";
 import type { Product, Store } from "@/lib/types";
 import {
@@ -55,6 +56,7 @@ export function ProductCard({
             </span>
           </div>
         )}
+        <WishlistButton productId={product.id} className="absolute right-2 top-2" />
       </Link>
 
       <div className="flex flex-1 flex-col p-3">

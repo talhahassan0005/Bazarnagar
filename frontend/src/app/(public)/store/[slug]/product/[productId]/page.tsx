@@ -7,6 +7,7 @@ import { Badge, Button, EmptyState, LoadingPanel } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
 import { WhatsAppButton } from "@/components/domain/WhatsAppButton";
 import { StockBadge, DeliveryBadge } from "@/components/domain/StatusBadges";
+import { WishlistButton } from "@/components/domain/WishlistButton";
 import { StarRating } from "@/components/storefront/StarRating";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButtons";
@@ -65,6 +66,7 @@ export default function ProductDetailPage() {
                 {product.condition}
               </Badge>
             )}
+            <WishlistButton productId={product.id} className="ml-auto" />
           </div>
 
           <h1 className="mt-3 text-2xl font-bold text-slate-900">{product.name}</h1>

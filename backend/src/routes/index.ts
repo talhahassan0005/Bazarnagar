@@ -4,6 +4,7 @@ import publicRoutes from "./public.routes";
 import sellerRoutes from "./seller.routes";
 import adminRoutes from "./admin.routes";
 import uploadRoutes from "./upload.routes";
+import customerRoutes from "./customer.routes";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/public", publicRoutes);
 router.use("/seller", sellerRoutes);
 router.use("/admin", adminRoutes);
 router.use("/upload", uploadRoutes);
+router.use("/customer", customerRoutes);
 
 export default router;
