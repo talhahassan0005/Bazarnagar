@@ -13,5 +13,7 @@ export function buildCartItem(product: Product, store: Store, quantity = 1): Car
     storeName: store.name,
     storeSlug: store.slug,
     whatsapp: store.whatsapp,
+    deliveryOption: product.deliveryOption,
+    deliveryFee: product.deliveryFee,
   };
 }

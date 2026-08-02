@@ -5,6 +5,7 @@ import { Product } from "../models/Product";
 import { Store } from "../models/Store";
 import { Seller } from "../models/Seller";
 import { ApiError, asyncHandler } from "../lib/helpers";
+import { computeDeliveryFee } from "../lib/delivery";
 
 /** The price actually charged (discount if present and lower). */
 function effectivePrice(price: number, discountPrice?: number): number {
@@ -36,7 +37,8 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   if (!store) throw new ApiError(404, "Store not found");
 
   const items = [];
-  let total = 0;
+  const products = [];
+  let subtotal = 0;
   for (const line of data.items) {
     const product = await Product.findOne({
       _id: line.productId,
@@ -53,8 +55,10 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       quantity: line.quantity,
       image: product.images[0],
     });
-    total += price * line.quantity;
+    products.push(product);
+    subtotal += price * line.quantity;
   }
+  const deliveryFee = computeDeliveryFee(products);
 
   const order = await Order.create({
     storeId: store._id,
@@ -65,7 +69,9 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
     customerCity: data.customerCity,
     note: data.note,
     items,
-    total,
+    subtotal,
+    deliveryFee,
+    total: subtotal + deliveryFee,
   });
 
   res.status(201).json(order.toJSON());

@@ -35,7 +35,8 @@ const EMPTY: ProductFormValues = {
   status: "active",
   negotiable: false,
   condition: "new",
-  deliveryAvailable: false,
+  deliveryOption: "available",
+  deliveryFee: undefined,
 };
 
 /**
@@ -253,12 +254,28 @@ export function ProductForm({
               checked={v.negotiable}
               onChange={(val) => set("negotiable", val)}
             />
-            <Toggle
-              label="Delivery available"
-              checked={!!v.deliveryAvailable}
-              onChange={(val) => set("deliveryAvailable", val)}
-            />
           </div>
+
+          <Select
+            label="Delivery"
+            value={v.deliveryOption}
+            onChange={(e) => set("deliveryOption", e.target.value as ProductFormValues["deliveryOption"])}
+            options={[
+              { value: "available", label: "Available" },
+              { value: "not_available", label: "Not available" },
+              { value: "negotiable", label: "Negotiable" },
+            ]}
+          />
+          {v.deliveryOption === "available" && (
+            <Input
+              label="Delivery fee (Rs.)"
+              type="number"
+              min={0}
+              placeholder="0 = free delivery"
+              value={v.deliveryFee ?? ""}
+              onChange={(e) => set("deliveryFee", e.target.value ? Number(e.target.value) : undefined)}
+            />
+          )}
 
           <div className="sm:col-span-2">
             <Button

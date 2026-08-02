@@ -95,7 +95,7 @@ async function run() {
       status: "active" as const,
       negotiable: false,
       condition: "new" as const,
-      deliveryAvailable: true,
+      deliveryOption: "available" as const,
       lat: Number((base.lat + jitter()).toFixed(6)),
       lng: Number((base.lng + jitter()).toFixed(6)),
       moderationStatus: "approved" as const,

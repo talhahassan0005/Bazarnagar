@@ -28,6 +28,10 @@ export interface OrderDoc extends Document {
   customerCity: string;
   note?: string;
   items: OrderItem[];
+  /** Sum of item prices only (before delivery fee). */
+  subtotal: number;
+  /** Flat delivery fee added on top of subtotal (sum of each distinct product's fee). */
+  deliveryFee: number;
   total: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
@@ -56,6 +60,8 @@ const orderSchema = new Schema<OrderDoc>(
     customerCity: { type: String, required: true },
     note: String,
     items: { type: [orderItemSchema], required: true },
+    subtotal: { type: Number, required: true, min: 0 },
+    deliveryFee: { type: Number, required: true, min: 0, default: 0 },
     total: { type: Number, required: true, min: 0 },
     status: {
       type: String,

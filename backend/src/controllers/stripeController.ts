@@ -10,6 +10,7 @@ import { getPlan, addBillingPeriod } from "../lib/plans";
 import { env } from "../config/env";
 import { ApiError, asyncHandler } from "../lib/helpers";
 import { stripe, stripeEnabled, createOrderCheckoutSession, constructWebhookEvent } from "../lib/stripe";
+import { computeDeliveryFee } from "../lib/delivery";
 import type { PlanId } from "../models/Seller";
 
 const checkoutSchema = z.object({
@@ -40,7 +41,8 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
   if (!store) throw new ApiError(404, "Store not found");
 
   const items = [];
-  let total = 0;
+  const products = [];
+  let subtotal = 0;
   for (const line of data.items) {
     const product = await Product.findOne({
       _id: line.productId,
@@ -57,8 +59,11 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
       quantity: line.quantity,
       image: product.images[0],
     });
-    total += price * line.quantity;
+    products.push(product);
+    subtotal += price * line.quantity;
   }
+  const deliveryFee = computeDeliveryFee(products);
+  const total = subtotal + deliveryFee;
 
   const order = await Order.create({
     storeId: store._id,
@@ -69,6 +74,8 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
     customerCity: data.customerCity,
     note: data.note,
     items,
+    subtotal,
+    deliveryFee,
     total,
     paymentMethod: "online",
     paymentStatus: "unpaid",

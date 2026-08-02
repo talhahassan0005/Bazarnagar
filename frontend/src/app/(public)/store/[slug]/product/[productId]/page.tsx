@@ -6,7 +6,7 @@ import { ChevronRight, Eye, PlayCircle, Store as StoreIcon } from "lucide-react"
 import { Badge, Button, EmptyState, LoadingPanel } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
 import { WhatsAppButton } from "@/components/domain/WhatsAppButton";
-import { StockBadge } from "@/components/domain/StatusBadges";
+import { StockBadge, DeliveryBadge } from "@/components/domain/StatusBadges";
 import { StarRating } from "@/components/storefront/StarRating";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButtons";
@@ -59,6 +59,7 @@ export default function ProductDetailPage() {
             <Badge tone="brand">{product.category}</Badge>
             <StockBadge status={product.stockStatus} />
             {product.negotiable && <Badge tone="amber">Negotiable</Badge>}
+            <DeliveryBadge option={product.deliveryOption} fee={product.deliveryFee} />
             {product.condition && (
               <Badge tone="gray" className="capitalize">
                 {product.condition}

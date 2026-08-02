@@ -4,6 +4,7 @@ import { baseSchemaOptions } from "./_base";
 export type StockStatus = "in_stock" | "out_of_stock";
 export type ProductStatus = "active" | "inactive";
 export type ProductCondition = "new" | "used";
+export type DeliveryOption = "available" | "not_available" | "negotiable";
 export type ModerationStatus =
   | "pending"
   | "approved"
@@ -25,7 +26,9 @@ export interface ProductDoc extends Document {
   status: ProductStatus;
   negotiable: boolean;
   condition?: ProductCondition;
-  deliveryAvailable?: boolean;
+  deliveryOption: DeliveryOption;
+  /** Flat delivery fee for this product (PKR). Ignored when deliveryOption is "negotiable" or "not_available". */
+  deliveryFee?: number;
   /** Optional per-product location (falls back to the store's location). */
   lat?: number;
   lng?: number;
@@ -57,7 +60,12 @@ const productSchema = new Schema<ProductDoc>(
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     negotiable: { type: Boolean, default: false },
     condition: { type: String, enum: ["new", "used"] },
-    deliveryAvailable: Boolean,
+    deliveryOption: {
+      type: String,
+      enum: ["available", "not_available", "negotiable"],
+      default: "available",
+    },
+    deliveryFee: { type: Number, min: 0 },
     lat: Number,
     lng: Number,
     moderationStatus: {

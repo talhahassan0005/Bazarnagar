@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Navigation } from "lucide-react";
 import { Badge } from "@/components/ui";
 import { ProductImage } from "./ProductImage";
-import { StockBadge } from "./StatusBadges";
+import { StockBadge, DeliveryBadge } from "./StatusBadges";
 import { WhatsAppButton } from "./WhatsAppButton";
 import { AddToCartButton } from "@/components/storefront/CartButtons";
 import type { Product, Store } from "@/lib/types";
@@ -75,8 +75,9 @@ export function ProductCard({
           )}
         </div>
 
-        <div className="mt-2">
+        <div className="mt-2 flex flex-wrap gap-1">
           <StockBadge status={product.stockStatus} />
+          <DeliveryBadge option={product.deliveryOption} fee={product.deliveryFee} />
         </div>
 
         {typeof distanceKm === "number" && (

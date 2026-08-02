@@ -1,10 +1,12 @@
 import { MODERATION_META } from "@/lib/constants";
 import type {
+  DeliveryOption,
   ModerationStatus,
   ProductStatus,
   StockStatus,
   SubscriptionStatus,
 } from "@/lib/types";
+import { formatPrice } from "@/lib/utils";
 import { Badge, type BadgeTone } from "@/components/ui";
 
 export function ModerationBadge({ status }: { status: ModerationStatus }) {
@@ -48,6 +50,17 @@ export function SubscriptionBadge({ status }: { status: SubscriptionStatus }) {
   return (
     <Badge tone={SUBSCRIPTION_TONE[status]} className="capitalize">
       {status}
+    </Badge>
+  );
+}
+
+/** Delivery availability tag for a product ("Available" / "Not available" / "Negotiable"). */
+export function DeliveryBadge({ option, fee }: { option: DeliveryOption; fee?: number }) {
+  if (option === "not_available") return <Badge tone="gray">No delivery</Badge>;
+  if (option === "negotiable") return <Badge tone="amber">Delivery negotiable</Badge>;
+  return (
+    <Badge tone="blue">
+      {fee ? `Delivery ${formatPrice(fee)}` : "Free delivery"}
     </Badge>
   );
 }

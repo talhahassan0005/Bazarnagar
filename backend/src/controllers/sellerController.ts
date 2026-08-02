@@ -190,7 +190,8 @@ const productSchema = z.object({
   status: z.enum(["active", "inactive"]).default("active"),
   negotiable: z.boolean().default(false),
   condition: z.enum(["new", "used"]).optional(),
-  deliveryAvailable: z.boolean().optional(),
+  deliveryOption: z.enum(["available", "not_available", "negotiable"]).default("available"),
+  deliveryFee: z.number().nonnegative().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
 });

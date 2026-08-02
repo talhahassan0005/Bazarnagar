@@ -49,8 +49,14 @@ function groupByStore(items: CartItem[]): StoreGroup[] {
   return [...map.values()];
 }
 
-const groupTotal = (g: StoreGroup) =>
+const groupSubtotal = (g: StoreGroup) =>
   g.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+/** Sum of each distinct product's delivery fee once (not per unit) — mirrors the server. */
+const groupDeliveryFee = (g: StoreGroup) =>
+  g.items.reduce((sum, i) => sum + (i.deliveryOption === "available" ? (i.deliveryFee ?? 0) : 0), 0);
+
+const groupTotal = (g: StoreGroup) => groupSubtotal(g) + groupDeliveryFee(g);
 
 export default function CheckoutPage() {
   const dispatch = useAppDispatch();
@@ -357,7 +363,19 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
-          <div className="mt-4 flex justify-between border-t border-slate-100 pt-3">
+          <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-sm">
+            <div className="flex justify-between text-slate-600">
+              <span>Subtotal</span>
+              <span>{formatPrice(groups.reduce((s, g) => s + groupSubtotal(g), 0))}</span>
+            </div>
+            {groups.reduce((s, g) => s + groupDeliveryFee(g), 0) > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Delivery fee</span>
+                <span>{formatPrice(groups.reduce((s, g) => s + groupDeliveryFee(g), 0))}</span>
+              </div>
+            )}
+          </div>
+          <div className="mt-2 flex justify-between border-t border-slate-100 pt-3">
             <span className="font-medium text-slate-700">Total</span>
             <span className="text-lg font-bold text-brand-900">
               {formatPrice(groups.reduce((s, g) => s + groupTotal(g), 0))}

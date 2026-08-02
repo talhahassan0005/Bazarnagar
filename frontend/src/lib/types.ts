@@ -123,6 +123,7 @@ export interface Store {
 export type StockStatus = "in_stock" | "out_of_stock";
 export type ProductStatus = "active" | "inactive";
 export type ProductCondition = "new" | "used";
+export type DeliveryOption = "available" | "not_available" | "negotiable";
 
 export type ModerationStatus =
   | "pending"
@@ -146,7 +147,9 @@ export interface Product {
   status: ProductStatus;
   negotiable: boolean;
   condition?: ProductCondition;
-  deliveryAvailable?: boolean;
+  deliveryOption: DeliveryOption;
+  /** Flat delivery fee (PKR). Ignored when deliveryOption is "negotiable" or "not_available". */
+  deliveryFee?: number;
   /** Optional per-product location (falls back to the store's location). */
   lat?: number;
   lng?: number;
@@ -252,6 +255,10 @@ export interface CartItem {
   storeName: string;
   storeSlug: string;
   whatsapp: string;
+  // Delivery — shown as an estimate in the cart; the server computes the
+  // authoritative total (once per distinct product, not per unit).
+  deliveryOption?: DeliveryOption;
+  deliveryFee?: number;
 }
 
 /* --------------------------------- Orders --------------------------------- */
@@ -287,6 +294,8 @@ export interface Order {
   customerCity: string;
   note?: string;
   items: OrderItem[];
+  subtotal: number;
+  deliveryFee: number;
   total: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
