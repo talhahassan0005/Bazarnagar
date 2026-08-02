@@ -25,6 +25,7 @@ import {
   createPaymentRequest,
   getMyPaymentRequests,
 } from "../controllers/paymentRequestController";
+import { getSellerConversations, getMessages } from "../controllers/chatController";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
@@ -56,5 +57,8 @@ router.post("/products/:id/boost", boostProduct);
 
 router.get("/orders", getSellerOrders);
 router.patch("/orders/:id/status", updateOrderStatus);
+
+router.get("/conversations", getSellerConversations);
+router.get("/conversations/:id/messages", getMessages);
 
 export default router;

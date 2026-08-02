@@ -9,6 +9,7 @@ import { Button } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/authSlice";
 import { clearToken } from "@/lib/api";
+import { disconnectChatSocket } from "@/lib/socket";
 
 /** Top navigation for public/customer-facing pages. */
 export function PublicNavbar() {
@@ -20,6 +21,7 @@ export function PublicNavbar() {
 
   function handleLogout() {
     clearToken();
+    disconnectChatSocket();
     dispatch(logout());
     router.push("/");
   }

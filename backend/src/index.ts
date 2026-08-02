@@ -1,8 +1,10 @@
+import http from "http";
 import bcrypt from "bcryptjs";
 import { createApp } from "./app";
 import { connectDB } from "./db/connect";
 import { env } from "./config/env";
 import { startSubscriptionScheduler } from "./lib/subscriptionScheduler";
+import { initSocket } from "./lib/socket";
 import { Admin } from "./models/Admin";
 
 async function ensureAdmin() {
@@ -19,7 +21,9 @@ async function start() {
     await connectDB();
     await ensureAdmin();
     const app = createApp();
-    app.listen(env.port, () => {
+    const server = http.createServer(app);
+    initSocket(server);
+    server.listen(env.port, () => {
       console.log(`✓ Bazaarnagar API running on http://localhost:${env.port}`);
       console.log(`  Health check: http://localhost:${env.port}/api/health`);
       startSubscriptionScheduler();

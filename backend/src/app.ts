@@ -6,20 +6,7 @@ import routes from "./routes";
 import { UPLOAD_DIR } from "./middleware/upload";
 import { notFound, errorHandler } from "./middleware/error";
 import { stripeWebhook } from "./controllers/stripeController";
-
-// Origins explicitly allowed via CLIENT_ORIGIN (comma-separated supported).
-const allowedOrigins = new Set(
-  env.clientOrigin
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-);
-
-/** Allow configured origins plus any localhost/127.0.0.1 port in development. */
-function isAllowedOrigin(origin: string): boolean {
-  if (allowedOrigins.has(origin)) return true;
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-}
+import { isAllowedOrigin } from "./lib/corsOrigins";
 
 export function createApp() {
   const app = express();

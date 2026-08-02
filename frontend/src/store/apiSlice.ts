@@ -6,6 +6,8 @@ import type {
   AdminReview,
   Banner,
   BannerPlacement,
+  ChatMessage,
+  Conversation,
   CreateOrderInput,
   Customer,
   DashboardMetrics,
@@ -60,7 +62,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -167,6 +169,26 @@ export const apiSlice = createApi({
     removeFromWishlist: builder.mutation<{ ok: boolean }, string>({
       query: (productId) => ({ url: `/customer/wishlist/${productId}`, method: "DELETE" }),
       invalidatesTags: ["Wishlist"],
+    }),
+
+    // ── Chat ──────────────────────────────────────────────────────────────
+    startConversation: builder.mutation<Conversation, { storeId: string; productId?: string; productName?: string }>({
+      query: (body) => ({ url: "/customer/conversations", method: "POST", body }),
+      invalidatesTags: ["Conversation"],
+    }),
+    getMyConversations: builder.query<Conversation[], void>({
+      query: () => "/customer/conversations",
+      providesTags: ["Conversation"],
+    }),
+    getCustomerMessages: builder.query<ChatMessage[], string>({
+      query: (conversationId) => `/customer/conversations/${conversationId}/messages`,
+    }),
+    getSellerConversations: builder.query<Conversation[], void>({
+      query: () => "/seller/conversations",
+      providesTags: ["Conversation"],
+    }),
+    getSellerMessages: builder.query<ChatMessage[], string>({
+      query: (conversationId) => `/seller/conversations/${conversationId}/messages`,
     }),
 
     // ── Seller ────────────────────────────────────────────────────────────
@@ -436,6 +458,11 @@ export const {
   useGetWishlistQuery,
   useAddToWishlistMutation,
   useRemoveFromWishlistMutation,
+  useStartConversationMutation,
+  useGetMyConversationsQuery,
+  useGetCustomerMessagesQuery,
+  useGetSellerConversationsQuery,
+  useGetSellerMessagesQuery,
   useGetSellerQuery,
   useGetMyStoreQuery,
   useGetMyProductsQuery,

@@ -12,6 +12,7 @@ import { StoreContact } from "@/components/storefront/StoreContact";
 import { useGetStoreBySlugQuery, useGetStoreProductsQuery } from "@/store/apiSlice";
 import { resolveLanding } from "@/lib/landing";
 import { StorefrontAdLayout } from "@/components/storefront/StorefrontAdLayout";
+import { ChatWidget } from "@/components/domain/ChatWidget";
 
 export default function PublicStorePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -65,6 +66,7 @@ export default function PublicStorePage() {
         <div className="mt-6">
           <StoreCatalog store={store.data} />
         </div>
+        <ChatWidget storeId={store.data.id} storeName={store.data.name} />
       </div>
     );
   }
@@ -81,6 +83,7 @@ export default function PublicStorePage() {
       </section>
       {landing.showAbout && <StoreAbout landing={landing} />}
       {landing.showContact && <StoreContact store={store.data} landing={landing} />}
+      <ChatWidget storeId={store.data.id} storeName={store.data.name} />
     </>
   );
 }

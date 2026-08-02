@@ -8,6 +8,7 @@ import { ImageGallery } from "@/components/domain/ImageGallery";
 import { WhatsAppButton } from "@/components/domain/WhatsAppButton";
 import { StockBadge, DeliveryBadge } from "@/components/domain/StatusBadges";
 import { WishlistButton } from "@/components/domain/WishlistButton";
+import { ChatWidget } from "@/components/domain/ChatWidget";
 import { StarRating } from "@/components/storefront/StarRating";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButtons";
@@ -160,6 +161,8 @@ export default function ProductDetailPage() {
       <ProductReviews productId={product.id} />
 
       <RelatedProducts storeId={store.id} currentProductId={product.id} category={product.category} store={store} />
+
+      <ChatWidget storeId={store.id} storeName={store.name} productId={product.id} productName={product.name} />
     </div>
   );
 }

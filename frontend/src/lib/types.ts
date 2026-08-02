@@ -345,6 +345,33 @@ export interface Banner {
   createdAt: string;
 }
 
+/* ---------------------------------- Chat ----------------------------------- */
+
+export type MessageSender = "customer" | "seller";
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderRole: MessageSender;
+  text: string;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  storeId: string;
+  customerId: string;
+  productId?: string;
+  productName?: string;
+  lastMessageText?: string;
+  lastMessageAt?: string;
+  createdAt: string;
+  /** Present on customer-side listings (joined server-side). */
+  store?: Pick<Store, "id" | "name" | "slug" | "logoUrl">;
+  /** Present on seller-side listings (joined server-side). */
+  customer?: Pick<Customer, "id" | "name" | "phone">;
+}
+
 export interface DashboardMetrics {
   productsUsed: number;
   productLimit: number;

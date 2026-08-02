@@ -6,6 +6,7 @@ import {
   BarChart3,
   CreditCard,
   LayoutDashboard,
+  MessageCircle,
   Package,
   Settings,
   ShoppingBag,
@@ -24,6 +25,7 @@ const NAV: NavItem[] = [
   { label: "Landing Page", href: "/dashboard/landing", icon: Sparkles },
   { label: "Products", href: "/dashboard/products", icon: Package },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
+  { label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Plan & Billing", href: "/dashboard/plan", icon: CreditCard },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
@@ -39,7 +41,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
 
   // Once the session is resolved, bounce non-sellers to login.
   useEffect(() => {
-    if (ready && role !== "seller") router.replace("/login");
+    if (ready && role !== "seller") router.replace("/login?role=seller");
   }, [ready, role, router]);
 
   // Don't render the dashboard (or fire seller queries) until authenticated.
