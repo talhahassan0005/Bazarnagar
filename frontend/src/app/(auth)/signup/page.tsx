@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
@@ -11,6 +11,14 @@ import { useSignupSellerMutation, useSignupCustomerMutation } from "@/store/apiS
 import { getErrorMessage } from "@/lib/utils";
 
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
