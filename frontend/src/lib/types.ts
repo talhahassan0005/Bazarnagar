@@ -206,6 +206,38 @@ export interface Payment {
   notes?: string;
 }
 
+/* ---------------------------- Manual Payments ------------------------------ */
+
+export type PaymentRequestStatus = "pending" | "approved" | "rejected";
+export type PaymentRequestMethod = "bank" | "jazzcash" | "easypaisa";
+
+/** Seller-submitted manual subscription payment awaiting admin verification. */
+export interface PaymentRequest {
+  id: string;
+  sellerId: string;
+  /** Present on admin listings (joined server-side). */
+  sellerName?: string;
+  sellerEmail?: string;
+  planId: PlanId;
+  amount: number;
+  method: PaymentRequestMethod;
+  reference: string;
+  proofUrl?: string;
+  status: PaymentRequestStatus;
+  reviewNote?: string;
+  createdAt: string;
+}
+
+/** Admin-configured bank/JazzCash/EasyPaisa details shown to sellers. */
+export interface ManualPaymentSettings {
+  bankAccountTitle?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  jazzcashNumber?: string;
+  easypaisaNumber?: string;
+  instructions?: string;
+}
+
 /* ---------------------------------- Cart ---------------------------------- */
 
 /** A line in the browser-side cart (no customer accounts). */

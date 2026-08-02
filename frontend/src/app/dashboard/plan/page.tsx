@@ -7,6 +7,7 @@ import { Button, Card, CardBody, CardHeader, Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
+import { ManualPaymentModal } from "@/components/domain/ManualPaymentModal";
 import { useAppDispatch } from "@/store/hooks";
 import {
   useGetSellerQuery,
@@ -16,6 +17,7 @@ import {
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
   useGetPublicPlanConfigQuery,
+  useGetMyPaymentRequestsQuery,
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
 import { PLANS } from "@/lib/constants";
@@ -83,10 +85,12 @@ export default function PlanPage() {
   const sub = useGetSubscriptionStatusQuery();
   const payments = useGetMyPaymentsQuery();
   const planConfig = useGetPublicPlanConfigQuery();
+  const manualRequests = useGetMyPaymentRequestsQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
 
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [manualPaymentOpen, setManualPaymentOpen] = useState(false);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function clearPendingPoll() {
@@ -276,6 +280,16 @@ export default function PlanPage() {
           )}
           <StatusBanner status={status} endsAt={endsAt} daysRemaining={daysRemaining} />
 
+          {manualRequests.data?.some((r) => r.status === "pending") && (
+            <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <RefreshCw className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Your manual payment is awaiting verification — we&apos;ll activate your plan once
+                it&apos;s confirmed, usually within a few hours.
+              </span>
+            </div>
+          )}
+
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <div className="flex flex-wrap items-baseline gap-2">
@@ -336,7 +350,26 @@ export default function PlanPage() {
 
       <p className="mt-4 text-center text-xs text-slate-400">
         Payments processed securely via Stripe · Card. Cancel anytime — access continues until period end.
+        {" "}
+        <button
+          type="button"
+          onClick={() => setManualPaymentOpen(true)}
+          className="font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800"
+        >
+          Prefer bank transfer / JazzCash / EasyPaisa?
+        </button>
       </p>
+
+      {manualPaymentOpen && (
+        <ManualPaymentModal
+          plans={planList}
+          defaultPlanId={current.id}
+          onClose={() => {
+            setManualPaymentOpen(false);
+            manualRequests.refetch();
+          }}
+        />
+      )}
 
       {payments.data && payments.data.length > 0 && (
         <div className="mt-10">

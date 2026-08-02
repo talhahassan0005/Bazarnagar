@@ -8,10 +8,14 @@ import type {
   BannerPlacement,
   CreateOrderInput,
   DashboardMetrics,
+  ManualPaymentSettings,
   ModerationStatus,
   Order,
   OrderStatus,
   Payment,
+  PaymentRequest,
+  PaymentRequestMethod,
+  PaymentRequestStatus,
   Plan,
   PlanId,
   Product,
@@ -53,7 +57,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -213,6 +217,30 @@ export const apiSlice = createApi({
     getMyPayments: builder.query<Payment[], void>({
       query: () => "/seller/payments",
       providesTags: ["Payment"],
+    }),
+
+    // ── Manual payments ───────────────────────────────────────────────────
+    getManualPaymentSettings: builder.query<ManualPaymentSettings, void>({
+      query: () => "/seller/manual-payment-settings",
+    }),
+    createPaymentRequest: builder.mutation<PaymentRequest, { planId: PlanId; method: PaymentRequestMethod; reference: string; proofUrl?: string }>({
+      query: (body) => ({ url: "/seller/subscription/manual-request", method: "POST", body }),
+      invalidatesTags: ["PaymentRequest"],
+    }),
+    getMyPaymentRequests: builder.query<PaymentRequest[], void>({
+      query: () => "/seller/subscription/manual-requests",
+      providesTags: ["PaymentRequest"],
+    }),
+    getAllPaymentRequests: builder.query<PaymentRequest[], void>({
+      query: () => "/admin/payment-requests",
+      providesTags: ["PaymentRequest"],
+    }),
+    reviewPaymentRequest: builder.mutation<PaymentRequest, { id: string; status: PaymentRequestStatus; reviewNote?: string }>({
+      query: ({ id, ...body }) => ({ url: `/admin/payment-requests/${id}`, method: "PATCH", body }),
+      invalidatesTags: ["PaymentRequest", "Seller", "Payment"],
+    }),
+    updateManualPaymentSettings: builder.mutation<ManualPaymentSettings, ManualPaymentSettings>({
+      query: (body) => ({ url: "/admin/manual-payment-settings", method: "PATCH", body }),
     }),
 
     // ── Admin ─────────────────────────────────────────────────────────────
@@ -376,6 +404,12 @@ export const {
   useToggleAutoRenewMutation,
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
+  useGetManualPaymentSettingsQuery,
+  useCreatePaymentRequestMutation,
+  useGetMyPaymentRequestsQuery,
+  useGetAllPaymentRequestsQuery,
+  useReviewPaymentRequestMutation,
+  useUpdateManualPaymentSettingsMutation,
   useGetAllSellersQuery,
   useGetAllStoresQuery,
   useGetAllProductsQuery,

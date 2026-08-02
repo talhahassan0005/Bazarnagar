@@ -12,6 +12,7 @@ import {
   CreditCard,
   Settings,
   Megaphone,
+  Landmark,
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import type { NavItem } from "./SidebarNav";
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
   { label: "Moderation", href: "/admin/moderation", icon: ShieldCheck },
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },
+  { label: "Payment Requests", href: "/admin/payment-requests", icon: Landmark },
   { label: "Plan Settings", href: "/admin/plan-settings", icon: Settings },
   { label: "Banner Ads", href: "/admin/banners", icon: Megaphone },
 ];

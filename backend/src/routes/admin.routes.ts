@@ -21,6 +21,11 @@ import {
   updateBanner,
   deleteBanner,
 } from "../controllers/bannerController";
+import {
+  getAllPaymentRequests,
+  reviewPaymentRequest,
+  updateManualPaymentSettings,
+} from "../controllers/paymentRequestController";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
@@ -55,5 +60,9 @@ router.get("/banners", getAllBanners);
 router.post("/banners", createBanner);
 router.patch("/banners/:id", updateBanner);
 router.delete("/banners/:id", deleteBanner);
+
+router.get("/payment-requests", getAllPaymentRequests);
+router.patch("/payment-requests/:id", reviewPaymentRequest);
+router.patch("/manual-payment-settings", updateManualPaymentSettings);
 
 export default router;

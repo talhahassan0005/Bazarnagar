@@ -20,6 +20,11 @@ import {
   getDashboard,
 } from "../controllers/sellerController";
 import { getSellerOrders, updateOrderStatus } from "../controllers/orderController";
+import {
+  getManualPaymentSettings,
+  createPaymentRequest,
+  getMyPaymentRequests,
+} from "../controllers/paymentRequestController";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
@@ -37,6 +42,9 @@ router.post("/subscription/checkout", subscriptionCheckout);
 router.get("/subscription/status", getSubscriptionStatus);
 router.post("/subscription/toggle-auto-renew", toggleAutoRenew);
 router.post("/subscription/cancel", cancelSubscription);
+router.get("/manual-payment-settings", getManualPaymentSettings);
+router.post("/subscription/manual-request", createPaymentRequest);
+router.get("/subscription/manual-requests", getMyPaymentRequests);
 router.get("/payments", getMyPayments);
 router.get("/dashboard", getDashboard);
 
