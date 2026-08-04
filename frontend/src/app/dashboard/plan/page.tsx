@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CreditCard, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Skeleton } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Skeleton, Toggle } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
@@ -15,6 +15,7 @@ import {
   useGetSubscriptionStatusQuery,
   useSubscriptionCheckoutMutation,
   useCancelSubscriptionMutation,
+  useToggleAutoRenewMutation,
   useGetMyPaymentsQuery,
   useGetPublicPlanConfigQuery,
   useGetMyPaymentRequestsQuery,
@@ -88,6 +89,7 @@ export default function PlanPage() {
   const manualRequests = useGetMyPaymentRequestsQuery();
   const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
+  const [toggleAutoRenew, { isLoading: togglingAutoRenew }] = useToggleAutoRenewMutation();
 
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [manualPaymentOpen, setManualPaymentOpen] = useState(false);
@@ -231,6 +233,19 @@ export default function PlanPage() {
     }
   }
 
+  async function handleToggleAutoRenew() {
+    try {
+      const result = await toggleAutoRenew().unwrap();
+      dispatch(addToast(
+        result.autoRenew ? "Auto-renewal turned on." : "Auto-renewal turned off.",
+        "success"
+      ));
+      sub.refetch();
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Could not update auto-renewal"), "error"));
+    }
+  }
+
   async function handleCancel() {
     if (!confirm("Cancel subscription? You'll keep access until the current period ends.")) return;
     try {
@@ -331,6 +346,22 @@ export default function PlanPage() {
               <PlanUsageBar used={used} limit={current.productLimit} />
             </div>
           </div>
+
+          {isActive && (
+            <div className="border-t border-slate-100 pt-4">
+              <Toggle
+                label="Auto-renewal"
+                description={
+                  sub.data?.hasCardToken
+                    ? "Automatically charge your saved card when this plan expires, so your shop never goes offline."
+                    : "Pay with a card once to save it — after that you can turn this on so renewals happen automatically."
+                }
+                checked={Boolean(sub.data?.autoRenew)}
+                disabled={!sub.data?.hasCardToken || togglingAutoRenew}
+                onChange={handleToggleAutoRenew}
+              />
+            </div>
+          )}
         </CardBody>
       </Card>
 
