@@ -63,7 +63,7 @@ export default function SellerMessagesPage() {
       <p className="mt-1 text-sm text-slate-500">Chat with customers about their orders and questions.</p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[20rem_1fr]">
-        <Card className="h-[32rem] overflow-y-auto p-2">
+        <Card className="h-[calc(100vh-14rem)] overflow-y-auto p-2">
           {isLoading && (
             <div className="space-y-2 p-2">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -90,7 +90,7 @@ export default function SellerMessagesPage() {
           ))}
         </Card>
 
-        <Card className="flex h-[32rem] flex-col overflow-hidden p-0">
+        <Card className="flex h-[calc(100vh-14rem)] flex-col overflow-hidden p-0">
           {active ? (
             <>
               <div className="border-b border-slate-200 px-4 py-3">
