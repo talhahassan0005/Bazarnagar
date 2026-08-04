@@ -25,7 +25,7 @@ export function StockBadge({ status }: { status: StockStatus }) {
     </Badge>
   ) : (
     <Badge tone="red" dot>
-      Out of stock
+      Sold out
     </Badge>
   );
 }

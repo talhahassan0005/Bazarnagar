@@ -226,7 +226,7 @@ export function ProductForm({
             onChange={(e) => set("stockStatus", e.target.value as ProductFormValues["stockStatus"])}
             options={[
               { value: "in_stock", label: "In stock" },
-              { value: "out_of_stock", label: "Out of stock" },
+              { value: "out_of_stock", label: "Sold out" },
             ]}
           />
           <Select

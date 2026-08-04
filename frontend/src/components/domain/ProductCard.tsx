@@ -52,7 +52,7 @@ export function ProductCard({
         {product.stockStatus === "out_of_stock" && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60">
             <span className="rounded-full bg-slate-900/80 px-3 py-1 text-xs font-medium text-white">
-              Out of stock
+              Sold out
             </span>
           </div>
         )}

@@ -41,7 +41,7 @@ export function AddToCartButton({
         dispatch(addToast(`Added "${product.name}" to cart`, "success"));
       }}
     >
-      {disabled ? "Out of stock" : "Add to cart"}
+      {disabled ? "Sold out" : "Add to cart"}
     </Button>
   );
 }
