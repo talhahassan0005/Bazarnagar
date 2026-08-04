@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       <Link
         href="/"
-        className="relative mb-6 flex items-center gap-2.5 text-white transition-transform hover:scale-[1.02]"
+        className="relative mb-3 flex items-center gap-2.5 text-white transition-transform hover:scale-[1.02]"
       >
         <BrandMark className="h-10 w-10" />
         <span className="text-xl font-bold tracking-tight">
