@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { UserPlus } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
@@ -60,10 +61,11 @@ function SignupForm() {
           ? "Sign up to start selling on Bazaarnagar."
           : "Track your orders and save products you like."
       }
+      icon={<UserPlus className="h-5 w-5" />}
       footer={{ text: "Already have an account?", linkText: "Log in", href: `/login?role=${role}` }}
     >
       <RoleToggle role={role} onChange={setRole} />
-      <form onSubmit={onSubmit} className="mt-4 space-y-4">
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <Input
           label={role === "seller" ? "Seller name" : "Full name"}
           placeholder="Ayesha Khan"

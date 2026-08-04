@@ -3,27 +3,40 @@ import Link from "next/link";
 import { BrandMark } from "@/components/layout/Logo";
 
 /**
- * Seller auth shell — mirrors the admin login design: dark navy backdrop with a
- * warm radial glow, brand lockup on top, and a white card holding the form.
+ * Seller/buyer auth shell — a deep navy backdrop with layered brand-colored
+ * glows and a soft grid, brand lockup on top, and a white card holding the
+ * form.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-brand-900 px-4 py-10">
-      {/* Blurred shop/marketplace backdrop */}
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0b1324] px-4 py-10">
+      {/* Base grid texture */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 scale-105 bg-cover bg-center opacity-20 blur-[3px]"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
         style={{
           backgroundImage:
-            "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1600&auto=format&fit=crop')",
+            "linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
         }}
       />
-      {/* Navy wash to keep the dark brand mood and card contrast */}
-      <div className="pointer-events-none absolute inset-0 bg-brand-900/70" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(232,93,44,0.18),_transparent_55%)]" />
+      {/* Layered color glows */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-brand-600/30 blur-[110px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 -right-24 h-[26rem] w-[26rem] rounded-full bg-accent-500/25 blur-[110px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0b1324]"
+      />
+
       <Link
         href="/"
-        className="relative mb-6 flex items-center gap-2.5 text-white transition-transform hover:scale-[1.02]"
+        className="relative mb-8 flex items-center gap-2.5 text-white transition-transform hover:scale-[1.02]"
       >
         <BrandMark className="h-10 w-10" />
         <span className="text-xl font-bold tracking-tight">
