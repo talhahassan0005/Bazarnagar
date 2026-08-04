@@ -32,7 +32,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           Bazaar<span className="text-accent-500">nagar</span>
         </span>
       </Link>
-      <div className="relative w-full max-w-md animate-fade-in-up">{children}</div>
+      <div className="relative w-full max-w-lg animate-fade-in-up">{children}</div>
     </div>
   );
 }

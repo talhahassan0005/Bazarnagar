@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { Lock } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
@@ -55,7 +55,7 @@ function LoginForm() {
     <AuthCard
       title="Welcome back"
       subtitle={role === "seller" ? "Log in to manage your shop and products." : "Log in to see your orders and wishlist."}
-      icon={<LogIn className="h-5 w-5" />}
+      icon={<Lock className="h-5 w-5" />}
       footer={{
         text: "New to Bazaarnagar?",
         linkText: role === "seller" ? "Create a store" : "Create an account",
