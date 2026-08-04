@@ -152,10 +152,6 @@ export function PublicNavbar() {
               Login
             </Button>
           )}
-          <Button href="/signup?role=seller" variant="accent" size="sm">
-            <span className="sm:hidden">Sell</span>
-            <span className="hidden sm:inline">Sell on Bazaarnagar</span>
-          </Button>
         </div>
       </div>
     </header>
