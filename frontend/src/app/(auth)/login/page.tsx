@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock } from "lucide-react";
+import { Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
@@ -70,6 +70,7 @@ function LoginForm() {
           placeholder="you@example.com"
           required
           autoComplete="email"
+          leftAddon={<Mail className="h-4 w-4" />}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -80,6 +81,7 @@ function LoginForm() {
             placeholder="••••••••"
             required
             autoComplete="current-password"
+            leftAddon={<Lock className="h-4 w-4" />}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -91,9 +93,13 @@ function LoginForm() {
             </div>
           )}
         </div>
-        <Button type="submit" fullWidth disabled={isLoading}>
+        <Button type="submit" fullWidth size="lg" disabled={isLoading}>
           {isLoading ? "Logging in…" : "Log in"}
         </Button>
+        <p className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Your information is encrypted and secure.
+        </p>
       </form>
     </AuthCard>
   );
