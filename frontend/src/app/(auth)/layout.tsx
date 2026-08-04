@@ -27,8 +27,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         href="/"
         className="relative mb-3 flex items-center gap-2.5 text-white transition-transform hover:scale-[1.02]"
       >
-        <BrandMark className="h-10 w-10" />
-        <span className="text-xl font-bold tracking-tight">
+        <BrandMark className="h-14 w-14" />
+        <span className="text-2xl font-bold tracking-tight">
           Bazaar<span className="text-accent-500">nagar</span>
         </span>
       </Link>
