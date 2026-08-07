@@ -4,6 +4,7 @@ import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
 import { setSellerSession, setAdminSession, setCustomerSession, logout as logoutAction } from "@/store/authSlice";
 import type {
   AdminReview,
+  AdSettings,
   Banner,
   BannerPlacement,
   ChatMessage,
@@ -62,7 +63,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation", "AdSettings"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -371,6 +372,20 @@ export const apiSlice = createApi({
       query: (id) => ({ url: `/admin/banners/${id}`, method: "DELETE" }),
       invalidatesTags: ["Banner"],
     }),
+
+    // ── Ad settings (manual banner vs Google AdSense, per slot) ────────────
+    getAdSettings: builder.query<AdSettings, void>({
+      query: () => "/public/ad-settings",
+      providesTags: ["AdSettings"],
+    }),
+    getAdminAdSettings: builder.query<AdSettings, void>({
+      query: () => "/admin/ad-settings",
+      providesTags: ["AdSettings"],
+    }),
+    updateAdSettings: builder.mutation<AdSettings, Partial<AdSettings>>({
+      query: (body) => ({ url: "/admin/ad-settings", method: "PATCH", body }),
+      invalidatesTags: ["AdSettings"],
+    }),
   }),
 });
 
@@ -504,4 +519,7 @@ export const {
   useCreateBannerMutation,
   useUpdateBannerMutation,
   useDeleteBannerMutation,
+  useGetAdSettingsQuery,
+  useGetAdminAdSettingsQuery,
+  useUpdateAdSettingsMutation,
 } = apiSlice;

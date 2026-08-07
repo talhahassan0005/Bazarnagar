@@ -345,6 +345,27 @@ export interface Banner {
   createdAt: string;
 }
 
+/* ------------------------------- Ad settings -------------------------------- */
+
+export type AdPlacementSource = "manual" | "adsense" | "off";
+
+export interface AdPlacementConfig {
+  source: AdPlacementSource;
+  /** Google AdSense ad-unit slot id — only meaningful when source is "adsense". */
+  adsenseSlotId?: string;
+}
+
+/** Admin-chosen ad source (manual banner vs Google AdSense) per storefront slot. */
+export interface AdSettings {
+  adsenseEnabled: boolean;
+  adsensePublisherId?: string;
+  placements: {
+    top: AdPlacementConfig;
+    bottom: AdPlacementConfig;
+    sidebar: AdPlacementConfig;
+  };
+}
+
 /* ---------------------------------- Chat ----------------------------------- */
 
 export type MessageSender = "customer" | "seller";

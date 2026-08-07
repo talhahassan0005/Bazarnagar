@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_NAME, SITE_TAGLINE } from "@/lib/constants";
 import { Providers } from "@/store/Providers";
+import { AdSenseScript } from "@/components/domain/AdSenseScript";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,7 +36,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          <AdSenseScript />
+          {children}
+        </Providers>
       </body>
     </html>
   );

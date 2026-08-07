@@ -6,6 +6,7 @@ import { Badge, Button, Modal, TableSkeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { BannerFormModal } from "@/components/domain/BannerFormModal";
+import { AdSettingsCard } from "@/components/domain/AdSettingsCard";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { useDeleteBannerMutation, useGetAllBannersQuery } from "@/store/apiSlice";
@@ -110,6 +111,10 @@ export default function AdminBannersPage() {
           </Button>
         }
       />
+
+      <div className="mb-6">
+        <AdSettingsCard />
+      </div>
 
       <DataTable
         columns={columns}

@@ -26,6 +26,7 @@ import {
   reviewPaymentRequest,
   updateManualPaymentSettings,
 } from "../controllers/paymentRequestController";
+import { getAdSettings, updateAdSettings } from "../controllers/adSettingsController";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
@@ -64,5 +65,8 @@ router.delete("/banners/:id", deleteBanner);
 router.get("/payment-requests", getAllPaymentRequests);
 router.patch("/payment-requests/:id", reviewPaymentRequest);
 router.patch("/manual-payment-settings", updateManualPaymentSettings);
+
+router.get("/ad-settings", getAdSettings);
+router.patch("/ad-settings", updateAdSettings);
 
 export default router;

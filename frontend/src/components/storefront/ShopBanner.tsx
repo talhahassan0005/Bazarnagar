@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useGetActiveBannersQuery } from "@/store/apiSlice";
+import { useGetActiveBannersQuery, useGetAdSettingsQuery } from "@/store/apiSlice";
+import { AdSenseUnit } from "@/components/domain/AdSenseUnit";
 import type { Banner, BannerPlacement, Store } from "@/lib/types";
 
 /** Shared: fetch active banners for a store + slot (skipped unless on the free plan). */
@@ -19,14 +20,32 @@ function useActiveBanner(store: Store, placement: BannerPlacement): Banner | nul
   }, [isStarter, banners]);
 }
 
+/** Admin's chosen ad source (manual banner / Google AdSense / off) for a slot. */
+function useAdSlotSource(placement: BannerPlacement) {
+  const { data: adSettings } = useGetAdSettingsQuery();
+  const config = adSettings?.placements[placement];
+  return {
+    source: config?.source ?? "manual",
+    publisherId: adSettings?.adsensePublisherId,
+    slotId: config?.adsenseSlotId,
+  };
+}
+
 /**
  * Horizontal banner ad shown on the shop page for free (starter) plan
- * stores. Sourced from admin-managed banners (`/admin/banners`); if none are
- * configured yet, falls back to a generic "discover more shops" placeholder.
+ * stores. Sourced from admin-managed banners (`/admin/banners`) or, if the
+ * admin switched this slot to Google AdSense in Ad Settings, a real AdSense
+ * unit instead.
  */
 export function ShopBanner({ store, placement }: { store: Store; placement: "top" | "bottom" }) {
   const banner = useActiveBanner(store, placement);
-  if (store.planId !== "starter") return null;
+  const adSlot = useAdSlotSource(placement);
+  if (store.planId !== "starter" || adSlot.source === "off") return null;
+
+  if (adSlot.source === "adsense") {
+    if (!adSlot.publisherId || !adSlot.slotId) return null;
+    return <AdSenseUnit publisherId={adSlot.publisherId} slotId={adSlot.slotId} />;
+  }
 
   if (!banner) {
     return (
@@ -71,7 +90,17 @@ export function ShopBanner({ store, placement }: { store: Store; placement: "top
  */
 export function ShopBannerVertical({ store }: { store: Store }) {
   const banner = useActiveBanner(store, "sidebar");
-  if (store.planId !== "starter") return null;
+  const adSlot = useAdSlotSource("sidebar");
+  if (store.planId !== "starter" || adSlot.source === "off") return null;
+
+  if (adSlot.source === "adsense") {
+    if (!adSlot.publisherId || !adSlot.slotId) return null;
+    return (
+      <div className="h-[380px] w-full overflow-hidden rounded-2xl">
+        <AdSenseUnit publisherId={adSlot.publisherId} slotId={adSlot.slotId} className="h-full" />
+      </div>
+    );
+  }
 
   if (!banner) {
     return (
