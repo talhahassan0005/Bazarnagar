@@ -197,6 +197,10 @@ export const apiSlice = createApi({
       query: () => "/seller/me",
       providesTags: ["Seller"],
     }),
+    submitKyc: builder.mutation<Seller, { cnicFront: string; cnicBack: string }>({
+      query: (body) => ({ url: "/seller/kyc", method: "POST", body }),
+      invalidatesTags: ["Seller"],
+    }),
     getMyStore: builder.query<Store | null, void>({
       query: () => "/seller/store",
       providesTags: ["Store"],
@@ -310,7 +314,7 @@ export const apiSlice = createApi({
       query: ({ id, ...body }) => ({ url: `/admin/products/${id}/moderation`, method: "PATCH", body }),
       invalidatesTags: ["Product"],
     }),
-    updateSeller: builder.mutation<Seller, { id: string; status?: SellerStatus; planId?: PlanId; subscriptionStatus?: SubscriptionStatus }>({
+    updateSeller: builder.mutation<Seller, { id: string; status?: SellerStatus; planId?: PlanId; subscriptionStatus?: SubscriptionStatus; kycRejectionReason?: string }>({
       query: ({ id, ...patch }) => ({ url: `/admin/sellers/${id}`, method: "PATCH", body: patch }),
       invalidatesTags: ["Seller"],
     }),
@@ -479,6 +483,7 @@ export const {
   useGetSellerConversationsQuery,
   useGetSellerMessagesQuery,
   useGetSellerQuery,
+  useSubmitKycMutation,
   useGetMyStoreQuery,
   useGetMyProductsQuery,
   useGetDashboardMetricsQuery,

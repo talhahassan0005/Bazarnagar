@@ -36,7 +36,7 @@ export const signupSeller = asyncHandler(async (req: Request, res: Response) => 
     subscriptionStatus: "trial",
     subscriptionStartedAt: now,
     subscriptionEndsAt: addTrialPeriod(now),
-    status: "active",
+    status: "pending",
   });
 
   const token = signToken({ sub: seller.id, role: "seller" });

@@ -24,7 +24,7 @@ export type SubscriptionStatus =
   | "suspended"
   | "cancelled";
 
-export type SellerStatus = "active" | "inactive" | "suspended";
+export type SellerStatus = "pending" | "active" | "inactive" | "suspended";
 
 export interface Seller {
   id: string;
@@ -38,6 +38,11 @@ export interface Seller {
   subscriptionEndsAt?: string;
   autoRenew?: boolean;
   storeId: string | null;
+  /** KYC — submitted while status is "pending", reviewed by an admin. */
+  kycCnicFront?: string;
+  kycCnicBack?: string;
+  kycSubmittedAt?: string;
+  kycRejectionReason?: string;
   createdAt: string;
 }
 

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Zap } from "lucide-react";
 import { Button } from "@/components/ui";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addItem } from "@/store/cartSlice";
 import { addToast } from "@/store/uiSlice";
 import { buildCartItem } from "@/lib/cart";
@@ -26,6 +26,8 @@ export function AddToCartButton({
   variant?: "primary" | "outline" | "secondary";
 }) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const isCustomer = useAppSelector((s) => s.auth.role === "customer");
   const disabled = outOfStock(product);
 
   return (
@@ -37,6 +39,11 @@ export function AddToCartButton({
       disabled={disabled}
       leftIcon={<ShoppingCart className="h-4 w-4" />}
       onClick={() => {
+        if (!isCustomer) {
+          dispatch(addToast("Please log in to add items to your cart", "info"));
+          router.push("/login");
+          return;
+        }
         dispatch(addItem(buildCartItem(product, store)));
         dispatch(addToast(`Added "${product.name}" to cart`, "success"));
       }}
@@ -60,6 +67,7 @@ export function BuyNowButton({
 }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const isCustomer = useAppSelector((s) => s.auth.role === "customer");
   const disabled = outOfStock(product);
 
   return (
@@ -71,6 +79,11 @@ export function BuyNowButton({
       disabled={disabled}
       leftIcon={<Zap className="h-4 w-4" />}
       onClick={() => {
+        if (!isCustomer) {
+          dispatch(addToast("Please log in to continue", "info"));
+          router.push("/login");
+          return;
+        }
         dispatch(addItem(buildCartItem(product, store)));
         router.push("/checkout");
       }}

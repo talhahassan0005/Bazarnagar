@@ -2,7 +2,7 @@ import { Schema, model, type Document, type Types } from "mongoose";
 import bcrypt from "bcryptjs";
 import { baseSchemaOptions } from "./_base";
 
-export type SellerStatus = "active" | "inactive" | "suspended";
+export type SellerStatus = "pending" | "active" | "inactive" | "suspended";
 export type SubscriptionStatus =
   | "trial"
   | "active"
@@ -27,6 +27,11 @@ export interface SellerDoc extends Document {
   stripeCustomerId?: string;
   stripePaymentMethodId?: string;
   storeId: Types.ObjectId | null;
+  /** KYC — submitted while status is "pending", reviewed by an admin. */
+  kycCnicFront?: string;
+  kycCnicBack?: string;
+  kycSubmittedAt?: Date;
+  kycRejectionReason?: string;
   createdAt: Date;
   comparePassword(plain: string): Promise<boolean>;
 }
@@ -39,8 +44,8 @@ const sellerSchema = new Schema<SellerDoc>(
     passwordHash: { type: String, required: true },
     status: {
       type: String,
-      enum: ["active", "inactive", "suspended"],
-      default: "active",
+      enum: ["pending", "active", "inactive", "suspended"],
+      default: "pending",
     },
     planId: {
       type: String,
@@ -59,6 +64,10 @@ const sellerSchema = new Schema<SellerDoc>(
     stripeCustomerId: { type: String },
     stripePaymentMethodId: { type: String },
     storeId: { type: Schema.Types.ObjectId, ref: "Store", default: null },
+    kycCnicFront: { type: String },
+    kycCnicBack: { type: String },
+    kycSubmittedAt: { type: Date },
+    kycRejectionReason: { type: String },
   },
   baseSchemaOptions
 );

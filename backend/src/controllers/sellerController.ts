@@ -30,6 +30,25 @@ export const getMyStore = asyncHandler(async (req: Request, res: Response) => {
   res.json(store ? store.toJSON() : null);
 });
 
+const kycSchema = z.object({
+  cnicFront: z.string().min(1),
+  cnicBack: z.string().min(1),
+});
+
+/** POST /api/seller/kyc — submit (or resubmit) CNIC images for verification. */
+export const submitKyc = asyncHandler(async (req: Request, res: Response) => {
+  const seller = await currentSeller(req);
+  const data = kycSchema.parse(req.body);
+
+  seller.kycCnicFront = data.cnicFront;
+  seller.kycCnicBack = data.cnicBack;
+  seller.kycSubmittedAt = new Date();
+  seller.kycRejectionReason = undefined;
+  await seller.save();
+
+  res.json(seller.toJSON());
+});
+
 const storeSchema = z.object({
   name: z.string().min(2),
   description: z.string().min(1),
@@ -70,6 +89,9 @@ async function uniqueSlug(base: string, ownStoreId?: string): Promise<string> {
 
 export const upsertStore = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
+  if (seller.status === "pending") {
+    throw new ApiError(403, "Your account is awaiting verification. Submit your KYC documents first.");
+  }
   const data = storeSchema.parse(req.body);
 
   let store = seller.storeId ? await Store.findById(seller.storeId) : null;

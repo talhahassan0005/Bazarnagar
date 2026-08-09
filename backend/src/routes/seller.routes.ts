@@ -18,6 +18,7 @@ import {
   deleteProduct,
   boostProduct,
   getDashboard,
+  submitKyc,
 } from "../controllers/sellerController";
 import { getSellerOrders, updateOrderStatus } from "../controllers/orderController";
 import {
@@ -33,6 +34,7 @@ const router = Router();
 router.use(authenticate, requireRole("seller"));
 
 router.get("/me", getMe);
+router.post("/kyc", submitKyc);
 router.get("/store", getMyStore);
 router.put("/store", upsertStore);
 router.patch("/store/landing", updateStoreLanding);

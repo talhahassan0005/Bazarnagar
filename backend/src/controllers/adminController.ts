@@ -56,18 +56,24 @@ export const getOverview = asyncHandler(async (_req: Request, res: Response) => 
 /* ------------------------------- Mutations ------------------------------- */
 
 const updateSellerSchema = z.object({
-  status: z.enum(["active", "inactive", "suspended"]).optional(),
+  status: z.enum(["pending", "active", "inactive", "suspended"]).optional(),
   planId: z.enum(["starter", "basic", "growth", "pro"]).optional(),
   subscriptionStatus: z
     .enum(["trial", "active", "expired", "suspended", "cancelled"])
     .optional(),
+  kycRejectionReason: z.string().optional(),
 });
 
-/** PATCH /api/admin/sellers/:id — change status / plan / subscription. */
+/** PATCH /api/admin/sellers/:id — change status / plan / subscription, or approve/reject KYC. */
 export const updateSeller = asyncHandler(async (req: Request, res: Response) => {
   const data = updateSellerSchema.parse(req.body);
   const seller = await Seller.findByIdAndUpdate(req.params.id, data, { new: true });
   if (!seller) throw new ApiError(404, "Seller not found");
+  // Approving clears any earlier rejection note.
+  if (data.status === "active" && seller.kycRejectionReason) {
+    seller.kycRejectionReason = undefined;
+    await seller.save();
+  }
   res.json(seller.toJSON());
 });
 
