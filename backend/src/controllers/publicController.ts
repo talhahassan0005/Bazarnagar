@@ -68,6 +68,15 @@ export const getProduct = asyncHandler(async (req: Request, res: Response) => {
   );
   if (!product) return res.json(null);
   const store = await Store.findById(product.storeId);
+
+  // Unapproved/inactive products are only visible to their own seller or an
+  // admin (e.g. previewing/editing before approval) — never to the public,
+  // so a stray direct link can't expose a rejected/pending listing.
+  const isPublic = product.status === "active" && product.moderationStatus === "approved";
+  const isOwner = req.user?.role === "seller" && store?.sellerId.toString() === req.user.id;
+  const isAdmin = req.user?.role === "admin";
+  if (!isPublic && !isOwner && !isAdmin) return res.json(null);
+
   const rating = await ratingSummary(product._id as Parameters<typeof ratingSummary>[0]);
   res.json({ ...product.toJSON(), store: store?.toJSON() ?? null, rating });
 });

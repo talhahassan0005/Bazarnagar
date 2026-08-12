@@ -28,7 +28,7 @@ router.get("/search", searchProducts);
 router.get("/stores", getStores);
 router.get("/stores/:slug", getStoreBySlug);
 router.get("/stores/:storeId/products", getStoreProducts);
-router.get("/products/:id", getProduct);
+router.get("/products/:id", optionalAuthenticate, getProduct);
 router.post("/products/:id/whatsapp-click", trackWhatsappClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
