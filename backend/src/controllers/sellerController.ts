@@ -5,7 +5,7 @@ import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
-import { getBoostPackage } from "../lib/boost";
+import { getEffectiveBoostPackage, getEffectiveBoostPackages } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
 import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
 import { env } from "../config/env";
@@ -299,6 +299,12 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   res.json({ ok: true });
 });
 
+/** GET /api/seller/boost-packages — live (admin-set) boost package pricing. */
+export const getBoostPackages = asyncHandler(async (_req: Request, res: Response) => {
+  const packages = await getEffectiveBoostPackages();
+  res.json(packages.filter((p) => p.enabled !== false));
+});
+
 const boostSchema = z.object({ packageId: z.string().min(1) });
 
 export const boostProduct = asyncHandler(async (req: Request, res: Response) => {
@@ -307,7 +313,7 @@ export const boostProduct = asyncHandler(async (req: Request, res: Response) => 
     throw new ApiError(403, "Boosting is a paid feature. Upgrade your plan to feature products.");
   }
   const { packageId } = boostSchema.parse(req.body);
-  const pkg = getBoostPackage(packageId);
+  const pkg = await getEffectiveBoostPackage(packageId);
   if (!pkg) throw new ApiError(400, "Invalid boost package");
 
   const product = await Product.findOne({ _id: req.params.id, storeId: store._id });

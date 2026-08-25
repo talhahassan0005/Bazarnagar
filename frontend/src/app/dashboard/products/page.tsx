@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
 import { Button, Card, TableSkeleton, EmptyState, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
@@ -14,6 +14,7 @@ import {
   useBoostProductMutation,
   useDeleteProductMutation,
   useGetMyProductsQuery,
+  useGetSellerBoostPackagesQuery,
   useGetSellerQuery,
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
@@ -25,11 +26,21 @@ export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const { data: products, isLoading } = useGetMyProductsQuery();
   const { data: seller } = useGetSellerQuery();
+  const { data: liveBoostPackages } = useGetSellerBoostPackagesQuery();
+  const boostPackages = liveBoostPackages ?? BOOST_PACKAGES;
   const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
   const [boostProduct, { isLoading: boosting }] = useBoostProductMutation();
   const [toDelete, setToDelete] = useState<Product | null>(null);
   const [toBoost, setToBoost] = useState<Product | null>(null);
   const [pkgId, setPkgId] = useState<string>(BOOST_PACKAGES[0]?.id ?? "");
+
+  // Keep the selected package valid once live (admin-set) pricing loads.
+  useEffect(() => {
+    if (liveBoostPackages?.length && !liveBoostPackages.some((p) => p.id === pkgId)) {
+      setPkgId(liveBoostPackages[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveBoostPackages]);
 
   if (isLoading) {
     return (
@@ -238,7 +249,7 @@ export default function ProductsPage() {
             listings with a ★ Featured tag. Choose a duration:
           </p>
           <div className="space-y-2">
-            {BOOST_PACKAGES.map((pkg) => (
+            {boostPackages.map((pkg) => (
               <label
                 key={pkg.id}
                 className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50"

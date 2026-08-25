@@ -17,6 +17,7 @@ import {
   updateProduct,
   deleteProduct,
   boostProduct,
+  getBoostPackages,
   getDashboard,
   submitKyc,
 } from "../controllers/sellerController";
@@ -56,6 +57,7 @@ router.post("/products", createProduct);
 router.put("/products/:id", updateProduct);
 router.delete("/products/:id", deleteProduct);
 router.post("/products/:id/boost", boostProduct);
+router.get("/boost-packages", getBoostPackages);
 
 router.get("/orders", getSellerOrders);
 router.patch("/orders/:id/status", updateOrderStatus);

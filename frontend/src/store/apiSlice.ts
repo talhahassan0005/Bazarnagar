@@ -7,6 +7,7 @@ import type {
   AdSettings,
   Banner,
   BannerPlacement,
+  BoostPackage,
   ChatMessage,
   Conversation,
   CreateOrderInput,
@@ -63,7 +64,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation", "AdSettings"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation", "AdSettings", "BoostConfig"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -241,6 +242,9 @@ export const apiSlice = createApi({
       query: ({ id, packageId }) => ({ url: `/seller/products/${id}/boost`, method: "POST", body: { packageId } }),
       invalidatesTags: ["Product"],
     }),
+    getSellerBoostPackages: builder.query<BoostPackage[], void>({
+      query: () => "/seller/boost-packages",
+    }),
     changePlan: builder.mutation<Seller, PlanId>({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
@@ -350,6 +354,16 @@ export const apiSlice = createApi({
     updateAdminPlanConfig: builder.mutation<Plan, { planId: PlanId; price: number; productLimit: number; imageLimit: number; videoLimit: number; enabled?: boolean }>({
       query: (body) => ({ url: "/admin/plan-config", method: "PATCH", body }),
       invalidatesTags: ["Seller"],
+    }),
+
+    // ── Admin Boost Config ────────────────────────────────────────────────
+    getAdminBoostConfig: builder.query<BoostPackage[], void>({
+      query: () => "/admin/boost-config",
+      providesTags: ["BoostConfig"],
+    }),
+    updateAdminBoostConfig: builder.mutation<BoostPackage, { packageId: string; label: string; days: number; price: number; enabled?: boolean }>({
+      query: (body) => ({ url: "/admin/boost-config", method: "PATCH", body }),
+      invalidatesTags: ["BoostConfig"],
     }),
 
     // ── Banners ───────────────────────────────────────────────────────────
@@ -494,6 +508,7 @@ export const {
   useUpdateProductMutation,
   useDeleteProductMutation,
   useBoostProductMutation,
+  useGetSellerBoostPackagesQuery,
   useChangePlanMutation,
   useSubscriptionCheckoutMutation,
   useGetSubscriptionStatusQuery,
@@ -518,6 +533,8 @@ export const {
   useModerateReviewMutation,
   useGetAdminPlanConfigQuery,
   useUpdateAdminPlanConfigMutation,
+  useGetAdminBoostConfigQuery,
+  useUpdateAdminBoostConfigMutation,
   useGetPublicPlanConfigQuery,
   useGetActiveBannersQuery,
   useGetAllBannersQuery,

@@ -13,6 +13,8 @@ import {
   getSellerPayments,
   getPlanConfig,
   updatePlanConfig,
+  getBoostConfig,
+  updateBoostConfig,
 } from "../controllers/adminController";
 import { getAllReviews, moderateReview } from "../controllers/reviewController";
 import {
@@ -56,6 +58,8 @@ router.patch("/reviews/:id", moderateReview);
 
 router.get("/plan-config", getPlanConfig);
 router.patch("/plan-config", updatePlanConfig);
+router.get("/boost-config", getBoostConfig);
+router.patch("/boost-config", updateBoostConfig);
 
 router.get("/banners", getAllBanners);
 router.post("/banners", createBanner);

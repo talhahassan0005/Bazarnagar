@@ -5,6 +5,8 @@ import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Payment } from "../models/Payment";
 import { PlanConfig } from "../models/PlanConfig";
+import { BoostConfig } from "../models/BoostConfig";
+import { BOOST_PACKAGES } from "../lib/boost";
 import { Admin } from "../models/Admin";
 import { PLANS } from "../lib/plans";
 import { addBillingPeriod } from "../lib/plans";
@@ -255,6 +257,40 @@ export const updatePlanConfig = asyncHandler(async (req: Request, res: Response)
   const data = planConfigSchema.parse(req.body);
   const config = await PlanConfig.findOneAndUpdate(
     { planId: data.planId },
+    { ...data, enabled: data.enabled ?? true },
+    { upsert: true, new: true }
+  );
+  res.json(config.toJSON());
+});
+
+/* ----------------------------- Boost Config ------------------------------ */
+
+/** GET /api/admin/boost-config — return current boost package rates (DB overrides defaults). */
+export const getBoostConfig = asyncHandler(async (_req: Request, res: Response) => {
+  const saved = await BoostConfig.find();
+  const savedById = new Map(saved.map((p) => [p.packageId, p]));
+  const result = BOOST_PACKAGES.map((pkg) => {
+    const override = savedById.get(pkg.id);
+    return override
+      ? { id: pkg.id, label: override.label, days: override.days, price: override.price, enabled: override.enabled }
+      : { ...pkg, enabled: true };
+  });
+  res.json(result);
+});
+
+const boostConfigSchema = z.object({
+  packageId: z.string().min(1),
+  label: z.string().min(1),
+  days: z.number().int().positive(),
+  price: z.number().nonnegative(),
+  enabled: z.boolean().optional(),
+});
+
+/** PATCH /api/admin/boost-config — upsert a boost package's price/label/days/enabled. */
+export const updateBoostConfig = asyncHandler(async (req: Request, res: Response) => {
+  const data = boostConfigSchema.parse(req.body);
+  const config = await BoostConfig.findOneAndUpdate(
+    { packageId: data.packageId },
     { ...data, enabled: data.enabled ?? true },
     { upsert: true, new: true }
   );

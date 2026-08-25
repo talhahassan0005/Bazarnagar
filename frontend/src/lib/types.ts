@@ -17,6 +17,15 @@ export interface Plan {
   enabled?: boolean;
 }
 
+/** Featured-product "boost" package — admin-editable price/duration. */
+export interface BoostPackage {
+  id: string;
+  label: string;
+  days: number;
+  price: number; // PKR
+  enabled?: boolean;
+}
+
 export type SubscriptionStatus =
   | "trial"
   | "active"

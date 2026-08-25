@@ -1,4 +1,4 @@
-import type { ModerationStatus, Plan, PlanId } from "./types";
+import type { BoostPackage, ModerationStatus, Plan, PlanId } from "./types";
 
 /** A product limit at/above this counts as "unlimited" (paid plans). */
 export const UNLIMITED = 1_000_000;
@@ -45,14 +45,10 @@ export const PLANS: Record<PlanId, Plan> = {
 
 export const PLAN_LIST: Plan[] = Object.values(PLANS);
 
-/** Featured-product "boost" packages — configurable rates (mirror backend/lib/boost.ts). */
-export interface BoostPackage {
-  id: string;
-  label: string;
-  days: number;
-  price: number;
-}
-
+/**
+ * Default featured-product "boost" packages — shown as a fallback while the
+ * live (admin-editable) rates load from `useGetSellerBoostPackagesQuery`.
+ */
 export const BOOST_PACKAGES: BoostPackage[] = [
   { id: "boost7", label: "7 days", days: 7, price: 500 },
   { id: "boost15", label: "15 days", days: 15, price: 900 },
