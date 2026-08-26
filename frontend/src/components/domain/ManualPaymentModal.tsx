@@ -60,8 +60,8 @@ export function ManualPaymentModal({
       <Modal open onClose={onClose} title="Payment submitted" footer={<Button onClick={onClose}>Done</Button>}>
         <p className="text-sm text-slate-600">
           Thanks! We&apos;ve received your payment details for <strong>{plan?.name}</strong>. Our
-          team will verify it and activate your plan — usually within a few hours. You&apos;ll see
-          the update here once it&apos;s approved.
+          team will verify it and activate your plan within 24 hours. You&apos;ll see the update
+          here once it&apos;s approved.
         </p>
       </Modal>
     );

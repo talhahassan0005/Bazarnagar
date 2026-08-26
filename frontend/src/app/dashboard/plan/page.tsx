@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CreditCard, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Skeleton, Toggle } from "@/components/ui";
+import { CreditCard, Landmark, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban } from "lucide-react";
+import { Button, Card, CardBody, CardHeader, Modal, Skeleton, Toggle } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
@@ -23,7 +23,7 @@ import {
 import { addToast } from "@/store/uiSlice";
 import { PLANS } from "@/lib/constants";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
-import type { Plan } from "@/lib/types";
+import type { Plan, PlanId } from "@/lib/types";
 
 function StatusBanner({ status, endsAt, daysRemaining }: {
   status: string;
@@ -93,6 +93,9 @@ export default function PlanPage() {
 
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [manualPaymentOpen, setManualPaymentOpen] = useState(false);
+  const [manualPlanId, setManualPlanId] = useState<PlanId | null>(null);
+  // Plan awaiting a "card vs. manual" payment-method choice.
+  const [choosingPlan, setChoosingPlan] = useState<Plan | null>(null);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function clearPendingPoll() {
@@ -299,8 +302,8 @@ export default function PlanPage() {
             <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               <RefreshCw className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                Your manual payment is awaiting verification — we&apos;ll activate your plan once
-                it&apos;s confirmed, usually within a few hours.
+                Your manual payment is awaiting verification — we&apos;ll activate your plan within
+                24 hours once it&apos;s confirmed.
               </span>
             </div>
           )}
@@ -319,16 +322,16 @@ export default function PlanPage() {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {needsRenewal && (
-                  <Button size="sm" loading={checkingOut}
+                  <Button size="sm"
                     leftIcon={<CreditCard className="h-4 w-4" />}
-                    onClick={() => handleSubscribe(current)}>
+                    onClick={() => setChoosingPlan(current)}>
                     {isTrial ? "Subscribe now" : "Renew subscription"}
                   </Button>
                 )}
                 {isActive && daysRemaining <= 7 && (
-                  <Button size="sm" loading={checkingOut}
+                  <Button size="sm"
                     leftIcon={<RefreshCw className="h-4 w-4" />}
-                    onClick={() => handleSubscribe(current)}>
+                    onClick={() => setChoosingPlan(current)}>
                     Renew early
                   </Button>
                 )}
@@ -374,29 +377,64 @@ export default function PlanPage() {
             key={plan.id}
             plan={plan}
             current={plan.id === current.id && isActive}
-            onSelect={handleSubscribe}
+            onSelect={setChoosingPlan}
           />
         ))}
       </div>
 
       <p className="mt-4 text-center text-xs text-slate-400">
-        Payments processed securely via Stripe · Card. Cancel anytime — access continues until period end.
-        {" "}
-        <button
-          type="button"
-          onClick={() => setManualPaymentOpen(true)}
-          className="font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800"
-        >
-          Prefer bank transfer / JazzCash / EasyPaisa?
-        </button>
+        Pay by card (instant) or manually via bank transfer / JazzCash / EasyPaisa. Cancel anytime —
+        access continues until period end.
       </p>
+
+      {choosingPlan && (
+        <Modal open onClose={() => setChoosingPlan(null)} title="Choose how to pay">
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">
+              {choosingPlan.name} — {formatPrice(choosingPlan.price)}/mo
+            </p>
+            <button
+              type="button"
+              disabled={checkingOut}
+              className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-300 hover:bg-brand-50 disabled:opacity-60"
+              onClick={() => handleSubscribe(choosingPlan)}
+            >
+              <CreditCard className="h-5 w-5 shrink-0 text-brand-600" />
+              <span>
+                <span className="block font-medium text-slate-900">
+                  {checkingOut ? "Redirecting to Stripe…" : "Pay with card"}
+                </span>
+                <span className="block text-xs text-slate-500">Via Stripe — plan activates instantly.</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
+              onClick={() => {
+                setManualPlanId(choosingPlan.id);
+                setChoosingPlan(null);
+                setManualPaymentOpen(true);
+              }}
+            >
+              <Landmark className="h-5 w-5 shrink-0 text-brand-600" />
+              <span>
+                <span className="block font-medium text-slate-900">Pay manually</span>
+                <span className="block text-xs text-slate-500">
+                  Bank transfer / JazzCash / EasyPaisa — reviewed by our team, activates within 24 hours.
+                </span>
+              </span>
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {manualPaymentOpen && (
         <ManualPaymentModal
           plans={planList}
-          defaultPlanId={current.id}
+          defaultPlanId={manualPlanId ?? current.id}
           onClose={() => {
             setManualPaymentOpen(false);
+            setManualPlanId(null);
             manualRequests.refetch();
           }}
         />
