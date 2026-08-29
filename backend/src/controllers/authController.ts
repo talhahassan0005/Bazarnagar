@@ -24,6 +24,14 @@ const loginSchema = z.object({
 /** POST /api/auth/signup — register a new seller. */
 export const signupSeller = asyncHandler(async (req: Request, res: Response) => {
   const data = signupSchema.parse(req.body);
+
+  if (await Customer.findOne({ email: data.email })) {
+    throw new ApiError(409, "This email already has a buyer account. Please use a different email or log in as a buyer.");
+  }
+  if (await Seller.findOne({ email: data.email })) {
+    throw new ApiError(409, "This email already has a seller account. Please log in instead.");
+  }
+
   const passwordHash = await bcrypt.hash(data.password, 10);
 
   const now = new Date();
@@ -71,6 +79,14 @@ export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
 /** POST /api/auth/customer/signup — register a new customer (buyer). */
 export const signupCustomer = asyncHandler(async (req: Request, res: Response) => {
   const data = signupSchema.parse(req.body);
+
+  if (await Seller.findOne({ email: data.email })) {
+    throw new ApiError(409, "This email already has a seller account. Please use a different email or log in as a seller.");
+  }
+  if (await Customer.findOne({ email: data.email })) {
+    throw new ApiError(409, "This email already has a buyer account. Please log in instead.");
+  }
+
   const passwordHash = await bcrypt.hash(data.password, 10);
 
   const customer = await Customer.create({
