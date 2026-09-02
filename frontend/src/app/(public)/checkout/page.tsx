@@ -128,8 +128,11 @@ export default function CheckoutPage() {
   const groups = groupByStore(items);
   const singleStore = groups.length === 1 ? groups[0]! : null;
 
-  // Online (card via Stripe) works for any single-shop cart.
-  const onlineAvailable = Boolean(singleStore);
+  // Online (card via Stripe) works for any single-shop cart. Toggle this
+  // flag off to hide the option site-wide (buyers see Cash on Delivery
+  // only) without ripping out the Stripe integration below.
+  const ONLINE_PAYMENTS_ENABLED = false;
+  const onlineAvailable = ONLINE_PAYMENTS_ENABLED && Boolean(singleStore);
   const isOnline = method === "card";
 
   useEffect(() => {
@@ -299,8 +302,7 @@ export default function CheckoutPage() {
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-bold text-brand-900">Checkout</h1>
       <p className="mt-1 text-sm text-slate-500">
-        No account needed — just your delivery details. Pay by Cash on Delivery
-        or card.
+        No account needed — just your delivery details. Pay by Cash on Delivery.
       </p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -494,7 +496,7 @@ export default function CheckoutPage() {
                 </p>
               </div>
             )}
-            {!onlineAvailable && groups.length > 1 && (
+            {ONLINE_PAYMENTS_ENABLED && !onlineAvailable && groups.length > 1 && (
               <p className="text-xs text-slate-400">
                 Online payment is available when all items are from one shop.
               </p>
