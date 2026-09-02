@@ -85,13 +85,11 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {role === "seller" && (
-            <div className="mt-1.5 flex justify-end">
-              <a href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-          )}
+          <div className="mt-1.5 flex justify-end">
+            <a href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">
+              Forgot password?
+            </a>
+          </div>
         </div>
         <Button type="submit" fullWidth size="lg" disabled={isLoading}>
           {isLoading ? "Logging in…" : "Log in"}
