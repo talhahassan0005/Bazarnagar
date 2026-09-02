@@ -108,23 +108,29 @@ export default function AdminPaymentRequestsPage() {
                 {pending.map((r) => (
                   <Card key={r.id} className="p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="flex items-center gap-2 font-medium text-slate-800">
-                          <Landmark className="h-4 w-4 text-slate-400" />
-                          {r.sellerName} <span className="text-slate-400">· {r.sellerEmail}</span>
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {r.planId} plan — {formatPrice(r.amount)} via {r.method}
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-400">Ref: {r.reference}</p>
+                      <div className="flex gap-3">
                         {r.proofUrl && (
-                          <a href={r.proofUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-brand-600 underline">
-                            View payment screenshot
+                          <a href={r.proofUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                            <img
+                              src={r.proofUrl}
+                              alt="Payment screenshot"
+                              className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                            />
                           </a>
                         )}
-                        <p className="mt-1 text-xs text-slate-400">
-                          {new Date(r.createdAt).toLocaleString("en-PK")}
-                        </p>
+                        <div>
+                          <p className="flex items-center gap-2 font-medium text-slate-800">
+                            <Landmark className="h-4 w-4 text-slate-400" />
+                            {r.sellerName} <span className="text-slate-400">· {r.sellerEmail}</span>
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {r.planId} plan — {formatPrice(r.amount)} via {r.method}
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-400">Ref: {r.reference}</p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {new Date(r.createdAt).toLocaleString("en-PK")}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -163,6 +169,7 @@ export default function AdminPaymentRequestsPage() {
                         <th className="px-4 py-3">Seller</th>
                         <th className="px-4 py-3">Plan</th>
                         <th className="px-4 py-3">Amount</th>
+                        <th className="px-4 py-3">Proof</th>
                         <th className="px-4 py-3">Status</th>
                         <th className="px-4 py-3">Date</th>
                       </tr>
@@ -173,6 +180,19 @@ export default function AdminPaymentRequestsPage() {
                           <td className="px-4 py-3">{r.sellerName}</td>
                           <td className="px-4 py-3 capitalize">{r.planId}</td>
                           <td className="px-4 py-3">{formatPrice(r.amount)}</td>
+                          <td className="px-4 py-3">
+                            {r.proofUrl ? (
+                              <a href={r.proofUrl} target="_blank" rel="noopener noreferrer">
+                                <img
+                                  src={r.proofUrl}
+                                  alt="Payment screenshot"
+                                  className="h-10 w-10 rounded-md border border-slate-200 object-cover"
+                                />
+                              </a>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                           <td className="px-4 py-3 text-slate-400">
                             {new Date(r.createdAt).toLocaleDateString("en-PK")}
