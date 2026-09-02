@@ -16,7 +16,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   basic: {
     id: "basic",
-    name: "Package 1",
+    name: "Plan 1",
     price: 500,
     productLimit: 100,
     imageLimit: 8,
@@ -25,7 +25,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   growth: {
     id: "growth",
-    name: "Package 2",
+    name: "Plan 2",
     price: 1000,
     productLimit: 200,
     imageLimit: 8,
@@ -34,7 +34,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   pro: {
     id: "pro",
-    name: "Package 3",
+    name: "Plan 3",
     price: 5000,
     productLimit: 500,
     imageLimit: 8,
