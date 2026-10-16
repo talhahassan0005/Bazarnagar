@@ -25,6 +25,20 @@ export const env = {
   // the currency actually charged depends on what the connected Stripe
   // account supports — override via env if it isn't USD.
   stripeCurrency: (process.env.STRIPE_CURRENCY ?? "usd").toLowerCase(),
+  // Cloudflare R2 (S3-compatible) image storage. Leave blank to keep saving
+  // uploads to the local ./uploads folder (served at <PUBLIC_URL>/uploads).
+  r2: {
+    accountId: process.env.R2_ACCOUNT_ID ?? "",
+    accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
+    bucket: process.env.R2_BUCKET ?? "",
+    /** Public base URL of the bucket (r2.dev or a custom domain). */
+    publicUrl: (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, ""),
+  },
+  get r2Enabled() {
+    const r = this.r2;
+    return Boolean(r.accountId && r.accessKeyId && r.secretAccessKey && r.bucket && r.publicUrl);
+  },
   adminEmail: process.env.ADMIN_EMAIL ?? "admin@bazaarnagar.com",
   adminPassword: process.env.ADMIN_PASSWORD ?? "admin123",
   get isProd() {

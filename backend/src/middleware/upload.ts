@@ -1,26 +1,15 @@
-import path from "path";
-import fs from "fs";
-import crypto from "crypto";
 import multer from "multer";
 import { ApiError } from "../lib/helpers";
 
-export const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
-
-// Ensure the upload directory exists at startup.
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`);
-  },
-});
+// Kept for the static /uploads route, which still serves images saved before
+// the move to R2 (and new ones when R2 isn't configured).
+export { UPLOAD_DIR } from "../lib/storage";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
+// Files are held in memory; the controller decides where they're stored.
 export const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 8 }, // 5 MB each, max 8 files
   fileFilter: (_req, file, cb) => {
     if (ALLOWED.has(file.mimetype)) return cb(null, true);

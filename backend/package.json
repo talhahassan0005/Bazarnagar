@@ -13,9 +13,11 @@
     "seed:banners": "tsx src/db/seed-banners.ts",
     "seed:starter-stores": "tsx src/db/seed-starter-stores.ts",
     "backfill:coords": "tsx src/db/backfill-coords.ts",
-    "add:products": "tsx src/db/add-products.ts"
+    "add:products": "tsx src/db/add-products.ts",
+    "migrate:r2": "tsx src/db/migrate-images-to-r2.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
