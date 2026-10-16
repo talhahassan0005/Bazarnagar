@@ -417,3 +417,63 @@ export interface DashboardMetrics {
   productViews: number;
   whatsappClicks: number;
 }
+
+/* ── Admin activity log & data summary ───────────────────────────────────── */
+
+export type ActivityType = "store.created" | "product.created";
+
+export interface ActivityLog {
+  id: string;
+  type: ActivityType;
+  sellerId?: string;
+  storeId?: string;
+  productId?: string;
+  /** Details as they were when the event happened. */
+  snapshot: {
+    sellerName?: string;
+    sellerEmail?: string;
+    storeName?: string;
+    storeSlug?: string;
+    city?: string;
+    category?: string;
+    productName?: string;
+    price?: number;
+  };
+  createdAt: string;
+}
+
+export interface ActivityLogPage {
+  items: ActivityLog[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+export interface CountRow {
+  key: string;
+  count: number;
+}
+
+export interface DataSummary {
+  generatedAt: string;
+  stores: {
+    total: number;
+    newThisWeek: number;
+    newThisMonth: number;
+    open: number;
+    withoutProducts: number;
+    byStatus: CountRow[];
+    byCity: CountRow[];
+    byCategory: CountRow[];
+  };
+  products: {
+    total: number;
+    newThisWeek: number;
+    newThisMonth: number;
+    boosted: number;
+    byStatus: CountRow[];
+    byStock: CountRow[];
+    byModeration: CountRow[];
+    byCategory: CountRow[];
+  };
+}

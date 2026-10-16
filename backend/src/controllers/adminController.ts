@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { Model } from "mongoose";
 import { z } from "zod";
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
@@ -8,6 +9,7 @@ import { PlanConfig } from "../models/PlanConfig";
 import { BoostConfig } from "../models/BoostConfig";
 import { BOOST_PACKAGES } from "../lib/boost";
 import { Admin } from "../models/Admin";
+import { ActivityLog } from "../models/ActivityLog";
 import { PLANS } from "../lib/plans";
 import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
@@ -52,6 +54,114 @@ export const getOverview = asyncHandler(async (_req: Request, res: Response) => 
     ).length,
     totalShopViews: stores.reduce((s, st) => s + st.views, 0),
     totalWhatsappClicks: stores.reduce((s, st) => s + st.whatsappClicks, 0),
+  });
+});
+
+/* ------------------------------ Activity log ----------------------------- */
+
+const activityQuerySchema = z.object({
+  type: z.enum(["store.created", "product.created"]).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+});
+
+/** GET /api/admin/activity — store creations and product additions, newest first. */
+export const getActivityLogs = asyncHandler(async (req: Request, res: Response) => {
+  const { type, page, limit } = activityQuerySchema.parse(req.query);
+  const filter = type ? { type } : {};
+  const [items, total] = await Promise.all([
+    ActivityLog.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    ActivityLog.countDocuments(filter),
+  ]);
+  res.json({
+    items: items.map((i) => i.toJSON()),
+    total,
+    page,
+    pages: Math.max(1, Math.ceil(total / limit)),
+  });
+});
+
+/** Group a collection by `field` and return [{ key, count }] sorted by count. */
+async function countBy(
+  model: Model<any>,
+  field: string
+): Promise<Array<{ key: string; count: number }>> {
+  const rows = await model.aggregate<{ _id: unknown; count: number }>([
+    { $group: { _id: `$${field}`, count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+  ]);
+  return rows.map((r) => ({ key: r._id == null || r._id === "" ? "—" : String(r._id), count: r.count }));
+}
+
+/** GET /api/admin/data-summary — current snapshot of all stores and products. */
+export const getDataSummary = asyncHandler(async (_req: Request, res: Response) => {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [
+    storeTotal,
+    storesThisWeek,
+    storesThisMonth,
+    storesOpen,
+    storeByStatus,
+    storeByCity,
+    storeByCategory,
+    productTotal,
+    productsThisWeek,
+    productsThisMonth,
+    productsBoosted,
+    productByStatus,
+    productByStock,
+    productByModeration,
+    productByCategory,
+    productsPerStore,
+  ] = await Promise.all([
+    Store.countDocuments(),
+    Store.countDocuments({ createdAt: { $gte: weekAgo } }),
+    Store.countDocuments({ createdAt: { $gte: monthAgo } }),
+    Store.countDocuments({ isOpen: true }),
+    countBy(Store, "status"),
+    countBy(Store, "city"),
+    countBy(Store, "category"),
+    Product.countDocuments(),
+    Product.countDocuments({ createdAt: { $gte: weekAgo } }),
+    Product.countDocuments({ createdAt: { $gte: monthAgo } }),
+    Product.countDocuments({ boostedUntil: { $gt: now } }),
+    countBy(Product, "status"),
+    countBy(Product, "stockStatus"),
+    countBy(Product, "moderationStatus"),
+    countBy(Product, "category"),
+    Product.aggregate<{ _id: unknown; count: number }>([
+      { $group: { _id: "$storeId", count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  res.json({
+    generatedAt: now.toISOString(),
+    stores: {
+      total: storeTotal,
+      newThisWeek: storesThisWeek,
+      newThisMonth: storesThisMonth,
+      open: storesOpen,
+      withoutProducts: Math.max(0, storeTotal - productsPerStore.length),
+      byStatus: storeByStatus,
+      byCity: storeByCity,
+      byCategory: storeByCategory,
+    },
+    products: {
+      total: productTotal,
+      newThisWeek: productsThisWeek,
+      newThisMonth: productsThisMonth,
+      boosted: productsBoosted,
+      byStatus: productByStatus,
+      byStock: productByStock,
+      byModeration: productByModeration,
+      byCategory: productByCategory,
+    },
   });
 });
 

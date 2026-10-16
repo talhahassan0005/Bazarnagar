@@ -5,6 +5,8 @@ import {
   getAllStores,
   getAllProducts,
   getOverview,
+  getActivityLogs,
+  getDataSummary,
   updateSeller,
   updateStore,
   moderateProductStatus,
@@ -40,6 +42,8 @@ router.post("/login", loginAdmin);
 router.use(authenticate, requireRole("admin"));
 
 router.get("/overview", getOverview);
+router.get("/activity", getActivityLogs);
+router.get("/data-summary", getDataSummary);
 
 router.get("/sellers", getAllSellers);
 router.patch("/sellers/:id", updateSeller);

@@ -7,6 +7,7 @@ import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { getEffectiveBoostPackage, getEffectiveBoostPackages } from "../lib/boost";
 import { moderateProduct } from "../lib/moderation";
+import { logProductCreated, logStoreCreated } from "../lib/activityLog";
 import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
@@ -101,6 +102,7 @@ export const upsertStore = asyncHandler(async (req: Request, res: Response) => {
     store = await Store.create({ ...data, sellerId: seller._id, slug });
     seller.storeId = store._id as typeof seller.storeId;
     await seller.save();
+    await logStoreCreated(seller, store);
   } else {
     Object.assign(store, data);
     if (!store.slug) store.slug = await uniqueSlug(data.name, store.id);
@@ -270,6 +272,7 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
     moderationStatus: moderation.status,
     moderationReason: moderation.reason,
   });
+  await logProductCreated(seller, store, product);
 
   res.status(201).json(product.toJSON());
 });

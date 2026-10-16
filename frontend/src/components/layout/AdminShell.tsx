@@ -13,6 +13,8 @@ import {
   Settings,
   Megaphone,
   Landmark,
+  History,
+  BarChart3,
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import type { NavItem } from "./SidebarNav";
@@ -24,6 +26,8 @@ const NAV: NavItem[] = [
   { label: "Sellers", href: "/admin/sellers", icon: Users },
   { label: "Stores", href: "/admin/stores", icon: Store },
   { label: "Products", href: "/admin/products", icon: Package },
+  { label: "Activity Log", href: "/admin/activity", icon: History },
+  { label: "Data Summary", href: "/admin/data", icon: BarChart3 },
   { label: "Moderation", href: "/admin/moderation", icon: ShieldCheck },
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },

@@ -12,6 +12,7 @@ import {
   Textarea,
   Toggle,
 } from "@/components/ui";
+import { ImageUpload } from "./ImageUpload";
 import { THEME_OPTIONS, defaultLanding } from "@/lib/landing";
 import { cn, formatPrice } from "@/lib/utils";
 import type { Product, StoreLanding, StoreTheme } from "@/lib/types";
@@ -94,13 +95,16 @@ export function StoreLandingForm({
             hint="Leave blank to use your store description."
             onChange={(e) => set("tagline", e.target.value)}
           />
-          <Input
-            label="Hero image URL"
-            value={v.heroImageUrl ?? ""}
-            placeholder="https://…"
-            hint="Leave blank to use your cover image."
-            onChange={(e) => set("heroImageUrl", e.target.value)}
-          />
+          <div>
+            <ImageUpload
+              label="Hero image"
+              value={v.heroImageUrl ?? ""}
+              onChange={(u) => set("heroImageUrl", u)}
+            />
+            <span className="mt-1 block text-xs text-slate-400">
+              Leave blank to use your cover image.
+            </span>
+          </div>
           <Input
             label="Button label"
             value={v.primaryCtaLabel ?? ""}

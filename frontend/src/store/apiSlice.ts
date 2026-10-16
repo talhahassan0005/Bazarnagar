@@ -3,6 +3,8 @@ import { type UnknownAction, type ThunkDispatch, type TypedStartListening } from
 import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
 import { setSellerSession, setAdminSession, setCustomerSession, logout as logoutAction } from "@/store/authSlice";
 import type {
+  ActivityLogPage,
+  ActivityType,
   AdminReview,
   AdSettings,
   Banner,
@@ -13,6 +15,7 @@ import type {
   CreateOrderInput,
   Customer,
   DashboardMetrics,
+  DataSummary,
   ManualPaymentSettings,
   ModerationStatus,
   Order,
@@ -314,6 +317,14 @@ export const apiSlice = createApi({
       query: () => "/admin/products",
       providesTags: ["Product"],
     }),
+    getActivityLogs: builder.query<ActivityLogPage, { type?: ActivityType; page?: number }>({
+      query: (params) => ({ url: "/admin/activity", params }),
+      providesTags: ["Store", "Product"],
+    }),
+    getDataSummary: builder.query<DataSummary, void>({
+      query: () => "/admin/data-summary",
+      providesTags: ["Store", "Product"],
+    }),
     moderateProduct: builder.mutation<Product, { id: string; moderationStatus: ModerationStatus; reason?: string }>({
       query: ({ id, ...body }) => ({ url: `/admin/products/${id}/moderation`, method: "PATCH", body }),
       invalidatesTags: ["Product"],
@@ -524,6 +535,8 @@ export const {
   useGetAllSellersQuery,
   useGetAllStoresQuery,
   useGetAllProductsQuery,
+  useGetActivityLogsQuery,
+  useGetDataSummaryQuery,
   useModerateProductMutation,
   useUpdateSellerMutation,
   useUpdateStoreStatusMutation,
