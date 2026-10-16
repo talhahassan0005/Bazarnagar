@@ -23,14 +23,17 @@ import { useAppSelector } from "@/store/hooks";
 
 const NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
-  { label: "Store Profile", href: "/dashboard/store", icon: Store },
-  { label: "Landing Page", href: "/dashboard/landing", icon: Sparkles },
-  { label: "Products", href: "/dashboard/products", icon: Package },
-  { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
-  { label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Plan & Billing", href: "/dashboard/plan", icon: CreditCard },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+
+  { group: "My Store", label: "Store Profile", href: "/dashboard/store", icon: Store },
+  { group: "My Store", label: "Landing Page", href: "/dashboard/landing", icon: Sparkles },
+  { group: "My Store", label: "Products", href: "/dashboard/products", icon: Package },
+
+  { group: "Sales", label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
+  { group: "Sales", label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
+  { group: "Sales", label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+
+  { group: "Account", label: "Plan & Billing", href: "/dashboard/plan", icon: CreditCard },
+  { group: "Account", label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 /** Seller dashboard chrome (sidebar + header) with an auth guard. */
