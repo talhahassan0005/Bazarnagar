@@ -19,13 +19,13 @@ export function Footer() {
             </div>
             <p className="mt-3 text-sm text-slate-500">{SITE_TAGLINE}</p>
             <p dir="rtl" className="mt-1 text-sm text-accent-500">{SITE_TAGLINE_UR}</p>
-            <a
-              href={`mailto:${SITE_EMAIL}`}
+            <Link
+              href="/contact"
               className="mt-4 inline-flex items-center gap-1.5 text-sm text-brand-600 hover:underline"
             >
               <Mail className="h-3.5 w-3.5" />
               {SITE_EMAIL}
-            </a>
+            </Link>
           </div>
 
           {/* Platform */}
@@ -46,11 +46,7 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm text-slate-500">
               <li><Link href="/about" className="transition-colors hover:text-brand-700">About us</Link></li>
               <li><Link href="/how-it-works" className="transition-colors hover:text-brand-700">How it works</Link></li>
-              <li>
-                <a href={`mailto:${SITE_EMAIL}`} className="transition-colors hover:text-brand-700">
-                  Contact us
-                </a>
-              </li>
+              <li><Link href="/contact" className="transition-colors hover:text-brand-700">Contact us</Link></li>
               {/* Admin link hidden from public footer — panel is still reachable directly at /admin. */}
             </ul>
           </div>

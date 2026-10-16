@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import { SellerVerificationGate } from "./SellerVerificationGate";
+import { KYC_REQUIRED } from "@/lib/constants";
 import type { NavItem } from "./SidebarNav";
 import { Badge, LoadingPanel } from "@/components/ui";
 import { PLANS } from "@/lib/constants";
@@ -54,7 +55,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
     );
   }
 
-  if (seller && seller.status === "pending") {
+  if (KYC_REQUIRED && seller && seller.status === "pending") {
     return <SellerVerificationGate seller={seller} />;
   }
 

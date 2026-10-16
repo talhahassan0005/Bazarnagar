@@ -39,6 +39,12 @@ export const env = {
     const r = this.r2;
     return Boolean(r.accountId && r.accessKeyId && r.secretAccessKey && r.bucket && r.publicUrl);
   },
+  /**
+   * When true, new sellers start as "pending" and must pass CNIC (KYC)
+   * verification before creating a store. Off unless set to "true". Keep in
+   * sync with KYC_REQUIRED in frontend/src/lib/constants.ts.
+   */
+  kycRequired: process.env.KYC_REQUIRED === "true",
   adminEmail: process.env.ADMIN_EMAIL ?? "admin@bazaarnagar.com",
   adminPassword: process.env.ADMIN_PASSWORD ?? "admin123",
   get isProd() {

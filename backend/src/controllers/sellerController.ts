@@ -90,7 +90,7 @@ async function uniqueSlug(base: string, ownStoreId?: string): Promise<string> {
 
 export const upsertStore = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
-  if (seller.status === "pending") {
+  if (env.kycRequired && seller.status === "pending") {
     throw new ApiError(403, "Your account is awaiting verification. Submit your KYC documents first.");
   }
   const data = storeSchema.parse(req.body);

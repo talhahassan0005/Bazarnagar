@@ -2,11 +2,12 @@
 
 import Script from "next/script";
 import { useGetAdSettingsQuery } from "@/store/apiSlice";
+import { ADS_ENABLED } from "@/lib/constants";
 
 /** Loads Google's AdSense script site-wide, but only once an admin has enabled it. */
 export function AdSenseScript() {
-  const { data } = useGetAdSettingsQuery();
-  if (!data?.adsenseEnabled || !data.adsensePublisherId) return null;
+  const { data } = useGetAdSettingsQuery(undefined, { skip: !ADS_ENABLED });
+  if (!ADS_ENABLED || !data?.adsenseEnabled || !data.adsensePublisherId) return null;
 
   return (
     <Script

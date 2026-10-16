@@ -123,5 +123,16 @@ export const SITE_TAGLINE_UR = "آپ کی دکان، ایک لنک میں";
 export const SITE_DOMAIN = "bazaarnagar.com";
 /** Contact email shown on legal / support pages. */
 export const SITE_EMAIL = "info@bazaarnagar.com";
+/**
+ * Master switch for all ads (banner ads + Google AdSense). When false, no ad
+ * slots render on shop pages and the AdSense script isn't loaded, whatever
+ * the admin Ad Settings say.
+ */
+export const ADS_ENABLED = false;
+/**
+ * Whether new sellers must pass CNIC (KYC) verification before using the
+ * dashboard. Keep in sync with the backend's KYC_REQUIRED env variable.
+ */
+export const KYC_REQUIRED = false;
 /** Last revision date for the legal pages. */
 export const LEGAL_UPDATED = "16 July 2026";

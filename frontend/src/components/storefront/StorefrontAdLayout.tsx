@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ShopBanner, ShopBannerVertical } from "./ShopBanner";
+import { ADS_ENABLED } from "@/lib/constants";
 import type { Store } from "@/lib/types";
 
 /**
@@ -12,6 +13,8 @@ import type { Store } from "@/lib/types";
  * use this — ad placement and sizing only need to be maintained here, once.
  */
 export function StorefrontAdLayout({ store, children }: { store: Store; children: ReactNode }) {
+  if (!ADS_ENABLED) return <>{children}</>;
+
   return (
     <>
       <div className="mb-6">

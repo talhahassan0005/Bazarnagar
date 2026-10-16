@@ -7,6 +7,7 @@ import { Customer } from "../models/Customer";
 import { Store } from "../models/Store";
 import { signToken } from "../lib/jwt";
 import { addTrialPeriod } from "../lib/plans";
+import { env } from "../config/env";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
 const signupSchema = z.object({
@@ -44,7 +45,7 @@ export const signupSeller = asyncHandler(async (req: Request, res: Response) => 
     subscriptionStatus: "trial",
     subscriptionStartedAt: now,
     subscriptionEndsAt: addTrialPeriod(now),
-    status: "pending",
+    status: env.kycRequired ? "pending" : "active",
   });
 
   const token = signToken({ sub: seller.id, role: "seller" });

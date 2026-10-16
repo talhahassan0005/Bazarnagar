@@ -23,17 +23,22 @@ import { useAppSelector } from "@/store/hooks";
 
 const NAV: NavItem[] = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
-  { label: "Sellers", href: "/admin/sellers", icon: Users },
-  { label: "Stores", href: "/admin/stores", icon: Store },
-  { label: "Products", href: "/admin/products", icon: Package },
-  { label: "Activity Log", href: "/admin/activity", icon: History },
-  { label: "Data Summary", href: "/admin/data", icon: BarChart3 },
-  { label: "Moderation", href: "/admin/moderation", icon: ShieldCheck },
-  { label: "Reviews", href: "/admin/reviews", icon: Star },
-  { label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },
-  { label: "Payment Requests", href: "/admin/payment-requests", icon: Landmark },
-  { label: "Plan Settings", href: "/admin/plan-settings", icon: Settings },
-  { label: "Banner Ads", href: "/admin/banners", icon: Megaphone },
+
+  { group: "Marketplace", label: "Sellers", href: "/admin/sellers", icon: Users },
+  { group: "Marketplace", label: "Stores", href: "/admin/stores", icon: Store },
+  { group: "Marketplace", label: "Products", href: "/admin/products", icon: Package },
+
+  { group: "Moderation", label: "Product Review", href: "/admin/moderation", icon: ShieldCheck },
+  { group: "Moderation", label: "Customer Reviews", href: "/admin/reviews", icon: Star },
+
+  { group: "Insights", label: "Activity Log", href: "/admin/activity", icon: History },
+  { group: "Insights", label: "Data Summary", href: "/admin/data", icon: BarChart3 },
+
+  { group: "Billing", label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },
+  { group: "Billing", label: "Payment Requests", href: "/admin/payment-requests", icon: Landmark },
+  { group: "Billing", label: "Plan Settings", href: "/admin/plan-settings", icon: Settings },
+
+  { group: "Advertising", label: "Banner Ads", href: "/admin/banners", icon: Megaphone },
 ];
 
 /** Admin panel chrome (sidebar + header) with an auth guard. */
