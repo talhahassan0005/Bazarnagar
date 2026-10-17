@@ -89,6 +89,12 @@ export const apiSlice = createApi({
     signupCustomer: builder.mutation<CustomerAuthResponse, { name: string; phone: string; email: string; password: string }>({
       query: (body) => ({ url: "/auth/customer/signup", method: "POST", body }),
     }),
+    forgotPassword: builder.mutation<{ ok: true }, { email: string }>({
+      query: (body) => ({ url: "/auth/forgot-password", method: "POST", body }),
+    }),
+    resetPassword: builder.mutation<{ ok: true; role: "seller" | "customer" }, { token: string; password: string }>({
+      query: (body) => ({ url: "/auth/reset-password", method: "POST", body }),
+    }),
 
     // ── Public / customer ─────────────────────────────────────────────────
     getPublicStores: builder.query<Store[], { q?: string; city?: string }>({
@@ -482,6 +488,8 @@ export const {
   useLoginAdminMutation,
   useLoginCustomerMutation,
   useSignupCustomerMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useGetMeQuery,
   useTrackWhatsappClickMutation,
   useGetPublicStoresQuery,

@@ -39,6 +39,19 @@ export const env = {
     const r = this.r2;
     return Boolean(r.accountId && r.accessKeyId && r.secretAccessKey && r.bucket && r.publicUrl);
   },
+  // Outgoing email (password resets). Leave SMTP_HOST blank in development to
+  // print the email to the console instead of sending it.
+  smtp: {
+    host: process.env.SMTP_HOST ?? "",
+    port: Number(process.env.SMTP_PORT ?? 465),
+    user: process.env.SMTP_USER ?? "",
+    pass: process.env.SMTP_PASS ?? "",
+    /** Sender shown to recipients, e.g. `Bazaarnagar <no-reply@bazaarnagar.com>`. */
+    from: process.env.MAIL_FROM || process.env.SMTP_USER || "",
+  },
+  get mailEnabled() {
+    return Boolean(this.smtp.host && this.smtp.user && this.smtp.pass);
+  },
   /**
    * When true, new sellers start as "pending" and must pass CNIC (KYC)
    * verification before creating a store. Off unless set to "true". Keep in

@@ -1,26 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
+import { useResetPasswordMutation } from "@/store/apiSlice";
+import { getErrorMessage } from "@/lib/utils";
 
 /**
- * New-password screen the (mock) reset email links to, e.g.
- * `/reset-password?token=…`. The token would be read from the URL and verified
- * by the backend; for the prototype we just validate and simulate success.
+ * New-password screen the reset email links to: `/reset-password?token=…`.
+ * The backend verifies the one-time token and sets the new password.
  */
 export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const token = useSearchParams().get("token") ?? "";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [resetPassword, { isLoading: loading }] = useResetPasswordMutation();
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -31,12 +41,27 @@ export default function ResetPasswordPage() {
       return;
     }
     setError("");
-    setLoading(true);
-    // Prototype: no backend — simulate the reset, then send them to log in.
-    setTimeout(() => {
+    try {
+      const { role } = await resetPassword({ token, password }).unwrap();
       dispatch(addToast("Password updated — please log in.", "success"));
-      router.push("/login");
-    }, 600);
+      router.push(role === "seller" ? "/login?role=seller" : "/login");
+    } catch (err) {
+      setError(getErrorMessage(err, "Could not update your password."));
+    }
+  }
+
+  if (!token) {
+    return (
+      <AuthCard
+        title="Reset link missing"
+        subtitle="This page needs the link from your password reset email."
+        footer={{ text: "Remembered it?", linkText: "Back to log in", href: "/login" }}
+      >
+        <Button href="/forgot-password" fullWidth>
+          Request a new link
+        </Button>
+      </AuthCard>
+    );
   }
 
   return (

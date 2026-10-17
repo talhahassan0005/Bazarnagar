@@ -6,23 +6,24 @@ import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
+import { useForgotPasswordMutation } from "@/store/apiSlice";
+import { getErrorMessage } from "@/lib/utils";
 
 export default function ForgotPasswordPage() {
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [forgotPassword, { isLoading: loading }] = useForgotPasswordMutation();
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    // Prototype: no email is actually sent — simulate the request. Wire this to
-    // a `requestPasswordReset(email)` mutation when the backend is ready.
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await forgotPassword({ email: email.trim() }).unwrap();
       setSent(true);
       dispatch(addToast("Reset link sent", "success"));
-    }, 600);
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Could not send the reset link"), "error"));
+    }
   }
 
   if (sent) {
