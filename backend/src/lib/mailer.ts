@@ -31,5 +31,6 @@ export async function sendMail(message: MailMessage): Promise<void> {
     console.log(`[mail] SMTP not configured — would send to ${message.to}:\n${message.text}`);
     return;
   }
-  await smtp().sendMail({ from: env.smtp.from, ...message });
+  const info = await smtp().sendMail({ from: env.smtp.from, ...message });
+  console.log(`[mail] sent "${message.subject}" to ${message.to} (${info.response})`);
 }
