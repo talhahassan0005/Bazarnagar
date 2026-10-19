@@ -185,7 +185,7 @@ export function ManageSellerModal({
                     <span className="font-medium text-slate-800">{formatPrice(p.amount)}</span>
                     <span className="text-slate-400">
                       {" "}
-                      · {PLANS[p.planId]?.name ?? p.planId} · {p.method}
+                      · {p.planId === "boost" ? "Boost" : PLANS[p.planId]?.name ?? p.planId} · {p.method}
                     </span>
                   </div>
                   <span className="text-xs text-slate-400">

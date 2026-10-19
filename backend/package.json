@@ -14,6 +14,7 @@
     "seed:starter-stores": "tsx src/db/seed-starter-stores.ts",
     "backfill:coords": "tsx src/db/backfill-coords.ts",
     "backfill:activity": "tsx src/db/backfill-activity.ts",
+    "backfill:storage": "tsx src/db/backfill-storage.ts",
     "add:products": "tsx src/db/add-products.ts",
     "migrate:r2": "tsx src/db/migrate-images-to-r2.ts"
   },

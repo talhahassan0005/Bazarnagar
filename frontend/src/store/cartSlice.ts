@@ -2,31 +2,52 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { CartItem } from "@/lib/types";
 import type { RootState } from "./index";
 
-export const CART_STORAGE_KEY = "bn_cart";
+/**
+ * Each cart is stored per owner, so carts never leak between people sharing a
+ * browser: "guest" for logged-out visitors, "customer:<id>" for each buyer.
+ */
+export const GUEST_CART_OWNER = "guest";
+export const cartStorageKey = (owner: string) => `bn_cart:${owner}`;
+/** Pre-per-user cart key; migrated into the first owner seen, then removed. */
+export const LEGACY_CART_KEY = "bn_cart";
 
 interface CartState {
   items: CartItem[];
+  /** Whose cart is loaded; null until the session has been resolved. */
+  owner: string | null;
 }
 
-const initialState: CartState = { items: [] };
+const initialState: CartState = { items: [], owner: null };
 
-/** Read the persisted cart (client only). */
-export function loadCart(): CartItem[] {
+/** Read a persisted cart (client only). */
+export function readCart(key: string): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(CART_STORAGE_KEY);
+    const raw = window.localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as CartItem[]) : [];
   } catch {
     return [];
   }
 }
 
+/** Combine two carts, adding quantities for products in both. */
+export function mergeCarts(base: CartItem[], extra: CartItem[]): CartItem[] {
+  const merged = base.map((i) => ({ ...i }));
+  for (const item of extra) {
+    const existing = merged.find((i) => i.productId === item.productId);
+    if (existing) existing.quantity += item.quantity;
+    else merged.push({ ...item });
+  }
+  return merged;
+}
+
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    hydrateCart(state, action: PayloadAction<CartItem[]>) {
-      state.items = action.payload;
+    hydrateCart(state, action: PayloadAction<{ owner: string; items: CartItem[] }>) {
+      state.owner = action.payload.owner;
+      state.items = action.payload.items;
     },
     addItem(state, action: PayloadAction<CartItem>) {
       const incoming = action.payload;

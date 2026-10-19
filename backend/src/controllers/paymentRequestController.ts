@@ -5,6 +5,8 @@ import { Settings } from "../models/Settings";
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Payment } from "../models/Payment";
+import { Product } from "../models/Product";
+import { DAY_MS } from "../lib/boost";
 import { getPlan, addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
@@ -68,6 +70,7 @@ export const createPaymentRequest = asyncHandler(async (req: Request, res: Respo
 
   const request = await PaymentRequest.create({
     sellerId: seller._id,
+    purpose: "plan",
     planId: data.planId,
     amount: plan.price,
     method: data.method,
@@ -94,11 +97,17 @@ export const getAllPaymentRequests = asyncHandler(async (_req: Request, res: Res
   const sellerIds = [...new Set(requests.map((r) => r.sellerId.toString()))];
   const sellers = await Seller.find({ _id: { $in: sellerIds } }).select("name email phone");
   const sellerById = new Map(sellers.map((s) => [s.id, s]));
+  const productIds = requests.filter((r) => r.productId).map((r) => r.productId);
+  const products = await Product.find({ _id: { $in: productIds } }).select("name");
+  const productById = new Map(products.map((p) => [p.id, p.name]));
   res.json(
     requests.map((r) => ({
       ...r.toJSON(),
+      // Requests created before boosts were paid are plan payments.
+      purpose: r.purpose ?? "plan",
       sellerName: sellerById.get(r.sellerId.toString())?.name ?? "Unknown seller",
       sellerEmail: sellerById.get(r.sellerId.toString())?.email ?? "",
+      productName: r.productId ? productById.get(r.productId.toString()) ?? "Deleted product" : undefined,
     }))
   );
 });
@@ -118,6 +127,29 @@ export const reviewPaymentRequest = asyncHandler(async (req: Request, res: Respo
   request.status = data.status;
   request.reviewNote = data.reviewNote;
   await request.save();
+
+  // Boosts went live when the seller paid: approving just records the
+  // payment; rejecting takes back the days that payment bought.
+  if (request.purpose === "boost") {
+    if (data.status === "approved") {
+      await Payment.create({
+        sellerId: request.sellerId,
+        planId: "boost",
+        amount: request.amount,
+        method: request.method,
+        paidAt: new Date(),
+        notes: `Boost ${request.days} day(s) verified (ref: ${request.reference})`,
+      });
+    } else {
+      const product = await Product.findById(request.productId);
+      if (product?.boostedUntil && request.days) {
+        const until = product.boostedUntil.getTime() - request.days * DAY_MS;
+        product.boostedUntil = until > Date.now() ? new Date(until) : undefined;
+        await product.save();
+      }
+    }
+    return res.json(request.toJSON());
+  }
 
   if (data.status === "approved") {
     const seller = await Seller.findById(request.sellerId);

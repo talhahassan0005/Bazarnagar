@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { SubscriptionBadge } from "@/components/domain/StatusBadges";
 import { Avatar } from "@/components/ui";
-import { useGetAllSellersQuery, useUpdateSellerMutation } from "@/store/apiSlice";
+import { useGetAllSellersQuery, useGetAllStoresQuery, useUpdateSellerMutation } from "@/store/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { PLANS } from "@/lib/constants";
@@ -113,6 +113,7 @@ function KycReviewModal({ seller, onClose }: { seller: Seller; onClose: () => vo
 export default function AdminSellersPage() {
   const dispatch = useAppDispatch();
   const { data, isLoading } = useGetAllSellersQuery();
+  const { data: stores } = useGetAllStoresQuery();
   const [updateSeller] = useUpdateSellerMutation();
   const [q, setQ] = useState("");
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -145,11 +146,15 @@ export default function AdminSellersPage() {
     );
   }
 
+  // Each seller owns at most one store.
+  const storeBySeller = new Map((stores ?? []).map((st) => [st.sellerId, st]));
+  const needle = q.trim().toLowerCase();
   const rows = (data ?? []).filter(
     (s) =>
-      s.name.toLowerCase().includes(q.toLowerCase()) ||
-      s.email.toLowerCase().includes(q.toLowerCase()) ||
-      s.phone.includes(q)
+      s.name.toLowerCase().includes(needle) ||
+      s.email.toLowerCase().includes(needle) ||
+      s.phone.includes(needle) ||
+      (storeBySeller.get(s.id)?.name.toLowerCase().includes(needle) ?? false)
   );
 
   const columns: Column<Seller>[] = [
@@ -165,7 +170,26 @@ export default function AdminSellersPage() {
         </div>
       ),
     },
+    {
+      header: "Store",
+      cell: (s) => {
+        const store = storeBySeller.get(s.id);
+        return store ? (
+          <a
+            href={`/store/${store.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-brand-700 hover:underline"
+          >
+            {store.name}
+          </a>
+        ) : (
+          <span className="text-xs text-slate-400">No store yet</span>
+        );
+      },
+    },
     { header: "Phone", hideOnMobile: true, cell: (s) => s.phone },
+    { header: "Country", hideOnMobile: true, cell: (s) => s.country ?? "—" },
     {
       header: "Plan",
       cell: (s) => <Badge tone="brand">{PLANS[s.planId].name}</Badge>,
@@ -184,7 +208,7 @@ export default function AdminSellersPage() {
       ),
     },
     {
-      header: "",
+      header: "Action",
       className: "text-right",
       cell: (s) => (
         <div className="flex justify-end gap-1">
@@ -233,7 +257,7 @@ export default function AdminSellersPage() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search sellers…"
+          placeholder="Search by seller, email, phone or store…"
           className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
         />
       </div>

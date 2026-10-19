@@ -1,4 +1,4 @@
-import type { BoostPackage, ModerationStatus, Plan, PlanId } from "./types";
+import type { BoostPricing, ModerationStatus, Plan, PlanId } from "./types";
 
 /** A product limit at/above this counts as "unlimited" (paid plans). */
 export const UNLIMITED = 1_000_000;
@@ -46,14 +46,10 @@ export const PLANS: Record<PlanId, Plan> = {
 export const PLAN_LIST: Plan[] = Object.values(PLANS);
 
 /**
- * Default featured-product "boost" packages — shown as a fallback while the
- * live (admin-editable) rates load from `useGetSellerBoostPackagesQuery`.
+ * Default per-day boost pricing — a fallback while the live (admin-editable)
+ * pricing loads from `useGetBoostPricingQuery`.
  */
-export const BOOST_PACKAGES: BoostPackage[] = [
-  { id: "boost7", label: "7 days", days: 7, price: 500 },
-  { id: "boost15", label: "15 days", days: 15, price: 900 },
-  { id: "boost30", label: "30 days", days: 30, price: 1500 },
-];
+export const DEFAULT_BOOST_PRICING: BoostPricing = { pricePerDay: 100, minDays: 1, maxDays: 30 };
 
 /** Business / product categories (SRS §5.3 / §5.4). */
 export const CATEGORIES = [
@@ -123,6 +119,9 @@ export const SITE_TAGLINE_UR = "آپ کی دکان، ایک لنک میں";
 export const SITE_DOMAIN = "bazaarnagar.com";
 /** Contact email shown on legal / support pages. */
 export const SITE_EMAIL = "info@bazaarnagar.com";
+/** Support phone / WhatsApp, in international digits (no +) and display form. */
+export const SITE_PHONE = "923241201757";
+export const SITE_PHONE_DISPLAY = "+92 324 1201757";
 /**
  * Master switch for all ads (banner ads + Google AdSense). When false, no ad
  * slots render on shop pages and the AdSense script isn't loaded, whatever

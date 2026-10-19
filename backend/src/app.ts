@@ -20,6 +20,8 @@ export function createApp() {
         // throwing — the browser blocks them, and we avoid noisy error logs.
         cb(null, !origin || isAllowedOrigin(origin));
       },
+      // Lets the admin panel read the filename of CSV downloads.
+      exposedHeaders: ["Content-Disposition"],
     })
   );
   // The Stripe webhook needs the RAW body for signature verification — mount

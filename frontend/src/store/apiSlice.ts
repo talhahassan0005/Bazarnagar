@@ -3,19 +3,20 @@ import { type UnknownAction, type ThunkDispatch, type TypedStartListening } from
 import { API_BASE, getToken, setToken, clearToken } from "@/lib/api";
 import { setSellerSession, setAdminSession, setCustomerSession, logout as logoutAction } from "@/store/authSlice";
 import type {
+  ActivityLogFilters,
   ActivityLogPage,
-  ActivityType,
   AdminReview,
   AdSettings,
   Banner,
   BannerPlacement,
-  BoostPackage,
+  BoostPricing,
   ChatMessage,
   Conversation,
   CreateOrderInput,
   Customer,
   DashboardMetrics,
   DataSummary,
+  StorageUsage,
   ManualPaymentSettings,
   ModerationStatus,
   Order,
@@ -45,6 +46,7 @@ import type {
 export interface SellerAuthResponse { token: string; seller: Seller }
 export interface AdminAuthResponse { token: string; admin: { id: string; name: string; email: string } }
 export interface CustomerAuthResponse { token: string; customer: Customer }
+export interface SignupInput { name: string; phone: string; email: string; country: string; password: string }
 
 type MeResponse =
   | { role: "seller"; seller: Seller; store: Store | null }
@@ -74,7 +76,7 @@ export const apiSlice = createApi({
     loginSeller: builder.mutation<SellerAuthResponse, { email: string; password: string }>({
       query: (body) => ({ url: "/auth/login", method: "POST", body }),
     }),
-    signupSeller: builder.mutation<SellerAuthResponse, { name: string; phone: string; email: string; password: string }>({
+    signupSeller: builder.mutation<SellerAuthResponse, SignupInput>({
       query: (body) => ({ url: "/auth/signup", method: "POST", body }),
     }),
     loginAdmin: builder.mutation<AdminAuthResponse, { email: string; password: string }>({
@@ -86,7 +88,7 @@ export const apiSlice = createApi({
     loginCustomer: builder.mutation<CustomerAuthResponse, { email: string; password: string }>({
       query: (body) => ({ url: "/auth/customer/login", method: "POST", body }),
     }),
-    signupCustomer: builder.mutation<CustomerAuthResponse, { name: string; phone: string; email: string; password: string }>({
+    signupCustomer: builder.mutation<CustomerAuthResponse, SignupInput>({
       query: (body) => ({ url: "/auth/customer/signup", method: "POST", body }),
     }),
     forgotPassword: builder.mutation<{ ok: true }, { email: string }>({
@@ -114,6 +116,14 @@ export const apiSlice = createApi({
     }),
     getProduct: builder.query<ProductWithStore | null, string>({
       query: (id) => `/public/products/${id}`,
+      providesTags: ["Product"],
+    }),
+    getCities: builder.query<string[], void>({
+      query: () => "/public/cities",
+      providesTags: ["Store"],
+    }),
+    getRelatedProducts: builder.query<ProductWithStore[], string>({
+      query: (id) => `/public/products/${id}/related`,
       providesTags: ["Product"],
     }),
     searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string }>({
@@ -247,12 +257,16 @@ export const apiSlice = createApi({
       query: (id) => ({ url: `/seller/products/${id}`, method: "DELETE" }),
       invalidatesTags: ["Product"],
     }),
-    boostProduct: builder.mutation<Product, { id: string; packageId: string }>({
-      query: ({ id, packageId }) => ({ url: `/seller/products/${id}/boost`, method: "POST", body: { packageId } }),
-      invalidatesTags: ["Product"],
+    boostProduct: builder.mutation<
+      Product,
+      { id: string; days: number; method: PaymentRequestMethod; reference: string; proofUrl?: string }
+    >({
+      query: ({ id, ...body }) => ({ url: `/seller/products/${id}/boost`, method: "POST", body }),
+      invalidatesTags: ["Product", "PaymentRequest"],
     }),
-    getSellerBoostPackages: builder.query<BoostPackage[], void>({
-      query: () => "/seller/boost-packages",
+    getBoostPricing: builder.query<BoostPricing, void>({
+      query: () => "/seller/boost-pricing",
+      providesTags: ["BoostConfig"],
     }),
     changePlan: builder.mutation<Seller, PlanId>({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
@@ -304,7 +318,8 @@ export const apiSlice = createApi({
     }),
     reviewPaymentRequest: builder.mutation<PaymentRequest, { id: string; status: PaymentRequestStatus; reviewNote?: string }>({
       query: ({ id, ...body }) => ({ url: `/admin/payment-requests/${id}`, method: "PATCH", body }),
-      invalidatesTags: ["PaymentRequest", "Seller", "Payment"],
+      // Rejecting a boost payment removes the boost, so products change too.
+      invalidatesTags: ["PaymentRequest", "Seller", "Payment", "Product"],
     }),
     updateManualPaymentSettings: builder.mutation<ManualPaymentSettings, ManualPaymentSettings>({
       query: (body) => ({ url: "/admin/manual-payment-settings", method: "PATCH", body }),
@@ -323,13 +338,16 @@ export const apiSlice = createApi({
       query: () => "/admin/products",
       providesTags: ["Product"],
     }),
-    getActivityLogs: builder.query<ActivityLogPage, { type?: ActivityType; page?: number }>({
+    getActivityLogs: builder.query<ActivityLogPage, ActivityLogFilters & { page?: number }>({
       query: (params) => ({ url: "/admin/activity", params }),
       providesTags: ["Store", "Product"],
     }),
     getDataSummary: builder.query<DataSummary, void>({
       query: () => "/admin/data-summary",
       providesTags: ["Store", "Product"],
+    }),
+    getStorageUsage: builder.query<StorageUsage, "paid" | "all">({
+      query: (scope) => ({ url: "/admin/storage", params: { scope } }),
     }),
     moderateProduct: builder.mutation<Product, { id: string; moderationStatus: ModerationStatus; reason?: string }>({
       query: ({ id, ...body }) => ({ url: `/admin/products/${id}/moderation`, method: "PATCH", body }),
@@ -374,11 +392,11 @@ export const apiSlice = createApi({
     }),
 
     // ── Admin Boost Config ────────────────────────────────────────────────
-    getAdminBoostConfig: builder.query<BoostPackage[], void>({
+    getAdminBoostConfig: builder.query<BoostPricing, void>({
       query: () => "/admin/boost-config",
       providesTags: ["BoostConfig"],
     }),
-    updateAdminBoostConfig: builder.mutation<BoostPackage, { packageId: string; label: string; days: number; price: number; enabled?: boolean }>({
+    updateAdminBoostConfig: builder.mutation<BoostPricing, BoostPricing>({
       query: (body) => ({ url: "/admin/boost-config", method: "PATCH", body }),
       invalidatesTags: ["BoostConfig"],
     }),
@@ -496,6 +514,8 @@ export const {
   useGetStoreBySlugQuery,
   useGetStoreProductsQuery,
   useGetProductQuery,
+  useGetRelatedProductsQuery,
+  useGetCitiesQuery,
   useSearchProductsQuery,
   useGetProductReviewsQuery,
   useCreateReviewMutation,
@@ -527,7 +547,7 @@ export const {
   useUpdateProductMutation,
   useDeleteProductMutation,
   useBoostProductMutation,
-  useGetSellerBoostPackagesQuery,
+  useGetBoostPricingQuery,
   useChangePlanMutation,
   useSubscriptionCheckoutMutation,
   useGetSubscriptionStatusQuery,
@@ -545,6 +565,7 @@ export const {
   useGetAllProductsQuery,
   useGetActivityLogsQuery,
   useGetDataSummaryQuery,
+  useGetStorageUsageQuery,
   useModerateProductMutation,
   useUpdateSellerMutation,
   useUpdateStoreStatusMutation,

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Navigation } from "lucide-react";
 import { Card, CardBody, CardHeader, Button, Input, Select, Textarea, Toggle } from "@/components/ui";
 import { ImageUpload } from "./ImageUpload";
-import { CATEGORIES, CITIES } from "@/lib/constants";
+import { CATEGORIES } from "@/lib/constants";
+import { CitySelect } from "./CitySelect";
 import { slugify } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 
@@ -149,14 +150,7 @@ export function StoreProfileForm({
       <Card>
         <CardHeader title="Location" subtitle="Help nearby customers find you." />
         <CardBody className="grid gap-4 sm:grid-cols-2">
-          <Select
-            label="City"
-            required
-            placeholder="Select a city"
-            value={v.city}
-            onChange={(e) => set("city", e.target.value)}
-            options={CITIES.map((c) => ({ value: c, label: c }))}
-          />
+          <CitySelect required value={v.city} onChange={(city) => set("city", city)} />
           <Input
             label="Area"
             value={v.area ?? ""}

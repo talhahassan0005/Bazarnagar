@@ -3,6 +3,7 @@ import { ArrowRight, MapPin, MessageCircle } from "lucide-react";
 import { STORE_THEMES, type ResolvedLanding } from "@/lib/landing";
 import { cn, toWhatsAppNumber } from "@/lib/utils";
 import type { Store } from "@/lib/types";
+import { ShareStoreButton } from "@/components/domain/ShareStoreButton";
 
 /** Themed hero for a store's customizable landing page. */
 export function StoreLandingHero({
@@ -67,7 +68,7 @@ export function StoreLandingHero({
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href={`/store/${store.slug}/products`}
+            href="#products"
             className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-medium text-slate-900 shadow-sm transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
           >
             {landing.primaryCtaLabel}
@@ -81,6 +82,7 @@ export function StoreLandingHero({
           >
             <MessageCircle className="h-4 w-4" /> WhatsApp
           </a>
+          <ShareStoreButton store={store} variant="hero" />
         </div>
       </div>
     </section>

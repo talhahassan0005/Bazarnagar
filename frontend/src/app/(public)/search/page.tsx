@@ -6,7 +6,8 @@ import { ArrowDownUp, ArrowRight, ChevronLeft, ChevronRight, Navigation, Search,
 import { Button, EmptyState, ProductGridSkeleton } from "@/components/ui";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { useSearchProductsQuery } from "@/store/apiSlice";
-import { CATEGORIES, CITIES } from "@/lib/constants";
+import { CATEGORIES } from "@/lib/constants";
+import { useFilterCities } from "@/components/domain/CitySelect";
 import { cn, distanceKm, effectivePrice } from "@/lib/utils";
 
 type Sort = "relevance" | "price-asc" | "price-desc";
@@ -26,6 +27,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
+  const cities = useFilterCities();
   const [sort, setSort] = useState<Sort>("relevance");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -186,7 +188,7 @@ export default function SearchPage() {
               <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
               <select value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent py-2.5 text-sm outline-none">
                 <option value="">All cities</option>
-                {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">

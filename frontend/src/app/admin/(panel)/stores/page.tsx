@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import { Badge, Button, TableSkeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
+import { CopyId } from "@/components/domain/CopyId";
 import { useGetAllStoresQuery, useUpdateStoreStatusMutation } from "@/store/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -53,6 +54,7 @@ export default function AdminStoresPage() {
         <div>
           <p className="font-medium text-slate-800">{s.name}</p>
           <p className="text-xs text-slate-400">/store/{s.slug}</p>
+          <CopyId id={s.id} />
         </div>
       ),
     },
@@ -68,7 +70,7 @@ export default function AdminStoresPage() {
       ),
     },
     {
-      header: "",
+      header: "Action",
       className: "text-right",
       cell: (s) => (
         <div className="flex justify-end gap-1">

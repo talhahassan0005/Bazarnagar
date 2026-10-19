@@ -5,7 +5,8 @@ import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Payment } from "../models/Payment";
 import { getPlan, addBillingPeriod } from "../lib/plans";
-import { getEffectiveBoostPackage, getEffectiveBoostPackages } from "../lib/boost";
+import { DAY_MS, getBoostPricing } from "../lib/boost";
+import { PaymentRequest } from "../models/PaymentRequest";
 import { moderateProduct } from "../lib/moderation";
 import { logProductCreated, logStoreCreated } from "../lib/activityLog";
 import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
@@ -55,7 +56,14 @@ const storeSchema = z.object({
   description: z.string().min(1),
   category: z.string().min(1),
   whatsapp: z.string().min(6),
-  city: z.string().min(1),
+  // Sellers can type their own city ("Other"): tidy spacing and capitalise
+  // each word, so "mandi  bahauddin" is stored as "Mandi Bahauddin".
+  city: z
+    .string()
+    .trim()
+    .min(1)
+    .max(60)
+    .transform((c) => c.replace(/\s+/g, " ").replace(/(^|\s)(\S)/g, (_m, sp, ch) => sp + ch.toUpperCase())),
   area: z.string().optional(),
   fullAddress: z.string().optional(),
   mapsLink: z.string().url().optional().or(z.literal("")),
@@ -171,7 +179,8 @@ export const changePlan = asyncHandler(async (req: Request, res: Response) => {
   seller.planId = planId;
   seller.subscriptionStatus = "active";
   seller.subscriptionStartedAt = now;
-  seller.subscriptionEndsAt = addBillingPeriod(now);
+  // The free plan never expires, so it has no end date.
+  seller.subscriptionEndsAt = planId === "starter" ? undefined : addBillingPeriod(now);
   await seller.save();
 
   if (wasInactive && seller.storeId) {
@@ -302,30 +311,53 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   res.json({ ok: true });
 });
 
-/** GET /api/seller/boost-packages — live (admin-set) boost package pricing. */
-export const getBoostPackages = asyncHandler(async (_req: Request, res: Response) => {
-  const packages = await getEffectiveBoostPackages();
-  res.json(packages.filter((p) => p.enabled !== false));
+/** GET /api/seller/boost-pricing — live per-day boost price and allowed day range. */
+export const getBoostPricingForSeller = asyncHandler(async (_req: Request, res: Response) => {
+  res.json(await getBoostPricing());
 });
 
-const boostSchema = z.object({ packageId: z.string().min(1) });
+const boostSchema = z.object({
+  days: z.number().int().positive(),
+  method: z.enum(["bank", "jazzcash", "easypaisa"]),
+  reference: z.string().trim().min(3, "Enter the transaction ID / reference number").max(100),
+  proofUrl: z.string().optional(),
+});
 
+/**
+ * POST /api/seller/products/:id/boost — any seller (free plan included) pays
+ * per day to feature a product. The boost starts immediately; the payment is
+ * logged for the admin, who can reject it later (removing the boost) if the
+ * money never arrived.
+ */
 export const boostProduct = asyncHandler(async (req: Request, res: Response) => {
   const { seller, store } = await requireOwnedStore(req);
-  if (seller.planId === "starter") {
-    throw new ApiError(403, "Boosting is a paid feature. Upgrade your plan to feature products.");
+  const data = boostSchema.parse(req.body);
+  const pricing = await getBoostPricing();
+  if (data.days < pricing.minDays || data.days > pricing.maxDays) {
+    throw new ApiError(400, `Choose between ${pricing.minDays} and ${pricing.maxDays} days.`);
   }
-  const { packageId } = boostSchema.parse(req.body);
-  const pkg = await getEffectiveBoostPackage(packageId);
-  if (!pkg) throw new ApiError(400, "Invalid boost package");
 
   const product = await Product.findOne({ _id: req.params.id, storeId: store._id });
   if (!product) throw new ApiError(404, "Product not found");
 
+  // Extends an active boost, otherwise starts now.
   const now = new Date();
   const base = product.boostedUntil && product.boostedUntil > now ? product.boostedUntil : now;
-  product.boostedUntil = new Date(base.getTime() + pkg.days * 24 * 60 * 60 * 1000);
+  product.boostedUntil = new Date(base.getTime() + data.days * DAY_MS);
   await product.save();
+
+  await PaymentRequest.create({
+    sellerId: seller._id,
+    purpose: "boost",
+    productId: product._id,
+    days: data.days,
+    amount: data.days * pricing.pricePerDay,
+    method: data.method,
+    reference: data.reference,
+    proofUrl: data.proofUrl,
+    status: "pending",
+  });
+
   res.json(product.toJSON());
 });
 

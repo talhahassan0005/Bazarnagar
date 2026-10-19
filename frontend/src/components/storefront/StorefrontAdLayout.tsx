@@ -8,9 +8,9 @@ import type { Store } from "@/lib/types";
 /**
  * Shared banner-ad placement for storefront pages: a full-width banner
  * above the content, a matching full-width banner below it, and (desktop
- * only) a sticky vertical banner beside the content. Both the full catalog
- * (StoreCatalog) and the landing page's featured section (FeaturedProducts)
- * use this — ad placement and sizing only need to be maintained here, once.
+ * only) a sticky vertical banner beside the content. Used by the store
+ * catalog (StoreCatalog) — ad placement and sizing only need to be
+ * maintained here, once.
  */
 export function StorefrontAdLayout({ store, children }: { store: Store; children: ReactNode }) {
   if (!ADS_ENABLED) return <>{children}</>;

@@ -25,14 +25,22 @@ import { PLANS } from "@/lib/constants";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
 import type { Plan, PlanId } from "@/lib/types";
 
-function StatusBanner({ status, endsAt, daysRemaining }: {
+function StatusBanner({ status, endsAt, daysRemaining, isFree }: {
   status: string;
   endsAt: string | null;
   daysRemaining: number;
+  isFree: boolean;
 }) {
   const date = endsAt
     ? new Date(endsAt).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })
     : null;
+
+  if (isFree && status !== "suspended") return (
+    <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>You&apos;re on the <strong>Free plan</strong> — it never expires. Upgrade any time to list more products.</span>
+    </div>
+  );
 
   if (status === "active") {
     if (daysRemaining <= 7) return (
@@ -217,9 +225,11 @@ export default function PlanPage() {
     endsAt ? Math.max(0, Math.ceil((new Date(endsAt).getTime() - Date.now()) / 86400000)) : 0
   );
 
-  const isActive = status === "active";
-  const isExpiredOrCancelled = status === "expired" || status === "cancelled";
-  const isTrial = status === "trial";
+  // The free plan has no billing cycle — no renew/cancel/auto-renew controls.
+  const isFree = seller.data.planId === "starter";
+  const isActive = !isFree && status === "active";
+  const isExpiredOrCancelled = !isFree && (status === "expired" || status === "cancelled");
+  const isTrial = !isFree && status === "trial";
   const needsRenewal = isExpiredOrCancelled || isTrial;
 
   async function handleSubscribe(plan: Plan) {
@@ -296,9 +306,9 @@ export default function PlanPage() {
               </div>
             </div>
           )}
-          <StatusBanner status={status} endsAt={endsAt} daysRemaining={daysRemaining} />
+          <StatusBanner status={status} endsAt={endsAt} daysRemaining={daysRemaining} isFree={isFree} />
 
-          {manualRequests.data?.some((r) => r.status === "pending") && (
+          {manualRequests.data?.some((r) => r.status === "pending" && r.purpose !== "boost") && (
             <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               <RefreshCw className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
@@ -369,7 +379,7 @@ export default function PlanPage() {
       </Card>
 
       <h2 className="mb-4 text-lg font-semibold text-slate-900">
-        {isActive ? "Change plan" : "Choose a plan"}
+        {isFree ? "Upgrade your plan" : isActive ? "Change plan" : "Choose a plan"}
       </h2>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {planList.map((plan) => (

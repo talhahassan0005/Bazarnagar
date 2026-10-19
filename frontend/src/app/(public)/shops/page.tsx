@@ -6,12 +6,13 @@ import { Navigation, Search, SlidersHorizontal, Store as StoreIcon } from "lucid
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { StoreCard } from "@/components/storefront/StoreCard";
 import { useGetPublicStoresQuery } from "@/store/apiSlice";
-import { CITIES } from "@/lib/constants";
+import { useFilterCities } from "@/components/domain/CitySelect";
 import { distanceKm } from "@/lib/utils";
 
 export default function ShopsPage() {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
+  const cities = useFilterCities();
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
 
@@ -81,7 +82,7 @@ export default function ShopsPage() {
             className="bg-transparent py-2.5 text-sm outline-none"
           >
             <option value="">All cities</option>
-            {CITIES.map((c) => (
+            {cities.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

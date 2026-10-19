@@ -17,13 +17,11 @@ export interface Plan {
   enabled?: boolean;
 }
 
-/** Featured-product "boost" package — admin-editable price/duration. */
-export interface BoostPackage {
-  id: string;
-  label: string;
-  days: number;
-  price: number; // PKR
-  enabled?: boolean;
+/** Featured-product "boost" pricing — any seller pays per day; admin-editable. */
+export interface BoostPricing {
+  pricePerDay: number; // PKR
+  minDays: number;
+  maxDays: number;
 }
 
 export type SubscriptionStatus =
@@ -40,6 +38,8 @@ export interface Seller {
   name: string;
   phone: string;
   email: string;
+  /** Missing on accounts created before signup asked for it. */
+  country?: string;
   status: SellerStatus;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
@@ -130,6 +130,7 @@ export interface Store {
   /** Seller's payout details (optional). */
   payout?: StorePayout;
   status: StoreStatus;
+  /** Seller/admin only — public endpoints omit views and whatsappClicks. */
   views: number;
   whatsappClicks: number;
 }
@@ -170,6 +171,7 @@ export interface Product {
   moderationStatus: ModerationStatus;
   /** Paid "boost" — product is featured while this date is in the future. */
   boostedUntil?: string;
+  /** Seller/admin only — public endpoints omit views and whatsappClicks. */
   views: number;
   whatsappClicks: number;
   createdAt: string;
@@ -216,7 +218,8 @@ export interface ProductReviews extends ProductRating {
 export interface Payment {
   id: string;
   sellerId: string;
-  planId: PlanId;
+  /** A plan id, or "boost" for a verified product-boost payment. */
+  planId: PlanId | "boost";
   amount: number;
   method: string;
   paidAt: string;
@@ -235,7 +238,14 @@ export interface PaymentRequest {
   /** Present on admin listings (joined server-side). */
   sellerName?: string;
   sellerEmail?: string;
-  planId: PlanId;
+  /** "plan" waits for admin approval; "boost" is live as soon as it's paid. */
+  purpose: "plan" | "boost";
+  /** Plan payments only. */
+  planId?: PlanId;
+  /** Boost payments only. */
+  productId?: string;
+  productName?: string;
+  days?: number;
   amount: number;
   method: PaymentRequestMethod;
   reference: string;
@@ -263,6 +273,8 @@ export interface Customer {
   name: string;
   phone: string;
   email: string;
+  /** Missing on accounts created before signup asked for it. */
+  country?: string;
   createdAt: string;
 }
 
@@ -442,6 +454,16 @@ export interface ActivityLog {
   createdAt: string;
 }
 
+/** Filters shared by the activity list and its CSV export. */
+export interface ActivityLogFilters {
+  type?: ActivityType;
+  /** Search across seller, store, product, city and category. */
+  q?: string;
+  /** ISO datetimes — inclusive range. */
+  from?: string;
+  to?: string;
+}
+
 export interface ActivityLogPage {
   items: ActivityLog[];
   total: number;
@@ -476,4 +498,25 @@ export interface DataSummary {
     byModeration: CountRow[];
     byCategory: CountRow[];
   };
+}
+
+/* ── Admin storage usage ─────────────────────────────────────────────────── */
+
+export interface StorageUsageRow {
+  storeId: string;
+  storeName: string;
+  storeSlug: string;
+  storeStatus: StoreStatus;
+  sellerName: string;
+  sellerEmail: string;
+  planId: PlanId;
+  files: number;
+  bytes: number;
+  lastUpload: string | null;
+}
+
+export interface StorageUsage {
+  scope: "paid" | "all";
+  totals: { stores: number; files: number; bytes: number };
+  rows: StorageUsageRow[];
 }

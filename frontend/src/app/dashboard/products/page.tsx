@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
 import { Button, Card, TableSkeleton, EmptyState, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
@@ -9,16 +9,15 @@ import {
   ProductStatusBadge,
   StockBadge,
 } from "@/components/domain/StatusBadges";
+import { BoostModal } from "@/components/domain/BoostModal";
 import { useAppDispatch } from "@/store/hooks";
 import {
-  useBoostProductMutation,
   useDeleteProductMutation,
   useGetMyProductsQuery,
-  useGetSellerBoostPackagesQuery,
   useGetSellerQuery,
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
-import { BOOST_PACKAGES, PLANS } from "@/lib/constants";
+import { PLANS } from "@/lib/constants";
 import { formatCount, formatPrice, getErrorMessage, isBoosted } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
@@ -26,21 +25,9 @@ export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const { data: products, isLoading } = useGetMyProductsQuery();
   const { data: seller } = useGetSellerQuery();
-  const { data: liveBoostPackages } = useGetSellerBoostPackagesQuery();
-  const boostPackages = liveBoostPackages ?? BOOST_PACKAGES;
   const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
-  const [boostProduct, { isLoading: boosting }] = useBoostProductMutation();
   const [toDelete, setToDelete] = useState<Product | null>(null);
   const [toBoost, setToBoost] = useState<Product | null>(null);
-  const [pkgId, setPkgId] = useState<string>(BOOST_PACKAGES[0]?.id ?? "");
-
-  // Keep the selected package valid once live (admin-set) pricing loads.
-  useEffect(() => {
-    if (liveBoostPackages?.length && !liveBoostPackages.some((p) => p.id === pkgId)) {
-      setPkgId(liveBoostPackages[0].id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveBoostPackages]);
 
   if (isLoading) {
     return (
@@ -54,7 +41,6 @@ export default function ProductsPage() {
   const list = products ?? [];
   const plan = seller ? PLANS[seller.planId] : null;
   const atLimit = plan ? list.length >= plan.productLimit : false;
-  const isPaid = seller ? seller.planId !== "starter" : false;
 
   return (
     <>
@@ -148,16 +134,14 @@ export default function ProductsPage() {
                   <ModerationBadge status={p.moderationStatus} />
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
-                  {isPaid && (
-                    <button
-                      onClick={() => setToBoost(p)}
-                      className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
-                      aria-label="Feature product"
-                      title={isBoosted(p) ? "Extend featured" : "Feature this product"}
-                    >
-                      <Rocket className="h-4 w-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setToBoost(p)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
+                    aria-label="Feature product"
+                    title={isBoosted(p) ? "Extend featured" : "Feature this product"}
+                  >
+                    <Rocket className="h-4 w-4" />
+                  </button>
                   <Button
                     href={`/dashboard/products/${p.id}/edit`}
                     variant="ghost"
@@ -215,60 +199,7 @@ export default function ProductsPage() {
         </p>
       </Modal>
 
-      <Modal
-        open={!!toBoost}
-        onClose={() => setToBoost(null)}
-        title="Feature this product"
-        footer={
-          <>
-            <Button variant="outline" disabled={boosting} onClick={() => setToBoost(null)}>
-              Cancel
-            </Button>
-            <Button
-              loading={boosting}
-              leftIcon={<Rocket className="h-4 w-4" />}
-              onClick={async () => {
-                if (!toBoost) return;
-                try {
-                  await boostProduct({ id: toBoost.id, packageId: pkgId }).unwrap();
-                  dispatch(addToast(`"${toBoost.name}" is now featured`, "success"));
-                  setToBoost(null);
-                } catch (err) {
-                  dispatch(addToast(getErrorMessage(err, "Could not feature product"), "error"));
-                }
-              }}
-            >
-              Feature now
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-slate-600">
-            Featured products appear <span className="font-medium">first</span> in search and store
-            listings with a ★ Featured tag. Choose a duration:
-          </p>
-          <div className="space-y-2">
-            {boostPackages.map((pkg) => (
-              <label
-                key={pkg.id}
-                className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50"
-              >
-                <span className="flex items-center gap-2.5">
-                  <input
-                    type="radio"
-                    name="boost"
-                    checked={pkgId === pkg.id}
-                    onChange={() => setPkgId(pkg.id)}
-                  />
-                  Featured for {pkg.label}
-                </span>
-                <span className="font-semibold text-slate-900">{formatPrice(pkg.price)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </Modal>
+      {toBoost && <BoostModal product={toBoost} onClose={() => setToBoost(null)} />}
     </>
   );
 }

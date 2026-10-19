@@ -13,11 +13,45 @@ import {
 import { formatPrice, getErrorMessage } from "@/lib/utils";
 import type { Plan, PlanId, PaymentRequestMethod } from "@/lib/types";
 
-const METHODS: { value: PaymentRequestMethod; label: string }[] = [
+export const PAYMENT_METHODS: { value: PaymentRequestMethod; label: string }[] = [
   { value: "bank", label: "Bank transfer" },
   { value: "jazzcash", label: "JazzCash" },
   { value: "easypaisa", label: "EasyPaisa" },
 ];
+
+/** "Send Rs X to:" box listing the admin's bank / JazzCash / EasyPaisa details. */
+export function PayToDetails({ amount }: { amount: number | null }) {
+  const { data: settings, isLoading } = useGetManualPaymentSettingsQuery();
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
+      <p className="mb-2 flex items-center gap-1.5 font-medium text-slate-700">
+        <Landmark className="h-4 w-4" /> Send {amount != null ? formatPrice(amount) : "—"} to:
+      </p>
+      {isLoading ? (
+        <p className="text-slate-400">Loading payment details…</p>
+      ) : settings ? (
+        <ul className="space-y-1 text-slate-600">
+          {settings.bankAccountNumber && (
+            <li>
+              <span className="text-slate-400">Bank:</span> {settings.bankName} —{" "}
+              {settings.bankAccountTitle} — {settings.bankAccountNumber}
+            </li>
+          )}
+          {settings.jazzcashNumber && (
+            <li><span className="text-slate-400">JazzCash:</span> {settings.jazzcashNumber}</li>
+          )}
+          {settings.easypaisaNumber && (
+            <li><span className="text-slate-400">EasyPaisa:</span> {settings.easypaisaNumber}</li>
+          )}
+          {settings.instructions && <li className="pt-1 text-xs text-slate-500">{settings.instructions}</li>}
+          {!settings.bankAccountNumber && !settings.jazzcashNumber && !settings.easypaisaNumber && (
+            <li className="text-amber-600">Payment details haven&apos;t been set up yet — please contact support.</li>
+          )}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 /** Seller-facing modal: pay for a plan manually (bank/JazzCash/EasyPaisa) instead of by card. */
 export function ManualPaymentModal({
@@ -30,7 +64,6 @@ export function ManualPaymentModal({
   onClose: () => void;
 }) {
   const dispatch = useAppDispatch();
-  const { data: settings, isLoading: loadingSettings } = useGetManualPaymentSettingsQuery();
   const [createRequest, { isLoading: submitting }] = useCreatePaymentRequestMutation();
 
   const [planId, setPlanId] = useState<PlanId>(defaultPlanId);
@@ -91,39 +124,13 @@ export function ManualPaymentModal({
           options={plans.map((p) => ({ value: p.id, label: `${p.name} — ${formatPrice(p.price)}/mo` }))}
         />
 
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
-          <p className="mb-2 flex items-center gap-1.5 font-medium text-slate-700">
-            <Landmark className="h-4 w-4" /> Send {plan ? formatPrice(plan.price) : "—"} to:
-          </p>
-          {loadingSettings ? (
-            <p className="text-slate-400">Loading payment details…</p>
-          ) : settings ? (
-            <ul className="space-y-1 text-slate-600">
-              {settings.bankAccountNumber && (
-                <li>
-                  <span className="text-slate-400">Bank:</span> {settings.bankName} —{" "}
-                  {settings.bankAccountTitle} — {settings.bankAccountNumber}
-                </li>
-              )}
-              {settings.jazzcashNumber && (
-                <li><span className="text-slate-400">JazzCash:</span> {settings.jazzcashNumber}</li>
-              )}
-              {settings.easypaisaNumber && (
-                <li><span className="text-slate-400">EasyPaisa:</span> {settings.easypaisaNumber}</li>
-              )}
-              {settings.instructions && <li className="pt-1 text-xs text-slate-500">{settings.instructions}</li>}
-              {!settings.bankAccountNumber && !settings.jazzcashNumber && !settings.easypaisaNumber && (
-                <li className="text-amber-600">Payment details haven&apos;t been set up yet — please contact support.</li>
-              )}
-            </ul>
-          ) : null}
-        </div>
+        <PayToDetails amount={plan ? plan.price : null} />
 
         <Select
           label="Paid via"
           value={method}
           onChange={(e) => setMethod(e.target.value as PaymentRequestMethod)}
-          options={METHODS}
+          options={PAYMENT_METHODS}
         />
         <Input
           label="Transaction ID / reference number"

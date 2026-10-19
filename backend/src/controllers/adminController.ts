@@ -6,13 +6,15 @@ import { Store } from "../models/Store";
 import { Product } from "../models/Product";
 import { Payment } from "../models/Payment";
 import { PlanConfig } from "../models/PlanConfig";
-import { BoostConfig } from "../models/BoostConfig";
-import { BOOST_PACKAGES } from "../lib/boost";
+import { BoostPricing } from "../models/BoostPricing";
+import { getBoostPricing } from "../lib/boost";
 import { Admin } from "../models/Admin";
 import { ActivityLog } from "../models/ActivityLog";
+import { UploadLog } from "../models/UploadLog";
 import { PLANS } from "../lib/plans";
 import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
+import { env } from "../config/env";
 
 /* ------------------------------- Listings -------------------------------- */
 
@@ -59,16 +61,50 @@ export const getOverview = asyncHandler(async (_req: Request, res: Response) => 
 
 /* ------------------------------ Activity log ----------------------------- */
 
-const activityQuerySchema = z.object({
+const activityFilterSchema = z.object({
   type: z.enum(["store.created", "product.created"]).optional(),
+  /** Free-text search across seller, store, product, city and category. */
+  q: z.string().trim().max(100).optional(),
+  /** Inclusive ISO datetime bounds (the admin's local day start / end). */
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+});
+
+const activityQuerySchema = activityFilterSchema.extend({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });
 
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Build the Mongo filter shared by the activity list and its CSV export. */
+function activityFilter(query: z.infer<typeof activityFilterSchema>) {
+  const filter: Record<string, unknown> = {};
+  if (query.type) filter.type = query.type;
+  if (query.from || query.to) {
+    filter.createdAt = {
+      ...(query.from ? { $gte: new Date(query.from) } : {}),
+      ...(query.to ? { $lte: new Date(query.to) } : {}),
+    };
+  }
+  if (query.q) {
+    const re = new RegExp(escapeRegex(query.q), "i");
+    filter.$or = [
+      "snapshot.sellerName",
+      "snapshot.sellerEmail",
+      "snapshot.storeName",
+      "snapshot.productName",
+      "snapshot.city",
+      "snapshot.category",
+    ].map((field) => ({ [field]: re }));
+  }
+  return filter;
+}
+
 /** GET /api/admin/activity — store creations and product additions, newest first. */
 export const getActivityLogs = asyncHandler(async (req: Request, res: Response) => {
-  const { type, page, limit } = activityQuerySchema.parse(req.query);
-  const filter = type ? { type } : {};
+  const { page, limit, ...rest } = activityQuerySchema.parse(req.query);
+  const filter = activityFilter(rest);
   const [items, total] = await Promise.all([
     ActivityLog.find(filter)
       .sort({ createdAt: -1 })
@@ -81,6 +117,118 @@ export const getActivityLogs = asyncHandler(async (req: Request, res: Response) 
     total,
     page,
     pages: Math.max(1, Math.ceil(total / limit)),
+  });
+});
+
+const EXPORT_MAX_ROWS = 50_000;
+
+/** Quote a CSV cell, and neutralise values a spreadsheet would run as a formula. */
+function csvCell(value: unknown): string {
+  let s = value == null ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * GET /api/admin/activity/export — the activity log as a CSV file, using the
+ * same filters as the list (type, search, date range). Times are Pakistan time.
+ */
+export const exportActivityLogs = asyncHandler(async (req: Request, res: Response) => {
+  const filter = activityFilter(activityFilterSchema.parse(req.query));
+  const logs = await ActivityLog.find(filter).sort({ createdAt: -1 }).limit(EXPORT_MAX_ROWS).lean();
+
+  const site = env.appUrl.replace(/\/$/, "");
+  const header = [
+    "Date & time (PKT)",
+    "Event",
+    "Store",
+    "Product",
+    "Category",
+    "City",
+    "Price (PKR)",
+    "Seller name",
+    "Seller email",
+    "Link",
+  ];
+  const rows = logs.map((l) => {
+    const s = l.snapshot ?? {};
+    const link = s.storeSlug
+      ? l.type === "product.created" && l.productId
+        ? `${site}/store/${s.storeSlug}/product/${l.productId}`
+        : `${site}/store/${s.storeSlug}`
+      : "";
+    return [
+      new Date(l.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Karachi" }),
+      l.type === "store.created" ? "Store created" : "Product added",
+      s.storeName,
+      s.productName,
+      s.category,
+      s.city,
+      s.price,
+      s.sellerName,
+      s.sellerEmail,
+      link,
+    ];
+  });
+
+  const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  // en-CA formats as YYYY-MM-DD; use Pakistan's date, not UTC's.
+  const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-activity-${stamp}.csv"`);
+  // BOM so Excel opens the file as UTF-8 (Urdu names, ₨ etc. render correctly).
+  res.send(`﻿${csv}\r\n`);
+});
+
+/**
+ * GET /api/admin/storage?scope=paid|all — storage used per store, from the
+ * upload log (summed per seller, since each seller owns one store). Paid
+ * stores only by default.
+ */
+export const getStorageUsage = asyncHandler(async (req: Request, res: Response) => {
+  const scope = req.query.scope === "all" ? "all" : "paid";
+
+  const usage = await UploadLog.aggregate<{ _id: unknown; files: number; bytes: number; lastUpload: Date }>([
+    { $match: { sellerId: { $ne: null } } },
+    { $group: { _id: "$sellerId", files: { $sum: 1 }, bytes: { $sum: "$size" }, lastUpload: { $max: "$createdAt" } } },
+  ]);
+  const usageBySeller = new Map(usage.map((u) => [String(u._id), u]));
+
+  const sellerFilter: Record<string, unknown> = { storeId: { $ne: null } };
+  if (scope === "paid") sellerFilter.planId = { $ne: "starter" };
+  const sellers = await Seller.find(sellerFilter).select("name email planId storeId");
+  const stores = await Store.find({ _id: { $in: sellers.map((s) => s.storeId) } }).select("name slug status");
+  const storeById = new Map(stores.map((s) => [s.id, s]));
+
+  const rows = sellers
+    .map((seller) => {
+      const store = storeById.get(String(seller.storeId));
+      if (!store) return null;
+      const u = usageBySeller.get(seller.id);
+      return {
+        storeId: store.id,
+        storeName: store.name,
+        storeSlug: store.slug,
+        storeStatus: store.status,
+        sellerName: seller.name,
+        sellerEmail: seller.email,
+        planId: seller.planId,
+        files: u?.files ?? 0,
+        bytes: u?.bytes ?? 0,
+        lastUpload: u?.lastUpload ?? null,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .sort((a, b) => b.bytes - a.bytes);
+
+  res.json({
+    scope,
+    totals: {
+      stores: rows.length,
+      files: rows.reduce((s, r) => s + r.files, 0),
+      bytes: rows.reduce((s, r) => s + r.bytes, 0),
+    },
+    rows,
   });
 });
 
@@ -375,34 +523,22 @@ export const updatePlanConfig = asyncHandler(async (req: Request, res: Response)
 
 /* ----------------------------- Boost Config ------------------------------ */
 
-/** GET /api/admin/boost-config — return current boost package rates (DB overrides defaults). */
+/** GET /api/admin/boost-config — the per-day boost price and allowed day range. */
 export const getBoostConfig = asyncHandler(async (_req: Request, res: Response) => {
-  const saved = await BoostConfig.find();
-  const savedById = new Map(saved.map((p) => [p.packageId, p]));
-  const result = BOOST_PACKAGES.map((pkg) => {
-    const override = savedById.get(pkg.id);
-    return override
-      ? { id: pkg.id, label: override.label, days: override.days, price: override.price, enabled: override.enabled }
-      : { ...pkg, enabled: true };
-  });
-  res.json(result);
+  res.json(await getBoostPricing());
 });
 
-const boostConfigSchema = z.object({
-  packageId: z.string().min(1),
-  label: z.string().min(1),
-  days: z.number().int().positive(),
-  price: z.number().nonnegative(),
-  enabled: z.boolean().optional(),
-});
+const boostConfigSchema = z
+  .object({
+    pricePerDay: z.number().int().min(0),
+    minDays: z.number().int().min(1).max(365),
+    maxDays: z.number().int().min(1).max(365),
+  })
+  .refine((d) => d.maxDays >= d.minDays, { message: "Max days must be at least min days", path: ["maxDays"] });
 
-/** PATCH /api/admin/boost-config — upsert a boost package's price/label/days/enabled. */
+/** PATCH /api/admin/boost-config — set the per-day boost price and day range. */
 export const updateBoostConfig = asyncHandler(async (req: Request, res: Response) => {
   const data = boostConfigSchema.parse(req.body);
-  const config = await BoostConfig.findOneAndUpdate(
-    { packageId: data.packageId },
-    { ...data, enabled: data.enabled ?? true },
-    { upsert: true, new: true }
-  );
-  res.json(config.toJSON());
+  await BoostPricing.findOneAndUpdate({ key: "boost" }, { $set: data }, { upsert: true });
+  res.json(await getBoostPricing());
 });

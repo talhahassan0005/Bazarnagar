@@ -15,6 +15,8 @@ export interface SellerDoc extends Document {
   name: string;
   phone: string;
   email: string;
+  /** Picked at signup. Missing on accounts created before the field existed. */
+  country?: string;
   passwordHash: string;
   status: SellerStatus;
   planId: PlanId;
@@ -41,6 +43,7 @@ const sellerSchema = new Schema<SellerDoc>(
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    country: { type: String, trim: true },
     passwordHash: { type: String, required: true },
     status: {
       type: String,

@@ -13,7 +13,7 @@ import {
   useUpdateAdminBoostConfigMutation,
 } from "@/store/apiSlice";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
-import type { BoostPackage, Plan, PlanId } from "@/lib/types";
+import type { BoostPricing, Plan, PlanId } from "@/lib/types";
 
 const UNLIMITED = 1_000_000;
 
@@ -140,121 +140,63 @@ export default function AdminPlanSettingsPage() {
         })}
       </div>
 
-      <BoostPackagesSection />
+      <BoostPricingSection />
     </>
   );
 }
 
-function BoostPackagesSection() {
+/** Per-day boost price and allowed day range — any seller can boost. */
+function BoostPricingSection() {
   const dispatch = useAppDispatch();
-  const { data: packages, isLoading } = useGetAdminBoostConfigQuery();
-  const [updateBoost] = useUpdateAdminBoostConfigMutation();
-  const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState<{ label: string; days: number; price: number }>({ label: "", days: 0, price: 0 });
-  const [saving, setSaving] = useState(false);
+  const { data, isLoading } = useGetAdminBoostConfigQuery();
+  const [updateBoost, { isLoading: saving }] = useUpdateAdminBoostConfigMutation();
+  // Local edits; null means "showing the saved values".
+  const [form, setForm] = useState<BoostPricing | null>(null);
+  const values = form ?? data;
 
-  function startEdit(pkg: BoostPackage) {
-    setEditing(pkg.id);
-    setForm({ label: pkg.label, days: pkg.days, price: pkg.price });
-  }
-
-  async function save(pkg: BoostPackage) {
-    setSaving(true);
+  async function save() {
+    if (!values) return;
     try {
-      await updateBoost({
-        packageId: pkg.id,
-        label: form.label,
-        days: form.days,
-        price: form.price,
-        enabled: pkg.enabled,
-      }).unwrap();
-      dispatch(addToast("Boost package updated", "success"));
-      setEditing(null);
-    } catch (err) {
-      dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function toggleEnabled(pkg: BoostPackage) {
-    try {
-      await updateBoost({
-        packageId: pkg.id,
-        label: pkg.label,
-        days: pkg.days,
-        price: pkg.price,
-        enabled: !(pkg.enabled ?? true),
-      }).unwrap();
-      dispatch(addToast(`Boost package ${pkg.enabled ?? true ? "disabled" : "enabled"}`, "success"));
+      await updateBoost(values).unwrap();
+      dispatch(addToast("Boost pricing updated", "success"));
+      setForm(null);
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
     }
   }
+
+  const set = (key: keyof BoostPricing) => (v: number) =>
+    setForm((f) => ({ ...(f ?? data!), [key]: v }));
 
   return (
     <div className="mt-10">
       <PageHeader
-        title="Boost Packages"
-        description="Prices sellers pay to feature a product. Changes apply immediately."
+        title="Boost Pricing"
+        description="Every seller — free plan included — can feature a product for a daily fee. Changes apply immediately."
       />
-      {isLoading ? (
-        <LoadingPanel label="Loading boost packages…" />
+      {isLoading || !values ? (
+        <LoadingPanel label="Loading boost pricing…" />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {(packages ?? []).map((pkg) => {
-            const isEnabled = pkg.enabled ?? true;
-            return (
-              <Card key={pkg.id} className={`p-5 ${!isEnabled ? "opacity-60" : ""}`}>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-800">{pkg.label}</h3>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => toggleEnabled(pkg)}
-                      title={isEnabled ? "Disable package" : "Enable package"}
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      {isEnabled ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                    {editing !== pkg.id && (
-                      <button onClick={() => startEdit(pkg)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {!isEnabled && (
-                  <p className="mt-1 text-xs font-medium text-red-500">Disabled — hidden from sellers</p>
-                )}
-
-                {editing === pkg.id ? (
-                  <div className="mt-3 space-y-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">Label</label>
-                      <input
-                        type="text"
-                        value={form.label}
-                        onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                      />
-                    </div>
-                    <Field label="Duration (days)" value={form.days} onChange={(v) => setForm((f) => ({ ...f, days: v }))} />
-                    <Field label="Price (PKR)" value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} />
-                    <div className="flex gap-2 pt-1">
-                      <Button size="sm" loading={saving} onClick={() => save(pkg)} leftIcon={<Check className="h-3.5 w-3.5" />}>Save</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditing(null)} leftIcon={<X className="h-3.5 w-3.5" />}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-3 space-y-1.5 text-sm text-slate-600">
-                    <p><span className="font-semibold text-slate-900">{formatPrice(pkg.price)}</span> for {pkg.days} day{pkg.days !== 1 ? "s" : ""}</p>
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+        <Card className="max-w-xl p-5">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Price per day (PKR)" value={values.pricePerDay} onChange={set("pricePerDay")} />
+            <Field label="Minimum days" value={values.minDays} onChange={set("minDays")} />
+            <Field label="Maximum days" value={values.maxDays} onChange={set("maxDays")} />
+          </div>
+          <p className="mt-3 text-sm text-slate-500">
+            Example: 7 days = <span className="font-semibold text-slate-900">{formatPrice(values.pricePerDay * 7)}</span>
+          </p>
+          <div className="mt-4 flex gap-2">
+            <Button size="sm" loading={saving} disabled={!form} onClick={save} leftIcon={<Check className="h-3.5 w-3.5" />}>
+              Save
+            </Button>
+            {form && (
+              <Button size="sm" variant="outline" onClick={() => setForm(null)} leftIcon={<X className="h-3.5 w-3.5" />}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </Card>
       )}
     </div>
   );

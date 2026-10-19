@@ -3,21 +3,20 @@
 import { useEffect } from "react";
 import { useAppDispatch } from "./hooks";
 import { authResolved, setAdminSession, setCustomerSession, setSellerSession } from "./authSlice";
-import { hydrateCart, loadCart } from "./cartSlice";
 import { clearToken, getToken } from "@/lib/api";
 import { apiSlice } from "./apiSlice";
 
 /**
- * On first load: restore the cart from localStorage, and restore the auth
- * session from a stored JWT so a page refresh keeps the user logged in.
+ * On first load: restore the auth session from a stored JWT so a page
+ * refresh keeps the user logged in.
  * Uses RTK Query's getMe endpoint instead of the raw api client.
  */
 export function SessionBootstrap() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(hydrateCart(loadCart()));
-
+    // The cart is loaded by the store's auth listener once the session is
+    // known, so a buyer never briefly sees someone else's cart.
     if (!getToken()) {
       dispatch(authResolved());
       return;

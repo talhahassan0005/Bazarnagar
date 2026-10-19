@@ -11,7 +11,6 @@ import { StoreAbout } from "@/components/storefront/StoreAbout";
 import { StoreContact } from "@/components/storefront/StoreContact";
 import { useGetStoreBySlugQuery, useGetStoreProductsQuery } from "@/store/apiSlice";
 import { resolveLanding } from "@/lib/landing";
-import { StorefrontAdLayout } from "@/components/storefront/StorefrontAdLayout";
 import { ChatWidget } from "@/components/domain/ChatWidget";
 
 export default function PublicStorePage() {
@@ -20,10 +19,10 @@ export default function PublicStorePage() {
 
   const landing = store.data ? resolveLanding(store.data) : null;
 
-  // Featured products are only needed when the landing page is enabled.
+  // Same query the catalog uses, so RTK Query shares one request between them.
   const products = useGetStoreProductsQuery(
     { storeId: store.data?.id ?? "", publicOnly: true },
-    { skip: !store.data || !landing?.enabled || !landing.showFeatured }
+    { skip: !store.data }
   );
 
   const featured = useMemo(() => {
@@ -71,15 +70,22 @@ export default function PublicStorePage() {
     );
   }
 
+  // Landing page: hero, the seller's handpicked products (if any), then the
+  // full catalog — visitors should see products as soon as they open a shop.
   return (
     <>
       <StoreLandingHero store={store.data} landing={landing} />
       <section className="mx-auto w-full max-w-[1600px] px-4 py-14 sm:px-6 lg:px-8">
-        <StorefrontAdLayout store={store.data}>
-          {landing.showFeatured && (
+        {landing.showFeatured && featured.length > 0 && (
+          <div className="mb-14">
             <FeaturedProducts store={store.data} landing={landing} products={featured} />
-          )}
-        </StorefrontAdLayout>
+          </div>
+        )}
+        {/* StoreCatalog places the shop's ad slots itself. */}
+        <div id="products" className="scroll-mt-20">
+          <h2 className="mb-4 text-2xl font-bold text-slate-900">All products</h2>
+          <StoreCatalog store={store.data} />
+        </div>
       </section>
       {landing.showAbout && <StoreAbout landing={landing} />}
       {landing.showContact && <StoreContact store={store.data} landing={landing} />}

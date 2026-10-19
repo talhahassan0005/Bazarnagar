@@ -13,7 +13,16 @@ import {
   useUpdateManualPaymentSettingsMutation,
 } from "@/store/apiSlice";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
+import { PLANS } from "@/lib/constants";
 import type { ManualPaymentSettings, PaymentRequest } from "@/lib/types";
+
+/** What the payment was for, e.g. "Plan 1 plan" or "Boost: Yoga Mat · 7 days". */
+function describe(r: PaymentRequest): string {
+  if (r.purpose === "boost") {
+    return `Boost: ${r.productName ?? "product"} · ${r.days} day${r.days === 1 ? "" : "s"}`;
+  }
+  return `${(r.planId && PLANS[r.planId]?.name) || r.planId} plan`;
+}
 
 function StatusBadge({ status }: { status: PaymentRequest["status"] }) {
   if (status === "approved") return <Badge tone="green">Approved</Badge>;
@@ -89,7 +98,10 @@ export default function AdminPaymentRequestsPage() {
 
   return (
     <>
-      <PageHeader title="Manual Payment Requests" description="Review bank transfer / JazzCash / EasyPaisa subscription payments." />
+      <PageHeader
+        title="Manual Payment Requests"
+        description="Bank transfer / JazzCash / EasyPaisa payments for plans (approve to activate) and boosts (already live — verify or reject)."
+      />
 
       <SettingsForm />
 
@@ -124,8 +136,13 @@ export default function AdminPaymentRequestsPage() {
                             {r.sellerName} <span className="text-slate-400">· {r.sellerEmail}</span>
                           </p>
                           <p className="mt-1 text-sm text-slate-600">
-                            {r.planId} plan — {formatPrice(r.amount)} via {r.method}
+                            {describe(r)} — {formatPrice(r.amount)} via {r.method}
                           </p>
+                          {r.purpose === "boost" && (
+                            <p className="mt-1 text-xs font-medium text-amber-700">
+                              Boost is already live — verify the payment arrived, or reject to remove it.
+                            </p>
+                          )}
                           <p className="mt-0.5 text-xs text-slate-400">Ref: {r.reference}</p>
                           <p className="mt-1 text-xs text-slate-400">
                             {new Date(r.createdAt).toLocaleString("en-PK")}
@@ -139,7 +156,7 @@ export default function AdminPaymentRequestsPage() {
                           loading={reviewing && reviewingId === r.id}
                           onClick={() => act(r.id, "approved")}
                         >
-                          Approve
+                          {r.purpose === "boost" ? "Verify payment" : "Approve"}
                         </Button>
                         <Button
                           size="sm"
@@ -148,7 +165,7 @@ export default function AdminPaymentRequestsPage() {
                           loading={reviewing && reviewingId === r.id}
                           onClick={() => act(r.id, "rejected")}
                         >
-                          Reject
+                          {r.purpose === "boost" ? "Reject & remove boost" : "Reject"}
                         </Button>
                       </div>
                     </div>
@@ -167,7 +184,7 @@ export default function AdminPaymentRequestsPage() {
                     <thead>
                       <tr className="border-b border-slate-100 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
                         <th className="px-4 py-3">Seller</th>
-                        <th className="px-4 py-3">Plan</th>
+                        <th className="px-4 py-3">For</th>
                         <th className="px-4 py-3">Amount</th>
                         <th className="px-4 py-3">Proof</th>
                         <th className="px-4 py-3">Status</th>
@@ -178,7 +195,7 @@ export default function AdminPaymentRequestsPage() {
                       {reviewed.map((r) => (
                         <tr key={r.id}>
                           <td className="px-4 py-3">{r.sellerName}</td>
-                          <td className="px-4 py-3 capitalize">{r.planId}</td>
+                          <td className="px-4 py-3">{describe(r)}</td>
                           <td className="px-4 py-3">{formatPrice(r.amount)}</td>
                           <td className="px-4 py-3">
                             {r.proofUrl ? (

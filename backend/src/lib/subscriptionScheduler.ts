@@ -64,9 +64,13 @@ export async function processSubscriptions(): Promise<void> {
     }
   }
 
+  // The free (starter) plan never expires — only paid plans are aged out below.
+  const paidPlan = { planId: { $ne: "starter" } };
+
   // ── 2. Expire subscriptions past endDate with autoRenew=false ─────────────
   await Seller.updateMany(
     {
+      ...paidPlan,
       subscriptionStatus: { $in: ["active", "trial"] },
       autoRenew: false,
       subscriptionEndsAt: { $ne: null, $lt: now },
@@ -77,6 +81,7 @@ export async function processSubscriptions(): Promise<void> {
   // Also expire active subs with no card token and no autoRenew
   await Seller.updateMany(
     {
+      ...paidPlan,
       subscriptionStatus: { $in: ["active", "trial"] },
       subscriptionEndsAt: { $ne: null, $lt: now },
     },
@@ -86,6 +91,7 @@ export async function processSubscriptions(): Promise<void> {
   // ── 3. Cancel + hide shop after grace period ───────────────────────────────
   const graceCutoff = new Date(now.getTime() - GRACE_DAYS * DAY_MS);
   const toCancel = await Seller.find({
+    ...paidPlan,
     subscriptionStatus: "expired",
     subscriptionEndsAt: { $ne: null, $lt: graceCutoff },
   });

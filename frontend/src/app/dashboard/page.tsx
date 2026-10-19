@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard, PlanUsageBar } from "@/components/domain/StatCard";
 import { CopyLink } from "@/components/domain/CopyLink";
+import { ShareStoreButton } from "@/components/domain/ShareStoreButton";
 import { ModerationBadge, StockBadge } from "@/components/domain/StatusBadges";
 import {
   useGetDashboardMetricsQuery,
@@ -73,8 +74,9 @@ export default function DashboardPage() {
             <p className="text-sm font-medium text-slate-700">Your public store link</p>
             <p className="text-xs text-slate-400">Share this anywhere — customers need no login.</p>
           </div>
-          <div className="flex flex-1 items-center gap-2 sm:max-w-md">
+          <div className="flex flex-1 flex-wrap items-center gap-2 sm:max-w-lg">
             <CopyLink value={storeUrl} className="flex-1" />
+            <ShareStoreButton store={s} />
             <Button href={`/store/${s.slug}`} variant="outline" target="_blank">
               Preview
             </Button>

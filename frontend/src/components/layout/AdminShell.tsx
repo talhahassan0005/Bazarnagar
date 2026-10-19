@@ -15,6 +15,7 @@ import {
   Landmark,
   History,
   BarChart3,
+  HardDrive,
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import type { NavItem } from "./SidebarNav";
@@ -33,6 +34,7 @@ const NAV: NavItem[] = [
 
   { group: "Insights", label: "Activity Log", href: "/admin/activity", icon: History },
   { group: "Insights", label: "Data Summary", href: "/admin/data", icon: BarChart3 },
+  { group: "Insights", label: "Storage Usage", href: "/admin/storage", icon: HardDrive },
 
   { group: "Billing", label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },
   { group: "Billing", label: "Payment Requests", href: "/admin/payment-requests", icon: Landmark },

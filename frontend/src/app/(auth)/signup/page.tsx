@@ -3,7 +3,8 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserPlus } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, Select } from "@/components/ui";
+import { COUNTRY_OPTIONS, DEFAULT_COUNTRY } from "@/lib/countries";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
 import { useAppDispatch } from "@/store/hooks";
@@ -34,17 +35,18 @@ function SignupForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [country, setCountry] = useState<string>(DEFAULT_COUNTRY);
   const [password, setPassword] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       if (role === "seller") {
-        await signupSeller({ name, phone, email, password }).unwrap();
+        await signupSeller({ name, phone, email, country, password }).unwrap();
         dispatch(addToast("Account created — let's set up your store.", "success"));
         router.push("/dashboard/store");
       } else {
-        await signupCustomer({ name, phone, email, password }).unwrap();
+        await signupCustomer({ name, phone, email, country, password }).unwrap();
         dispatch(addToast("Account created!", "success"));
         router.push("/orders");
       }
@@ -90,6 +92,14 @@ function SignupForm() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+        />
+        <Select
+          label="Country"
+          required
+          autoComplete="country-name"
+          options={COUNTRY_OPTIONS}
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
         />
         <Input
           type="password"

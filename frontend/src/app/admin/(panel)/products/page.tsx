@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Trash2 } from "lucide-react";
-import { TableSkeleton } from "@/components/ui";
+import { ExternalLink, Search, Trash2 } from "lucide-react";
+import { Button, TableSkeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { CategoryChips } from "@/components/domain/CategoryChips";
+import { CopyId } from "@/components/domain/CopyId";
 import {
   ModerationBadge,
   ProductStatusBadge,
@@ -31,10 +32,10 @@ export default function AdminProductsPage() {
     );
   }
 
+  const needle = q.trim().toLowerCase();
   const rows = (data ?? []).filter((p) => {
     if (mod && p.moderationStatus !== mod) return false;
-    if (q && !p.name.toLowerCase().includes(q.toLowerCase()) && !p.store.name.toLowerCase().includes(q.toLowerCase()))
-      return false;
+    if (needle && ![p.name, p.store.name, p.id].some((v) => v.toLowerCase().includes(needle))) return false;
     return true;
   });
 
@@ -47,6 +48,7 @@ export default function AdminProductsPage() {
           <div className="min-w-0">
             <p className="truncate font-medium text-slate-800">{p.name}</p>
             <p className="text-xs text-slate-400">{p.store.name}</p>
+            <CopyId id={p.id} />
           </div>
         </div>
       ),
@@ -55,12 +57,24 @@ export default function AdminProductsPage() {
     { header: "Status", hideOnMobile: true, cell: (p) => <ProductStatusBadge status={p.status} /> },
     { header: "Moderation", cell: (p) => <ModerationBadge status={p.moderationStatus} /> },
     {
-      header: "",
+      header: "Action",
       className: "text-right",
-      cell: () => (
-        <button className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Remove">
-          <Trash2 className="h-4 w-4" />
-        </button>
+      cell: (p) => (
+        <div className="flex items-center justify-end gap-1">
+          {/* Admins can open the page even before the product is approved. */}
+          <Button
+            href={`/store/${p.store.slug}/product/${p.id}`}
+            target="_blank"
+            variant="ghost"
+            size="sm"
+            leftIcon={<ExternalLink className="h-4 w-4" />}
+          >
+            View
+          </Button>
+          <button className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Remove">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       ),
     },
   ];
@@ -75,7 +89,7 @@ export default function AdminProductsPage() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search products or stores…"
+            placeholder="Search by product, store or ID…"
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
         </div>

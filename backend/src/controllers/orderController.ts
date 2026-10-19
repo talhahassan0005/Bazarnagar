@@ -6,6 +6,7 @@ import { Store } from "../models/Store";
 import { Seller } from "../models/Seller";
 import { ApiError, asyncHandler } from "../lib/helpers";
 import { computeDeliveryFee } from "../lib/delivery";
+import { sendOrderPlacedEmail, sendOrderStatusEmail } from "../lib/orderEmails";
 
 /** The price actually charged (discount if present and lower). */
 function effectivePrice(price: number, discountPrice?: number): number {
@@ -18,7 +19,7 @@ const createOrderSchema = z.object({
   customerPhone: z.string().min(6),
   customerEmail: z.string().email().optional().or(z.literal("")),
   customerAddress: z.string().min(3),
-  customerCity: z.string().min(1),
+  customerCity: z.string().trim().min(1).max(60),
   note: z.string().optional(),
   items: z
     .array(z.object({ productId: z.string().min(1), quantity: z.number().int().positive() }))
@@ -74,6 +75,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
     deliveryFee,
     total: subtotal + deliveryFee,
   });
+  sendOrderPlacedEmail(order, store.name);
 
   res.status(201).json(order.toJSON());
 });
@@ -147,11 +149,17 @@ const statusSchema = z.object({
 export const updateOrderStatus = asyncHandler(async (req: Request, res: Response) => {
   const storeId = await sellerStoreId(req);
   const { status } = statusSchema.parse(req.body);
-  const order = await Order.findOneAndUpdate(
-    { _id: req.params.id, storeId },
-    { status },
-    { new: true }
-  );
+  const order = await Order.findOne({ _id: req.params.id, storeId });
   if (!order) throw new ApiError(404, "Order not found");
+
+  const changed = order.status !== status;
+  order.status = status;
+  await order.save();
+
+  // Only email the buyer on a real change, so re-saving doesn't spam them.
+  if (changed) {
+    const store = await Store.findById(storeId).select("name");
+    sendOrderStatusEmail(order, store?.name ?? "The shop");
+  }
   res.json(order.toJSON());
 });

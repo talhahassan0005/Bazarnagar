@@ -10,7 +10,8 @@ import {
   MessageCircle,
   ShoppingCart,
 } from "lucide-react";
-import { Button, EmptyState, Input, Select, Textarea } from "@/components/ui";
+import { Button, EmptyState, Input, Textarea } from "@/components/ui";
+import { CodNotice } from "@/components/domain/CodNotice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearCart, selectCartItems } from "@/store/cartSlice";
 import { addToast } from "@/store/uiSlice";
@@ -20,7 +21,7 @@ import {
   useStripeCheckoutMutation,
   useStripeMockConfirmMutation,
 } from "@/store/apiSlice";
-import { CITIES } from "@/lib/constants";
+import { CitySelect } from "@/components/domain/CitySelect";
 import { formatPrice, getErrorMessage, toWhatsAppNumber } from "@/lib/utils";
 import { rememberOrder } from "@/lib/orderHistory";
 import type { CartItem, Order } from "@/lib/types";
@@ -225,6 +226,8 @@ export default function CheckoutPage() {
           </p>
         </div>
 
+        <CodNotice className="mt-6" />
+
         <div className="mt-8 space-y-4">
           {placed.orders.map((order, i) => {
             const g = placed.groups[i]!;
@@ -332,19 +335,20 @@ export default function CheckoutPage() {
               label="Email address"
               type="email"
               required={isOnline}
-              hint={isOnline ? "Your payment receipt is sent here." : "Optional — for order updates."}
+              hint={
+                isOnline
+                  ? "Your payment receipt is sent here."
+                  : "Optional — we'll email your order confirmation and updates here."
+              }
               placeholder="you@example.com"
               className="sm:col-span-2"
               value={form.customerEmail}
               onChange={(e) => set("customerEmail", e.target.value)}
             />
-            <Select
-              label="City"
+            <CitySelect
               required
-              placeholder="Select a city"
               value={form.customerCity}
-              onChange={(e) => set("customerCity", e.target.value)}
-              options={CITIES.map((c) => ({ value: c, label: c }))}
+              onChange={(city) => set("customerCity", city)}
             />
             <Input
               label="Delivery address"
@@ -415,6 +419,7 @@ export default function CheckoutPage() {
               <Banknote className="h-4 w-4 text-slate-500" />
               Cash on Delivery
             </label>
+            {method === "cod" && <CodNotice />}
             {/* Live (hosted) mode: card details are entered on Stripe's page. */}
             {onlineAvailable && hosted && (
               <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-leaf-400 has-[:checked]:bg-leaf-50">

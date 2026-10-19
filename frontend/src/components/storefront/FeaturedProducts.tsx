@@ -6,9 +6,8 @@ import { cn } from "@/lib/utils";
 import type { Product, Store } from "@/lib/types";
 
 /**
- * Curated products showcased on the landing page. Renders nothing when the
- * seller hasn't picked any featured products — the caller (page.tsx) still
- * wraps this in <StorefrontAdLayout> regardless, so ads keep showing either way.
+ * Curated products showcased on the landing page, above the full catalog.
+ * Renders nothing when the seller hasn't picked any featured products.
  */
 export function FeaturedProducts({
   store,
@@ -32,7 +31,7 @@ export function FeaturedProducts({
           <h2 className="mt-1 text-2xl font-bold text-slate-900">Handpicked for you</h2>
         </div>
         <Link
-          href={`/store/${store.slug}/products`}
+          href="#products"
           className={cn(
             "inline-flex items-center gap-1 text-sm font-medium hover:underline",
             theme.accentText

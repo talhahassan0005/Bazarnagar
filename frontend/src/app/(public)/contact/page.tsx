@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clock, HelpCircle, Mail, Store } from "lucide-react";
+import { Clock, HelpCircle, Mail, MessageCircle, Phone, Store } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { CopyEmailButton } from "@/components/domain/CopyEmailButton";
-import { SITE_EMAIL, SITE_NAME } from "@/lib/constants";
+import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SITE_PHONE_DISPLAY } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: `Contact us · ${SITE_NAME}`,
-  description: `Get in touch with the ${SITE_NAME} team at ${SITE_EMAIL}.`,
+  description: `Get in touch with the ${SITE_NAME} team at ${SITE_EMAIL} or ${SITE_PHONE_DISPLAY}.`,
 };
 
 // Opens Gmail's compose window in the browser — works even when the visitor
@@ -47,6 +47,34 @@ export default function ContactPage() {
           <Clock className="h-4 w-4 text-slate-400" />
           We typically respond within 24 hours.
         </p>
+      </Card>
+
+      <Card className="mt-4 p-6 sm:p-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-leaf-500/10 text-leaf-600">
+            <Phone className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500">Call or WhatsApp us</p>
+            <a href={`tel:+${SITE_PHONE}`} className="text-lg font-semibold text-slate-900 hover:underline">
+              {SITE_PHONE_DISPLAY}
+            </a>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Button
+            href={`https://wa.me/${SITE_PHONE}`}
+            target="_blank"
+            variant="whatsapp"
+            leftIcon={<MessageCircle className="h-4 w-4" />}
+          >
+            Chat on WhatsApp
+          </Button>
+          <Button href={`tel:+${SITE_PHONE}`} variant="outline" leftIcon={<Phone className="h-4 w-4" />}>
+            Call now
+          </Button>
+        </div>
       </Card>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">

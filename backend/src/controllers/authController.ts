@@ -9,6 +9,7 @@ import { Store } from "../models/Store";
 import { PasswordReset } from "../models/PasswordReset";
 import { signToken } from "../lib/jwt";
 import { sendMail } from "../lib/mailer";
+import { COUNTRIES } from "../lib/countries";
 import {
   RESET_TTL_MINUTES,
   appLink,
@@ -25,7 +26,6 @@ import {
 function sendWelcome(to: string, content: EmailContent) {
   sendMail({ to, ...content }).catch((err) => console.error("Failed to send welcome email:", err));
 }
-import { addTrialPeriod } from "../lib/plans";
 import { env } from "../config/env";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
@@ -33,6 +33,7 @@ const signupSchema = z.object({
   name: z.string().min(2),
   phone: z.string().min(6),
   email: z.string().email(),
+  country: z.enum(COUNTRIES, { errorMap: () => ({ message: "Please select your country." }) }),
   password: z.string().min(6),
 });
 
@@ -54,16 +55,16 @@ export const signupSeller = asyncHandler(async (req: Request, res: Response) => 
 
   const passwordHash = await bcrypt.hash(data.password, 10);
 
-  const now = new Date();
+  // New sellers start on the free plan, which never expires (no end date).
   const seller = await Seller.create({
     name: data.name,
     phone: data.phone,
+    country: data.country,
     email: data.email,
     passwordHash,
     planId: "starter",
-    subscriptionStatus: "trial",
-    subscriptionStartedAt: now,
-    subscriptionEndsAt: addTrialPeriod(now),
+    subscriptionStatus: "active",
+    subscriptionStartedAt: new Date(),
     status: env.kycRequired ? "pending" : "active",
   });
 
@@ -114,6 +115,7 @@ export const signupCustomer = asyncHandler(async (req: Request, res: Response) =
   const customer = await Customer.create({
     name: data.name,
     phone: data.phone,
+    country: data.country,
     email: data.email,
     passwordHash,
   });

@@ -19,6 +19,42 @@ export function clearToken(): void {
   if (typeof window !== "undefined") window.localStorage.removeItem(TOKEN_KEY);
 }
 
+/**
+ * Download an authenticated file (e.g. a CSV export) and save it in the
+ * browser. A plain link can't carry the Bearer token, so fetch it as a blob.
+ */
+export async function downloadFile(
+  path: string,
+  params: Record<string, string | undefined>,
+  fallbackName: string
+): Promise<void> {
+  const query = new URLSearchParams(
+    Object.entries(params).filter((e): e is [string, string] => Boolean(e[1]))
+  ).toString();
+  const token = getToken();
+  const res = await fetch(`${API_BASE}${path}${query ? `?${query}` : ""}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    let message = `Download failed (${res.status})`;
+    try {
+      const d = await res.json();
+      message = d?.error ?? d?.message ?? message;
+    } catch { /* non-JSON */ }
+    throw new Error(message);
+  }
+  const name =
+    res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** Upload one image (seller-authenticated). Returns its public URL. */
 export async function uploadImage(file: File): Promise<{ url: string }> {
   const form = new FormData();

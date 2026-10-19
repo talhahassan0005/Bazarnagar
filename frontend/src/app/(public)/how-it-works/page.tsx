@@ -18,7 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
-import { PLANS, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
+import { ADS_ENABLED, PLANS, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -78,7 +78,7 @@ const FEATURES = [
   {
     icon: Star,
     title: "Featured / Boosted products",
-    desc: "Pay to boost a product for 7, 15 or 30 days. Boosted products appear first in search results and your shop catalog with a ★ Featured badge.",
+    desc: "Any seller — Free plan included — can boost a product for a small daily fee, for as many days as they like. Boosted products appear first in search results and your shop catalog with a ★ Featured badge.",
   },
   {
     icon: Smartphone,
@@ -97,56 +97,109 @@ const FEATURES = [
   },
 ];
 
-const FAQS = [
+const FAQ_SECTIONS = [
   {
-    q: "Is Bazaarnagar free to use?",
-    a: "Yes. The Free plan lets you list up to 50 products with 4 images each. Paid plans (Plan 1, 2 and 3) unlock more products — up to 100, 200 or 500 — with up to 8 images per product.",
+    title: "Creating your free store",
+    faqs: [
+      {
+        q: "How do I create a free store?",
+        a: "1) Click \"Start selling\" and sign up with your name, phone number, email and a password. 2) In your dashboard, open Store Profile and fill in your shop name, a short description, category, WhatsApp number and city — then save. 3) Go to Products → Add product to list your first item. That's it — your shop is live with its own link.",
+      },
+      {
+        q: "Is the store really free? Does the free plan expire?",
+        a: "Yes, it's really free. The Free plan never expires and needs no card or payment — you can list up to 50 products with 4 photos each. You only pay if you choose to upgrade for more products.",
+      },
+      {
+        q: "What do I need to get started?",
+        a: "Just an email address, a WhatsApp number for customers to reach you, and a few photos of what you sell. No documents, website or technical skills are needed.",
+      },
+      {
+        q: "How long does it take to set up?",
+        a: "Most sellers have their shop and first products online in about 10 minutes. You can always come back later to add your logo, cover photo, map location and social links.",
+      },
+      {
+        q: "What is my store link?",
+        a: `Your shop gets its own link based on its name, like ${SITE_DOMAIN}/store/your-shop-name. Share it on WhatsApp, Facebook and Instagram so customers can browse your products.`,
+      },
+      {
+        q: "How do I add products?",
+        a: "Go to Dashboard → Products → Add product. Enter a name, category and price, upload photos, and add a description if you like. New products go through a quick review and then appear in your shop and in search.",
+      },
+      {
+        q: "Can I make my shop look like my own website?",
+        a: "Yes. Under Dashboard → Landing Page you can turn on a custom shop homepage with your own headline, hero image, colour theme, featured products and an About section.",
+      },
+      {
+        q: "Do I need a website or technical skills?",
+        a: "No. Everything is done through a simple dashboard. If you can use WhatsApp, you can run a shop on Bazaarnagar.",
+      },
+    ],
   },
   {
-    q: "Do I need a website or technical skills?",
-    a: "No. Everything is done through a simple dashboard. If you can use WhatsApp, you can run a shop on Bazaarnagar.",
+    title: "Selling & orders",
+    faqs: [
+      {
+        q: "How do customers place orders?",
+        a: "Customers can tap the WhatsApp button on any product to message you with the product name, price and link, or place an order through checkout. You confirm and arrange delivery directly.",
+      },
+      {
+        q: "How do customers pay?",
+        a: "Orders placed on Bazaarnagar are Cash on Delivery — the customer pays when the order arrives. For WhatsApp orders, you agree on payment directly with the customer.",
+      },
+      {
+        q: "What is product moderation?",
+        a: "When you add or edit a product, it goes through a quick review to make sure it meets our guidelines. Approved products go live publicly. If something needs a fix, you'll see the reason in your dashboard.",
+      },
+      {
+        q: "Can I have more than one shop?",
+        a: "Each seller account has one shop. If you need multiple shops, create separate seller accounts.",
+      },
+    ],
   },
   {
-    q: "How do customers place orders?",
-    a: "Customers browse your shop and tap the WhatsApp button on any product. A pre-filled message with the product name, price and link is sent to your WhatsApp number. You confirm and arrange delivery directly.",
+    title: "Plans & upgrades",
+    faqs: [
+      {
+        q: "What do paid plans add?",
+        a: "Paid plans (Plan 1, 2 and 3) unlock more products — up to 100, 200 or 500 — with up to 8 images per product.",
+      },
+      {
+        q: "What are Boosted / Featured products?",
+        a: "Boosting promotes a specific product for a daily fee — you choose how many days. Boosted products sort first in search results and your shop catalog, and show a ★ Featured badge. Every seller can boost, including on the Free plan: go to Dashboard → Products and tap the rocket icon. The boost starts as soon as you submit your payment.",
+      },
+      {
+        q: "How do I change my plan?",
+        a: "Go to Dashboard → Plan. You can upgrade or downgrade at any time. A paid plan takes effect immediately and runs on a 30-day billing cycle.",
+      },
+      {
+        q: "What happens if my paid plan expires?",
+        a: "There is a 7-day grace period after a paid plan expires. If you don't renew within that window, your shop is hidden from public search until you renew or switch back to the Free plan.",
+      },
+    ],
   },
   {
-    q: "Can customers also pay online?",
-    a: "Yes. Customers can place orders with Cash on Delivery or pay online via card. Online payments are deposited to your connected payout account (Easypaisa, JazzCash or bank).",
-  },
-  {
-    q: "What is product moderation?",
-    a: "When you add or edit a product, it goes through a quick review to make sure it meets our guidelines. Approved products go live publicly. If something needs a fix, you'll see the reason in your dashboard.",
-  },
-  {
-    q: "What are Boosted / Featured products?",
-    a: "Boosting pays to promote a specific product for 7, 15 or 30 days. Boosted products sort first in search results and your shop catalog, and show a ★ Featured badge. Available on Plan 1, 2 and 3.",
-  },
-  {
-    q: "Why do I see ads on my shop page?",
-    a: "Shops on the Free plan show a small Bazaarnagar banner ad. Upgrading to any paid package removes the banner permanently.",
-  },
-  {
-    q: "Can I have more than one shop?",
-    a: "Each seller account has one shop. If you need multiple shops, create separate seller accounts.",
-  },
-  {
-    q: "How do I change my plan?",
-    a: "Go to Dashboard → Plan. You can upgrade or downgrade at any time. The new plan takes effect immediately and starts a fresh 30-day billing cycle.",
-  },
-  {
-    q: "What happens if my subscription expires?",
-    a: "There is a 7-day grace period after expiry. If you don't renew within that window, your shop is hidden from public search until you reactivate.",
-  },
-  {
-    q: "How do I connect my payout account?",
-    a: "Go to Dashboard → Settings → Payout. Enter your Easypaisa, JazzCash or bank account details. Once saved, online order payments will be deposited there.",
-  },
-  {
-    q: "How do I contact support?",
-    a: `Email us at ${SITE_EMAIL}. We typically respond within 24 hours.`,
+    title: "Support",
+    faqs: [
+      {
+        q: "How do I contact support?",
+        a: `Email us at ${SITE_EMAIL}. We typically respond within 24 hours.`,
+      },
+    ],
   },
 ];
+
+// FAQ structured data so search engines can show these answers directly.
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_SECTIONS.flatMap((s) =>
+    s.faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    }))
+  ),
+};
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   return (
@@ -274,18 +327,16 @@ export default function HowItWorksPage() {
                       {h}
                     </li>
                   ))}
-                  {id === "starter" && (
+                  {ADS_ENABLED && id === "starter" && (
                     <li className="flex items-start gap-2 text-amber-600">
                       <CreditCard className="mt-0.5 h-4 w-4 shrink-0" />
                       Banner ads shown on shop
                     </li>
                   )}
-                  {id !== "starter" && (
-                    <li className="flex items-start gap-2 text-brand-700">
-                      <Star className="mt-0.5 h-4 w-4 shrink-0" />
-                      Boost / feature products
-                    </li>
-                  )}
+                  <li className="flex items-start gap-2 text-brand-700">
+                    <Star className="mt-0.5 h-4 w-4 shrink-0" />
+                    Boost / feature products (pay per day)
+                  </li>
                 </ul>
                 <Button
                   href="/signup?role=seller"
@@ -308,17 +359,28 @@ export default function HowItWorksPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">FAQ</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">Frequently asked questions</h2>
           </div>
-          <div className="mt-10">
-            {FAQS.map((faq) => (
-              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
-            ))}
-          </div>
+          {FAQ_SECTIONS.map((section) => (
+            <div key={section.title} className="mt-10">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                {section.title}
+              </h3>
+              <div className="mt-2">
+                {section.faqs.map((faq) => (
+                  <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+                ))}
+              </div>
+            </div>
+          ))}
           <p className="mt-8 text-center text-sm text-slate-500">
             Still have questions?{" "}
-            <a href={`mailto:${SITE_EMAIL}`} className="font-medium text-brand-700 hover:underline">
-              Email us
-            </a>
+            <Link href="/contact" className="font-medium text-brand-700 hover:underline">
+              Contact us
+            </Link>
           </p>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
+          />
         </div>
       </section>
 

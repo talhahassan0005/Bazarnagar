@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronRight, Eye, PlayCircle, Store as StoreIcon } from "lucide-react";
-import { Badge, Button, EmptyState, LoadingPanel } from "@/components/ui";
+import type { ReactNode } from "react";
+import { Badge, Button, EmptyState, LoadingPanel, ProductCardSkeleton, Skeleton } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
 import { WhatsAppButton } from "@/components/domain/WhatsAppButton";
 import { StockBadge, DeliveryBadge } from "@/components/domain/StatusBadges";
@@ -13,7 +14,12 @@ import { StarRating } from "@/components/storefront/StarRating";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButtons";
 import { ProductCard } from "@/components/domain/ProductCard";
-import { useGetProductQuery, useGetStoreProductsQuery } from "@/store/apiSlice";
+import { CodNotice } from "@/components/domain/CodNotice";
+import {
+  useGetProductQuery,
+  useGetRelatedProductsQuery,
+  useGetStoreProductsQuery,
+} from "@/store/apiSlice";
 import { discountPercent, effectivePrice, formatCount, formatPrice } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 
@@ -79,9 +85,12 @@ export default function ProductDetailPage() {
                 {product.rating.average.toFixed(1)} ({product.rating.count})
               </span>
             )}
-            <span className="flex items-center gap-1">
-              <Eye className="h-4 w-4" /> {formatCount(product.views)} views
-            </span>
+            {/* The API only includes view counts for the product's seller and admins. */}
+            {product.views != null && (
+              <span className="flex items-center gap-1">
+                <Eye className="h-4 w-4" /> {formatCount(product.views)} views
+              </span>
+            )}
           </div>
 
           <div className="mt-3 flex items-baseline gap-3">
@@ -154,48 +163,101 @@ export default function ProductDetailPage() {
                 label={product.negotiable ? "Negotiate on WhatsApp" : "Inquire on WhatsApp"}
               />
             </div>
+            <CodNotice compact />
           </div>
         </div>
       </div>
 
       <ProductReviews productId={product.id} />
 
-      <RelatedProducts storeId={store.id} currentProductId={product.id} category={product.category} store={store} />
+      <RelatedProducts productId={product.id} category={product.category} />
+
+      <MoreFromStore currentProductId={product.id} store={store} />
 
       <ChatWidget storeId={store.id} storeName={store.name} productId={product.id} productName={product.name} />
     </div>
   );
 }
 
-function RelatedProducts({
-  storeId,
-  currentProductId,
-  category,
-  store,
-}: {
-  storeId: string;
-  currentProductId: string;
-  category: string;
-  store: Store;
-}) {
-  const { data: allProducts } = useGetStoreProductsQuery({ storeId, publicOnly: true });
+const PRODUCT_GRID =
+  "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6";
 
-  const related = (allProducts ?? [])
-    .filter((p) => p.id !== currentProductId && p.category === category)
-    .slice(0, 6);
+/** Section heading with an optional "View all" link on the right. */
+function SectionHeader({ title, href }: { title: ReactNode; href?: string }) {
+  return (
+    <div className="mb-4 flex items-end justify-between gap-3">
+      <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+      {href && (
+        <Link
+          href={href}
+          className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+        >
+          View all <ChevronRight className="h-4 w-4" />
+        </Link>
+      )}
+    </div>
+  );
+}
 
-  if (related.length === 0) return null;
+/** Same-category products from every store on the marketplace. */
+function RelatedProducts({ productId, category }: { productId: string; category: string }) {
+  const { data: related, isLoading } = useGetRelatedProductsQuery(productId);
+
+  if (isLoading) {
+    return (
+      <div className="mt-12">
+        <Skeleton className="mb-4 h-6 w-48" />
+        <div className={PRODUCT_GRID}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (!related || related.length === 0) return null;
 
   return (
-    <div className="mt-12">
-      <h2 className="mb-4 text-lg font-semibold text-slate-800">
-        More in <span className="text-brand-700">{category}</span>
-      </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-        {related.map((p) => (
-          <ProductCard key={p.id} product={p} store={store} />
+    <section className="mt-12">
+      <SectionHeader
+        title={
+          <>
+            Related products in <span className="text-brand-700">{category}</span>
+          </>
+        }
+        href={`/search?category=${encodeURIComponent(category)}`}
+      />
+      <div className={PRODUCT_GRID}>
+        {related.map((p, i) => (
+          <ProductCard key={p.id} product={p} store={p.store} index={i} />
         ))}
       </div>
-    </div>
+    </section>
+  );
+}
+
+/** Other products from the shop the customer is browsing. */
+function MoreFromStore({ currentProductId, store }: { currentProductId: string; store: Store }) {
+  const { data: allProducts } = useGetStoreProductsQuery({ storeId: store.id, publicOnly: true });
+
+  const others = (allProducts ?? []).filter((p) => p.id !== currentProductId);
+  if (others.length === 0) return null;
+
+  return (
+    <section className="mt-12">
+      <SectionHeader
+        title={
+          <>
+            More from <span className="text-brand-700">{store.name}</span>
+          </>
+        }
+        href={others.length > 6 ? `/store/${store.slug}/products` : undefined}
+      />
+      <div className={PRODUCT_GRID}>
+        {others.slice(0, 6).map((p, i) => (
+          <ProductCard key={p.id} product={p} store={store} index={i} />
+        ))}
+      </div>
+    </section>
   );
 }

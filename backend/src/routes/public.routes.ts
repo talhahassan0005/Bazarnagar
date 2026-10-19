@@ -1,9 +1,11 @@
 import { Router } from "express";
 import {
   getStores,
+  getCities,
   getStoreBySlug,
   getStoreProducts,
   getProduct,
+  getRelatedProducts,
   searchProducts,
   trackWhatsappClick,
 } from "../controllers/publicController";
@@ -26,9 +28,11 @@ router.get("/banners", getActiveBanners);
 router.get("/ad-settings", getAdSettings);
 router.get("/search", searchProducts);
 router.get("/stores", getStores);
+router.get("/cities", getCities);
 router.get("/stores/:slug", getStoreBySlug);
 router.get("/stores/:storeId/products", getStoreProducts);
 router.get("/products/:id", optionalAuthenticate, getProduct);
+router.get("/products/:id/related", getRelatedProducts);
 router.post("/products/:id/whatsapp-click", trackWhatsappClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);

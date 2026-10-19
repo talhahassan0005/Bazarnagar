@@ -4,6 +4,7 @@ import { WishlistItem } from "../models/Wishlist";
 import { Product } from "../models/Product";
 import { Store } from "../models/Store";
 import { ApiError, asyncHandler } from "../lib/helpers";
+import { withoutStats } from "../lib/publicJson";
 
 /** GET /api/customer/wishlist — the logged-in customer's saved products. */
 export const getWishlist = asyncHandler(async (req: Request, res: Response) => {
@@ -13,13 +14,13 @@ export const getWishlist = asyncHandler(async (req: Request, res: Response) => {
   const products = await Product.find({ _id: { $in: productIds } });
   const storeIds = [...new Set(products.map((p) => p.storeId.toString()))];
   const stores = await Store.find({ _id: { $in: storeIds } });
-  const storeById = new Map(stores.map((s) => [s.id, s.toJSON()]));
+  const storeById = new Map(stores.map((s) => [s.id, withoutStats(s.toJSON())]));
   const productById = new Map(products.map((p) => [p.id, p]));
 
   const result = items
     .map((i) => productById.get(i.productId.toString()))
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((p) => ({ ...p.toJSON(), store: storeById.get(p.storeId.toString()) ?? null }));
+    .map((p) => ({ ...withoutStats(p.toJSON()), store: storeById.get(p.storeId.toString()) ?? null }));
 
   res.json(result);
 });
