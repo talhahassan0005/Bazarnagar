@@ -8,8 +8,27 @@ import type { RootState } from "./index";
  */
 export const GUEST_CART_OWNER = "guest";
 export const cartStorageKey = (owner: string) => `bn_cart:${owner}`;
-/** Pre-per-user cart key; migrated into the first owner seen, then removed. */
-export const LEGACY_CART_KEY = "bn_cart";
+/** Pre-per-user cart key, shared by everyone on the browser. */
+const LEGACY_CART_KEY = "bn_cart";
+const CART_VERSION_KEY = "bn_cart_version";
+const CART_VERSION = "2";
+
+/**
+ * One-time cleanup when per-user carts first run in a browser: the old shared
+ * cart (and the guest cart an earlier build migrated it into) can't be traced
+ * to an owner, so it's dropped rather than shown to whoever opens the site.
+ */
+export function dropLegacyCartOnce(): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (window.localStorage.getItem(CART_VERSION_KEY) === CART_VERSION) return;
+    window.localStorage.removeItem(LEGACY_CART_KEY);
+    window.localStorage.removeItem(cartStorageKey(GUEST_CART_OWNER));
+    window.localStorage.setItem(CART_VERSION_KEY, CART_VERSION);
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 interface CartState {
   items: CartItem[];

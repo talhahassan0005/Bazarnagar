@@ -19,7 +19,7 @@ import cartReducer, {
   mergeCarts,
   cartStorageKey,
   GUEST_CART_OWNER,
-  LEGACY_CART_KEY,
+  dropLegacyCartOnce,
 } from "./cartSlice";
 
 // ── Cart persistence listener ────────────────────────────────────────────────
@@ -47,11 +47,8 @@ cartListener.startListening({
       auth.role === "customer" && auth.customer ? `customer:${auth.customer.id}` : GUEST_CART_OWNER;
     if (owner === cart.owner) return;
 
+    dropLegacyCartOnce();
     let items = readCart(cartStorageKey(owner));
-
-    const legacy = readCart(LEGACY_CART_KEY);
-    if (legacy.length > 0) items = mergeCarts(items, legacy);
-    window.localStorage.removeItem(LEGACY_CART_KEY);
 
     if (owner !== GUEST_CART_OWNER) {
       items = mergeCarts(items, readCart(cartStorageKey(GUEST_CART_OWNER)));
