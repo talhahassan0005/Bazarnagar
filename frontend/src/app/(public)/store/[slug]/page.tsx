@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { StoreHeader } from "@/components/domain/StoreHeader";
+import { OwnerStoreStats } from "@/components/storefront/OwnerStoreStats";
 import { StoreCatalog } from "@/components/storefront/StoreCatalog";
 import { StoreLandingHero } from "@/components/storefront/StoreLandingHero";
 import { FeaturedProducts } from "@/components/storefront/FeaturedProducts";
@@ -61,6 +62,7 @@ export default function PublicStorePage() {
   if (!landing.enabled) {
     return (
       <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+        <OwnerStoreStats store={store.data} className="mb-4" />
         <StoreHeader store={store.data} />
         <div className="mt-6">
           <StoreCatalog store={store.data} />
@@ -76,6 +78,7 @@ export default function PublicStorePage() {
     <>
       <StoreLandingHero store={store.data} landing={landing} />
       <section className="mx-auto w-full max-w-[1600px] px-4 py-14 sm:px-6 lg:px-8">
+        <OwnerStoreStats store={store.data} className="mb-8" />
         {landing.showFeatured && featured.length > 0 && (
           <div className="mb-14">
             <FeaturedProducts store={store.data} landing={landing} products={featured} />

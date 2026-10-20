@@ -7,15 +7,17 @@ import {
   Package,
   Search,
   ShieldCheck,
-  Sparkles,
+  PlayCircle,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
-import { HeroPreview } from "@/components/marketing/HeroPreview";
 import { HomeCatalog } from "@/components/marketing/HomeCatalog";
-import { PLAN_LIST, SITE_TAGLINE_UR } from "@/lib/constants";
+import { PLAN_LIST, PLANS } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 
-const TRUST = ["No setup fees", "Ready in minutes", "Works on any phone", "Cancel anytime"];
+const TRUST = ["No setup fees", "No coding needed"];
+
+/** Products allowed on the free plan — shown in the hero headline. */
+const FREE_PRODUCT_LIMIT = PLANS.starter.productLimit;
 
 const STEPS = [
   { icon: Package, title: "Add your products", text: "Upload photos, prices and details in minutes.", tone: "bg-brand-50 text-brand-700" },
@@ -33,62 +35,45 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-brand-50 via-white to-white">
-        {/* Blurred shop/marketplace backdrop */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 scale-105 bg-cover bg-center opacity-[0.16] blur-[1.2px]"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600&auto=format&fit=crop')",
-          }}
-        />
-        {/* Soften the image into the page so hero text stays crisp */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/30 to-white" />
+      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-brand-50/70 via-white to-white">
         <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent-200/30 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 top-40 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl" />
-        <div className="relative mx-auto grid w-full max-w-[1600px] items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:px-8">
-          <div className="animate-fade-in-up">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-brand-700 shadow-sm ring-1 ring-brand-100">
-              <Sparkles className="h-3.5 w-3.5 text-accent-500" />
-              For WhatsApp & Instagram sellers
-            </span>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-brand-900 sm:text-5xl">
-              Your shop, in{" "}
-              <span className="relative whitespace-nowrap text-accent-500">
-                one link
-                <svg className="absolute -bottom-1 left-0 h-2 w-full text-accent-300" viewBox="0 0 100 8" preserveAspectRatio="none">
-                  <path d="M0 6 Q 25 0 50 4 T 100 3" stroke="currentColor" strokeWidth="2" fill="none" />
-                </svg>
-              </span>
-              .
-            </h1>
-            <p dir="rtl" className="mt-1 text-lg text-slate-500">{SITE_TAGLINE_UR}</p>
-            <p className="mt-3 max-w-lg text-lg text-slate-600">
-              Build a mobile-friendly catalog, get a public shop link, and take
-              orders directly on WhatsApp — no website, no app, no code.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button href="/signup?role=seller" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-                Create your store
-              </Button>
-              <Button href="/shops" size="lg" variant="outline">
-                Browse shops
-              </Button>
-            </div>
-            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-              {TRUST.map((t) => (
-                <li key={t} className="flex items-center gap-1.5 text-sm text-slate-500">
-                  <Check className="h-4 w-4 text-leaf-500" />
-                  {t}
-                </li>
-              ))}
-            </ul>
+        <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl" />
+        <div className="animate-fade-in-up relative mx-auto w-full max-w-4xl px-4 py-12 text-center sm:px-6 sm:py-16">
+          <p className="text-sm font-semibold text-slate-500">For shops, home businesses &amp; online sellers</p>
+          <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-brand-900 sm:text-6xl">
+            Create a <span className="text-accent-500">free online store</span>
+            <br className="hidden sm:block" /> with up to{" "}
+            <span className="text-accent-500">{FREE_PRODUCT_LIMIT} products.</span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-500">
+            Add your products, get your own store link, and share it on WhatsApp, Instagram or anywhere your
+            customers are.
+          </p>
+          <p dir="rtl" lang="ur" className="mt-4 text-xl text-slate-800 sm:text-2xl">
+            اپنا آن لائن اسٹور مفت بنائیں - {FREE_PRODUCT_LIMIT} تک مصنوعات شامل کریں۔
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button
+              href="/signup?role=seller"
+              variant="accent"
+              size="lg"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+              className="shadow-lg shadow-accent-500/25"
+            >
+              Create free store
+            </Button>
+            <Button href="/how-it-works" size="lg" variant="outline" leftIcon={<PlayCircle className="h-5 w-5" />}>
+              How to create store?
+            </Button>
           </div>
-
-          <div className="animate-fade-in-up [animation-delay:120ms] lg:pl-6">
-            <HeroPreview />
-          </div>
+          <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {TRUST.map((t) => (
+              <li key={t} className="flex items-center gap-1.5 text-sm text-slate-500">
+                <Check className="h-4 w-4 text-leaf-500" />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

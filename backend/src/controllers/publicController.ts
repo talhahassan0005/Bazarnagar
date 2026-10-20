@@ -22,15 +22,20 @@ function boostFirst(a: ProductDoc, b: ProductDoc): number {
 
 /** GET /api/public/stores/:slug — public shop page. Increments shop views. */
 export const getStoreBySlug = asyncHandler(async (req: Request, res: Response) => {
-  const store = await Store.findOneAndUpdate(
-    { slug: req.params.slug, status: "active" },
-    { $inc: { views: 1 } },
-    { new: true }
-  );
+  const store = await Store.findOne({ slug: req.params.slug, status: "active" });
   if (!store) return res.json(null);
+
+  // The shop's own seller and admins see its stats, and their visits aren't counted.
+  const insider = isOwnerOrAdmin(req, store.sellerId);
+  if (!insider) {
+    await Store.updateOne({ _id: store._id }, { $inc: { views: 1 } });
+    store.views += 1;
+  }
+
   const { Seller } = await import("../models/Seller");
   const seller = await Seller.findById(store.sellerId).select("planId");
-  res.json({ ...withoutStats(store.toJSON()), planId: seller?.planId ?? "starter" });
+  const json = insider ? store.toJSON() : withoutStats(store.toJSON());
+  res.json({ ...json, planId: seller?.planId ?? "starter" });
 });
 
 /**

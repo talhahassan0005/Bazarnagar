@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button, EmptyState, ProductGridSkeleton, Skeleton } from "@/components/ui";
 import { StoreHeader } from "@/components/domain/StoreHeader";
+import { OwnerStoreStats } from "@/components/storefront/OwnerStoreStats";
 import { StoreCatalog } from "@/components/storefront/StoreCatalog";
 import { useGetStoreBySlugQuery } from "@/store/apiSlice";
 
@@ -52,6 +53,7 @@ export default function StoreCatalogPage() {
         <ChevronLeft className="h-4 w-4" /> Back to {store.data.name}
       </Link>
 
+      <OwnerStoreStats store={store.data} className="mb-4" />
       <StoreHeader store={store.data} />
 
       <div className="mt-6">

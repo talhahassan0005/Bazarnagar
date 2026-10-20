@@ -31,7 +31,7 @@ router.get("/ad-settings", getAdSettings);
 router.get("/search", searchProducts);
 router.get("/stores", getStores);
 router.get("/cities", getCities);
-router.get("/stores/:slug", getStoreBySlug);
+router.get("/stores/:slug", optionalAuthenticate, getStoreBySlug);
 router.get("/stores/:storeId/products", getStoreProducts);
 router.get("/products/:id", optionalAuthenticate, getProduct);
 router.get("/products/:id/related", getRelatedProducts);
