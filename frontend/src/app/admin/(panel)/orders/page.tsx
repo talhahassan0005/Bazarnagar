@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { StatCard } from "@/components/domain/StatCard";
 import { OrderStatusBadge } from "@/components/domain/StatusBadges";
+import { LoadError } from "@/components/domain/LoadError";
 import { useGetAdminOrdersQuery } from "@/store/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -122,7 +123,7 @@ export default function AdminOrdersPage() {
   const invalidRange = Boolean(fromDate && toDate && fromDate > toDate);
   const hasFilters = Boolean(q || fromDate || toDate);
 
-  const { data, isLoading, isFetching } = useGetAdminOrdersQuery(
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetAdminOrdersQuery(
     { ...filters, page },
     { refetchOnMountOrArgChange: true, skip: invalidRange }
   );
@@ -192,6 +193,15 @@ export default function AdminOrdersPage() {
       ),
     },
   ];
+
+  if (isError) {
+    return (
+      <>
+        <PageHeader title="Orders" description="Every order placed on the platform, with buyer, shop and status history." />
+        <LoadError what="orders" error={error} onRetry={refetch} />
+      </>
+    );
+  }
 
   return (
     <>

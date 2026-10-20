@@ -6,6 +6,7 @@ import { Avatar, Button, Input, StatCardSkeleton, TableSkeleton } from "@/compon
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { StatCard } from "@/components/domain/StatCard";
+import { LoadError } from "@/components/domain/LoadError";
 import { useGetBuyersQuery } from "@/store/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -20,7 +21,7 @@ export default function AdminBuyersPage() {
   const [input, setInput] = useState("");
   const [q, setQ] = useState("");
   const [downloading, setDownloading] = useState(false);
-  const { data, isLoading, isFetching } = useGetBuyersQuery(
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetBuyersQuery(
     { q: q || undefined },
     { refetchOnMountOrArgChange: true }
   );
@@ -77,6 +78,15 @@ export default function AdminBuyersPage() {
       cell: (b) => <span className="whitespace-nowrap text-slate-600">{when(b.lastOrderAt)}</span>,
     },
   ];
+
+  if (isError) {
+    return (
+      <>
+        <PageHeader title="Buyers" description="Buyer accounts — when they joined, last logged in, and what they've ordered." />
+        <LoadError what="buyers" error={error} onRetry={refetch} />
+      </>
+    );
+  }
 
   return (
     <>
