@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, MapPin, MessageCircle } from "lucide-react";
 import { STORE_THEMES, type ResolvedLanding } from "@/lib/landing";
-import { cn, toWhatsAppNumber } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 import { ShareStoreButton } from "@/components/domain/ShareStoreButton";
+import { StoreWhatsAppLink } from "./StoreWhatsAppLink";
 
 /** Themed hero for a store's customizable landing page. */
 export function StoreLandingHero({
@@ -74,14 +75,12 @@ export function StoreLandingHero({
             {landing.primaryCtaLabel}
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <a
-            href={`https://wa.me/${toWhatsAppNumber(store.whatsapp)}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <StoreWhatsAppLink
+            store={store}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/10 px-6 text-base font-medium text-white backdrop-blur transition-colors hover:bg-white/20"
           >
             <MessageCircle className="h-4 w-4" /> WhatsApp
-          </a>
+          </StoreWhatsAppLink>
           <ShareStoreButton store={store} variant="hero" />
         </div>
       </div>

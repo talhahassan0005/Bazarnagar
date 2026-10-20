@@ -11,6 +11,7 @@ import { getBoostPricing } from "../lib/boost";
 import { Admin } from "../models/Admin";
 import { ActivityLog } from "../models/ActivityLog";
 import { UploadLog } from "../models/UploadLog";
+import { SearchLog } from "../models/SearchLog";
 import { PLANS } from "../lib/plans";
 import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
@@ -32,12 +33,97 @@ export const getAllProducts = asyncHandler(async (_req: Request, res: Response) 
   const products = await Product.find().sort({ createdAt: -1 });
   const stores = await Store.find();
   const storeById = new Map(stores.map((s) => [s.id, s]));
+  const searchCounts = await searchesPerProduct();
   res.json(
     products.map((p) => ({
       ...p.toJSON(),
       store: storeById.get(p.storeId.toString())?.toJSON() ?? null,
+      searchCount: searchCounts.get(p.id) ?? 0,
     }))
   );
+});
+
+/** How many logged keyword searches returned each product (optionally since a date). */
+async function searchesPerProduct(since?: Date): Promise<Map<string, number>> {
+  const rows = await SearchLog.aggregate<{ _id: unknown; count: number }>([
+    ...(since ? [{ $match: { createdAt: { $gte: since } } }] : []),
+    { $unwind: "$productIds" },
+    { $group: { _id: "$productIds", count: { $sum: 1 } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), r.count]));
+}
+
+const insightsQuerySchema = z.object({ days: z.enum(["7", "30", "all"]).default("30") });
+
+/**
+ * GET /api/admin/search-insights?days=7|30|all — what shoppers search for:
+ * top terms, searches with no results, and products found most often.
+ */
+export const getSearchInsights = asyncHandler(async (req: Request, res: Response) => {
+  const { days } = insightsQuerySchema.parse(req.query);
+  const since = days === "all" ? undefined : new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
+  const match = since ? { createdAt: { $gte: since } } : {};
+
+  const [totals, topTerms, zeroResultTerms, perProduct] = await Promise.all([
+    SearchLog.aggregate<{ searches: number; terms: string[]; zero: number }>([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          searches: { $sum: 1 },
+          terms: { $addToSet: "$query" },
+          zero: { $sum: { $cond: [{ $eq: ["$resultCount", 0] }, 1, 0] } },
+        },
+      },
+    ]),
+    SearchLog.aggregate<{ _id: string; count: number; avgResults: number; lastSearched: Date }>([
+      { $match: match },
+      {
+        $group: {
+          _id: "$query",
+          count: { $sum: 1 },
+          avgResults: { $avg: "$resultCount" },
+          lastSearched: { $max: "$createdAt" },
+        },
+      },
+      { $sort: { count: -1, lastSearched: -1 } },
+      { $limit: 25 },
+    ]),
+    SearchLog.aggregate<{ _id: string; count: number; lastSearched: Date }>([
+      { $match: { ...match, resultCount: 0 } },
+      { $group: { _id: "$query", count: { $sum: 1 }, lastSearched: { $max: "$createdAt" } } },
+      { $sort: { count: -1, lastSearched: -1 } },
+      { $limit: 25 },
+    ]),
+    searchesPerProduct(since),
+  ]);
+
+  const topProductIds = [...perProduct.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25);
+  const products = await Product.find({ _id: { $in: topProductIds.map(([id]) => id) } }).select("name storeId");
+  const productById = new Map(products.map((p) => [p.id, p]));
+  const stores = await Store.find({ _id: { $in: products.map((p) => p.storeId) } }).select("name slug");
+  const storeById = new Map(stores.map((s) => [s.id, s]));
+
+  const t = totals[0];
+  res.json({
+    days,
+    totals: { searches: t?.searches ?? 0, uniqueTerms: t?.terms.length ?? 0, zeroResultSearches: t?.zero ?? 0 },
+    topTerms: topTerms.map((r) => ({
+      query: r._id,
+      count: r.count,
+      avgResults: Math.round(r.avgResults),
+      lastSearched: r.lastSearched,
+    })),
+    zeroResultTerms: zeroResultTerms.map((r) => ({ query: r._id, count: r.count, lastSearched: r.lastSearched })),
+    topProducts: topProductIds
+      .map(([id, searches]) => {
+        const product = productById.get(id);
+        if (!product) return null; // deleted since
+        const store = storeById.get(product.storeId.toString());
+        return { productId: id, name: product.name, storeName: store?.name ?? "", storeSlug: store?.slug ?? "", searches };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null),
+  });
 });
 
 /** GET /api/admin/overview — platform totals (SRS §11 / §13). */

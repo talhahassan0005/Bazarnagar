@@ -61,6 +61,7 @@ export default function AdminStoresPage() {
     { header: "Category", hideOnMobile: true, cell: (s) => s.category },
     { header: "City", hideOnMobile: true, cell: (s) => s.city },
     { header: "Views", cell: (s) => formatCount(s.views) },
+    { header: "WhatsApp clicks", hideOnMobile: true, cell: (s) => formatCount(s.whatsappClicks) },
     {
       header: "Status",
       cell: (s) => (

@@ -42,7 +42,7 @@ const PRODUCTS = [
  *  layer over a branded gradient, so it stays crisp even if an image is slow. */
 export function HeroPreview() {
   return (
-    <div className="relative mx-auto w-full max-w-md">
+    <div className="relative mx-auto w-full max-w-sm">
       {/* Browser-style storefront card */}
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-brand-900/15 ring-1 ring-black/5 [transform:perspective(1200px)_rotateY(-6deg)_rotateX(2deg)]">
         {/* Browser bar */}
@@ -56,7 +56,7 @@ export function HeroPreview() {
         </div>
 
         {/* Cover */}
-        <div className="relative h-16 overflow-hidden bg-gradient-to-r from-brand-700 via-brand-600 to-brand-800">
+        <div className="relative h-12 overflow-hidden bg-gradient-to-r from-brand-700 via-brand-600 to-brand-800">
           <div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/10" />
           <div className="absolute -bottom-10 left-10 h-24 w-24 rounded-full bg-accent-500/20" />
         </div>
@@ -84,11 +84,11 @@ export function HeroPreview() {
           </div>
 
           {/* Product grid */}
-          <div className="my-4 grid grid-cols-2 gap-2.5">
+          <div className="my-3 grid grid-cols-2 gap-2">
             {PRODUCTS.map((p) => (
               <div key={p.name} className="overflow-hidden rounded-xl border border-slate-100">
                 {/* Gradient sits underneath as a graceful fallback for the photo. */}
-                <div className={`relative aspect-square bg-gradient-to-br ${p.grad}`}>
+                <div className={`relative aspect-[4/3] bg-gradient-to-br ${p.grad}`}>
                   <img
                     src={p.img}
                     alt={p.name}

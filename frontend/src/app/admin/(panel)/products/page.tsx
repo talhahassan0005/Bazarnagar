@@ -13,7 +13,7 @@ import {
 } from "@/components/domain/StatusBadges";
 import { useGetAllProductsQuery } from "@/store/apiSlice";
 import { MODERATION_META } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
+import { formatCount, formatPrice } from "@/lib/utils";
 import type { ModerationStatus, ProductWithStore } from "@/lib/types";
 
 const MOD_FILTERS = Object.keys(MODERATION_META) as ModerationStatus[];
@@ -54,6 +54,9 @@ export default function AdminProductsPage() {
       ),
     },
     { header: "Price", hideOnMobile: true, cell: (p) => formatPrice(p.price) },
+    { header: "Views", hideOnMobile: true, cell: (p) => formatCount(p.views) },
+    { header: "WhatsApp clicks", hideOnMobile: true, cell: (p) => formatCount(p.whatsappClicks) },
+    { header: "Searches", hideOnMobile: true, cell: (p) => formatCount(p.searchCount ?? 0) },
     { header: "Status", hideOnMobile: true, cell: (p) => <ProductStatusBadge status={p.status} /> },
     { header: "Moderation", cell: (p) => <ModerationBadge status={p.moderationStatus} /> },
     {

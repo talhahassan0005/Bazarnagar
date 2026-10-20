@@ -185,6 +185,8 @@ export interface ProductRating {
 /** A product joined with its store — handy for public search & detail views. */
 export interface ProductWithStore extends Product {
   store: Store;
+  /** Admin listing only: logged keyword searches that returned this product. */
+  searchCount?: number;
   /** Present on the public product-detail response. */
   rating?: ProductRating;
 }
@@ -519,4 +521,14 @@ export interface StorageUsage {
   scope: "paid" | "all";
   totals: { stores: number; files: number; bytes: number };
   rows: StorageUsageRow[];
+}
+
+/* ── Admin search insights ───────────────────────────────────────────────── */
+
+export interface SearchInsights {
+  days: "7" | "30" | "all";
+  totals: { searches: number; uniqueTerms: number; zeroResultSearches: number };
+  topTerms: { query: string; count: number; avgResults: number; lastSearched: string }[];
+  zeroResultTerms: { query: string; count: number; lastSearched: string }[];
+  topProducts: { productId: string; name: string; storeName: string; storeSlug: string; searches: number }[];
 }

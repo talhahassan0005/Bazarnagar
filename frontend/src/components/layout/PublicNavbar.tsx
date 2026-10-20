@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, Info, LogOut, MessageCircle, PackageSearch, Search, Store as StoreIcon } from "lucide-react";
+import { ArrowRight, Heart, Info, LogOut, MessageCircle, PackageSearch, Search, Store as StoreIcon } from "lucide-react";
 import { Logo } from "./Logo";
 import { CartLink } from "./CartLink";
 import { Button } from "@/components/ui";
@@ -151,6 +151,25 @@ export function PublicNavbar() {
             <Button href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
               Login
             </Button>
+          )}
+
+          {/* Main call to action: open a store (sellers go to their dashboard instead). */}
+          {role === "seller" ? (
+            <Button href="/dashboard" variant="accent" size="sm" className="hidden lg:inline-flex">
+              My dashboard
+            </Button>
+          ) : (
+            role !== "admin" && (
+              <Button
+                href="/signup?role=seller"
+                variant="accent"
+                size="sm"
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+                className="hidden rounded-full px-4 shadow-md shadow-accent-500/25 lg:inline-flex"
+              >
+                Create free store
+              </Button>
+            )
           )}
         </div>
       </div>

@@ -16,6 +16,7 @@ import type {
   Customer,
   DashboardMetrics,
   DataSummary,
+  SearchInsights,
   StorageUsage,
   ManualPaymentSettings,
   ModerationStatus,
@@ -131,6 +132,9 @@ export const apiSlice = createApi({
       providesTags: ["Product"],
     }),
 
+    trackStoreWhatsappClick: builder.mutation<{ ok: boolean }, string>({
+      query: (storeId) => ({ url: `/public/stores/${storeId}/whatsapp-click`, method: "POST" }),
+    }),
     trackWhatsappClick: builder.mutation<{ ok: boolean }, string>({
       query: (productId) => ({ url: `/public/products/${productId}/whatsapp-click`, method: "POST" }),
     }),
@@ -346,6 +350,9 @@ export const apiSlice = createApi({
       query: () => "/admin/data-summary",
       providesTags: ["Store", "Product"],
     }),
+    getSearchInsights: builder.query<SearchInsights, "7" | "30" | "all">({
+      query: (days) => ({ url: "/admin/search-insights", params: { days } }),
+    }),
     getStorageUsage: builder.query<StorageUsage, "paid" | "all">({
       query: (scope) => ({ url: "/admin/storage", params: { scope } }),
     }),
@@ -510,6 +517,7 @@ export const {
   useResetPasswordMutation,
   useGetMeQuery,
   useTrackWhatsappClickMutation,
+  useTrackStoreWhatsappClickMutation,
   useGetPublicStoresQuery,
   useGetStoreBySlugQuery,
   useGetStoreProductsQuery,
@@ -566,6 +574,7 @@ export const {
   useGetActivityLogsQuery,
   useGetDataSummaryQuery,
   useGetStorageUsageQuery,
+  useGetSearchInsightsQuery,
   useModerateProductMutation,
   useUpdateSellerMutation,
   useUpdateStoreStatusMutation,

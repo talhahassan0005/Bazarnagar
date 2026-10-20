@@ -94,7 +94,14 @@ export default function SearchPage() {
     );
   }
 
-  const { data, isLoading } = useSearchProductsQuery({ q: query, category, city });
+  // Search once typing pauses, so each keystroke isn't a request (or a logged search).
+  const [searchTerm, setSearchTerm] = useState(query);
+  useEffect(() => {
+    const t = setTimeout(() => setSearchTerm(query.trim()), 500);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data, isLoading } = useSearchProductsQuery({ q: searchTerm, category, city });
 
   const items = useMemo(() => {
     const list = (data ?? []).map((p) => {

@@ -2,7 +2,6 @@ import {
   AtSign,
   Globe,
   MapPin,
-  MessageCircle,
   Navigation,
   Truck,
   Wallet,
@@ -10,7 +9,7 @@ import {
 import { Badge, Button } from "@/components/ui";
 import { StoreMap } from "@/components/storefront/StoreMap";
 import { ShareStoreButton } from "@/components/domain/ShareStoreButton";
-import { toWhatsAppNumber } from "@/lib/utils";
+import { StoreWhatsAppButton } from "@/components/storefront/StoreWhatsAppLink";
 import type { Store } from "@/lib/types";
 
 /** Public shop page header (SRS §7.1). */
@@ -68,15 +67,7 @@ export function StoreHeader({ store }: { store: Store }) {
                 Directions
               </Button>
             )}
-            <Button
-              href={`https://wa.me/${toWhatsAppNumber(store.whatsapp)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="whatsapp"
-              leftIcon={<MessageCircle className="h-4 w-4" />}
-            >
-              WhatsApp
-            </Button>
+            <StoreWhatsAppButton store={store}>WhatsApp</StoreWhatsAppButton>
           </div>
         </div>
 

@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
+import { isValidObjectId } from "mongoose";
 import { Store } from "../models/Store";
 import { Product, type ProductDoc } from "../models/Product";
 import { asyncHandler } from "../lib/helpers";
 import { ratingSummary } from "./reviewController";
 import { withoutStats } from "../lib/publicJson";
+import { SearchLog, SEARCH_LOG_MAX_PRODUCTS } from "../models/SearchLog";
 
 /** Only products customers may see publicly (SRS §7). */
 const PUBLIC_PRODUCT_FILTER = { status: "active", moderationStatus: "approved" } as const;
@@ -192,6 +194,20 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
   }
 
   products.sort(boostFirst);
+
+  // Record keyword searches for admin insights. Browsing without a keyword
+  // (home page, category chips) isn't a search; logging never blocks results.
+  const term = q?.toLowerCase().replace(/\s+/g, " ").slice(0, 100);
+  if (term && term.length >= 2) {
+    SearchLog.create({
+      query: term,
+      category: category || undefined,
+      city: city || undefined,
+      resultCount: products.length,
+      productIds: products.slice(0, SEARCH_LOG_MAX_PRODUCTS).map((p) => p._id),
+    }).catch((err) => console.error("Failed to log search:", err));
+  }
+
   res.json(
     products.map((p) => {
       const store = storeById.get(p.storeId.toString());
@@ -201,6 +217,17 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
 });
 
 /** POST /api/public/products/:id/whatsapp-click — track an inquiry click. */
+/**
+ * POST /api/public/stores/:id/whatsapp-click — a shopper tapped the shop's own
+ * WhatsApp button (header / banner / contact), not a specific product's.
+ */
+export const trackStoreWhatsappClick = asyncHandler(async (req: Request, res: Response) => {
+  if (isValidObjectId(req.params.id)) {
+    await Store.updateOne({ _id: req.params.id, status: "active" }, { $inc: { whatsappClicks: 1 } });
+  }
+  res.json({ ok: true });
+});
+
 export const trackWhatsappClick = asyncHandler(async (req: Request, res: Response) => {
   const product = await Product.findByIdAndUpdate(
     req.params.id,

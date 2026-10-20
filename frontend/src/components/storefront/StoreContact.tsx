@@ -2,15 +2,15 @@ import {
   AtSign,
   Globe,
   MapPin,
-  MessageCircle,
   Navigation,
   Truck,
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { StoreMap } from "./StoreMap";
+import { StoreWhatsAppButton } from "./StoreWhatsAppLink";
 import { STORE_THEMES, type ResolvedLanding } from "@/lib/landing";
-import { cn, toWhatsAppNumber } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 
 /** Contact / location / socials block for the landing page. */
@@ -39,16 +39,9 @@ export function StoreContact({
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button
-              href={`https://wa.me/${toWhatsAppNumber(store.whatsapp)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="whatsapp"
-              size="lg"
-              leftIcon={<MessageCircle className="h-4 w-4" />}
-            >
+            <StoreWhatsAppButton store={store} size="lg">
               Message on WhatsApp
-            </Button>
+            </StoreWhatsAppButton>
             {store.showLocation && store.mapsLink && (
               <Button
                 href={store.mapsLink}
