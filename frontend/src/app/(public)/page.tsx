@@ -46,8 +46,7 @@ export default function LandingPage() {
             <span className="text-accent-500">{FREE_PRODUCT_LIMIT} products.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-500">
-            Add your products, get your own store link, and share it on WhatsApp, Instagram or anywhere your
-            customers are.
+           Create your store, add products, and share your link anywhere.
           </p>
           <p dir="rtl" lang="ur" className="mt-4 text-xl text-slate-800 sm:text-2xl">
             اپنا آن لائن اسٹور مفت بنائیں - {FREE_PRODUCT_LIMIT} تک مصنوعات شامل کریں۔
