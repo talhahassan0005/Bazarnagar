@@ -12,6 +12,8 @@ import { Admin } from "../models/Admin";
 import { ActivityLog } from "../models/ActivityLog";
 import { UploadLog } from "../models/UploadLog";
 import { SearchLog } from "../models/SearchLog";
+import { Customer } from "../models/Customer";
+import { Order } from "../models/Order";
 import { PLANS } from "../lib/plans";
 import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
@@ -148,7 +150,7 @@ export const getOverview = asyncHandler(async (_req: Request, res: Response) => 
 /* ------------------------------ Activity log ----------------------------- */
 
 const activityFilterSchema = z.object({
-  type: z.enum(["store.created", "product.created"]).optional(),
+  type: z.enum(["store.created", "product.created", "buyer.registered"]).optional(),
   /** Free-text search across seller, store, product, city and category. */
   q: z.string().trim().max(100).optional(),
   /** Inclusive ISO datetime bounds (the admin's local day start / end). */
@@ -178,6 +180,8 @@ function activityFilter(query: z.infer<typeof activityFilterSchema>) {
     filter.$or = [
       "snapshot.sellerName",
       "snapshot.sellerEmail",
+      "snapshot.buyerName",
+      "snapshot.buyerEmail",
       "snapshot.storeName",
       "snapshot.productName",
       "snapshot.city",
@@ -208,6 +212,12 @@ export const getActivityLogs = asyncHandler(async (req: Request, res: Response) 
 
 const EXPORT_MAX_ROWS = 50_000;
 
+const EVENT_LABEL: Record<string, string> = {
+  "store.created": "Store created",
+  "product.created": "Product added",
+  "buyer.registered": "Buyer joined",
+};
+
 /** Quote a CSV cell, and neutralise values a spreadsheet would run as a formula. */
 function csvCell(value: unknown): string {
   let s = value == null ? "" : String(value);
@@ -234,6 +244,8 @@ export const exportActivityLogs = asyncHandler(async (req: Request, res: Respons
     "Price (PKR)",
     "Seller name",
     "Seller email",
+    "Buyer name",
+    "Buyer email",
     "Link",
   ];
   const rows = logs.map((l) => {
@@ -245,7 +257,7 @@ export const exportActivityLogs = asyncHandler(async (req: Request, res: Respons
       : "";
     return [
       new Date(l.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Karachi" }),
-      l.type === "store.created" ? "Store created" : "Product added",
+      EVENT_LABEL[l.type] ?? l.type,
       s.storeName,
       s.productName,
       s.category,
@@ -253,6 +265,8 @@ export const exportActivityLogs = asyncHandler(async (req: Request, res: Respons
       s.price,
       s.sellerName,
       s.sellerEmail,
+      s.buyerName,
+      s.buyerEmail,
       link,
     ];
   });
@@ -685,5 +699,220 @@ export const exportSearchLogs = asyncHandler(async (req: Request, res: Response)
   const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-searches-${stamp}.csv"`);
+  res.send(`\uFEFF${csv}\r\n`);
+});
+
+/* --------------------------------- Buyers -------------------------------- */
+
+interface BuyerRow {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country?: string;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  orders: number;
+  /** Sum of non-cancelled order totals (PKR). */
+  totalSpent: number;
+  lastOrderAt: Date | null;
+}
+
+/** Every buyer account with their order activity, newest signups first. */
+async function buyerRows(q?: string): Promise<BuyerRow[]> {
+  const filter: Record<string, unknown> = {};
+  if (q) {
+    const re = new RegExp(escapeRegex(q), "i");
+    filter.$or = [{ name: re }, { email: re }, { phone: re }];
+  }
+  const customers = await Customer.find(filter).sort({ createdAt: -1 });
+  const stats = await Order.aggregate<{ _id: unknown; orders: number; spent: number; last: Date }>([
+    { $match: { customerId: { $in: customers.map((c) => c._id) } } },
+    {
+      $group: {
+        _id: "$customerId",
+        orders: { $sum: 1 },
+        spent: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 0, "$total"] } },
+        last: { $max: "$createdAt" },
+      },
+    },
+  ]);
+  const statsById = new Map(stats.map((s) => [String(s._id), s]));
+  return customers.map((c) => {
+    const s = statsById.get(c.id);
+    return {
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      country: c.country,
+      createdAt: c.createdAt,
+      lastLoginAt: c.lastLoginAt,
+      orders: s?.orders ?? 0,
+      totalSpent: s?.spent ?? 0,
+      lastOrderAt: s?.last ?? null,
+    };
+  });
+}
+
+const buyersQuerySchema = z.object({ q: z.string().trim().max(100).optional() });
+
+/** GET /api/admin/buyers?q= — buyer accounts with signup, last login and orders. */
+export const getBuyers = asyncHandler(async (req: Request, res: Response) => {
+  const { q } = buyersQuerySchema.parse(req.query);
+  res.json(await buyerRows(q));
+});
+
+/** GET /api/admin/buyers/export?q= — the buyers list as CSV (Pakistan time). */
+export const exportBuyers = asyncHandler(async (req: Request, res: Response) => {
+  const { q } = buyersQuerySchema.parse(req.query);
+  const pkt = (d?: Date | null) => (d ? new Date(d).toLocaleString("en-GB", { timeZone: "Asia/Karachi" }) : "");
+  const header = ["Name", "Email", "Phone", "Country", "Joined (PKT)", "Last login (PKT)", "Orders", "Total spent (PKR)", "Last order (PKT)"];
+  const rows = (await buyerRows(q)).map((b) => [
+    b.name,
+    b.email,
+    b.phone,
+    b.country,
+    pkt(b.createdAt),
+    pkt(b.lastLoginAt),
+    b.orders,
+    b.totalSpent,
+    pkt(b.lastOrderAt),
+  ]);
+  const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-buyers-${stamp}.csv"`);
+  res.send(`\uFEFF${csv}\r\n`);
+});
+
+/* --------------------------------- Orders -------------------------------- */
+
+const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"] as const;
+
+const adminOrdersFilterSchema = z.object({
+  status: z.enum(ORDER_STATUSES).optional(),
+  /** Order number (last 6 of the id), buyer name/phone/email, or shop name. */
+  q: z.string().trim().max(100).optional(),
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+});
+
+async function adminOrdersFilter(query: z.infer<typeof adminOrdersFilterSchema>) {
+  const filter: Record<string, unknown> = {};
+  if (query.status) filter.status = query.status;
+  if (query.from || query.to) {
+    filter.createdAt = {
+      ...(query.from ? { $gte: new Date(query.from) } : {}),
+      ...(query.to ? { $lte: new Date(query.to) } : {}),
+    };
+  }
+  if (query.q) {
+    const re = new RegExp(escapeRegex(query.q.replace(/^#/, "")), "i");
+    const stores = await Store.find({ name: re }).select("_id");
+    filter.$or = [
+      { customerName: re },
+      { customerPhone: re },
+      { customerEmail: re },
+      { storeId: { $in: stores.map((s) => s._id) } },
+      // Order number shown to people = last 6 characters of the id.
+      { $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: escapeRegex(query.q.replace(/^#/, "")), options: "i" } } },
+    ];
+  }
+  return filter;
+}
+
+/** Add shop name/slug to orders for admin views. */
+async function withStoreNames<T extends { storeId: unknown }>(orders: T[]) {
+  const stores = await Store.find({ _id: { $in: orders.map((o) => o.storeId) } }).select("name slug");
+  const byId = new Map(stores.map((s) => [s.id, s]));
+  return orders.map((o) => {
+    const store = byId.get(String(o.storeId));
+    return { ...o, storeName: store?.name ?? "Deleted shop", storeSlug: store?.slug ?? "" };
+  });
+}
+
+/** GET /api/admin/orders — every order on the platform, newest first, with totals. */
+export const getAdminOrders = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit, ...rest } = adminOrdersFilterSchema
+    .extend({
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(100).default(25),
+    })
+    .parse(req.query);
+  const filter = await adminOrdersFilter(rest);
+
+  const [orders, total, sums] = await Promise.all([
+    Order.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+    Order.countDocuments(filter),
+    Order.aggregate<{ _id: string; count: number; value: number }>([
+      { $match: filter },
+      { $group: { _id: "$status", count: { $sum: 1 }, value: { $sum: "$total" } } },
+    ]),
+  ]);
+
+  const byStatus = Object.fromEntries(ORDER_STATUSES.map((s) => [s, 0])) as Record<string, number>;
+  let value = 0;
+  for (const s of sums) {
+    byStatus[s._id] = s.count;
+    if (s._id !== "cancelled") value += s.value;
+  }
+
+  res.json({
+    items: await withStoreNames(orders.map((o) => o.toJSON() as Record<string, unknown> & { storeId: unknown })),
+    total,
+    page,
+    pages: Math.max(1, Math.ceil(total / limit)),
+    summary: { byStatus, value },
+  });
+});
+
+/** GET /api/admin/orders/export — orders as CSV with the same filters (Pakistan time). */
+export const exportAdminOrders = asyncHandler(async (req: Request, res: Response) => {
+  const filter = await adminOrdersFilter(adminOrdersFilterSchema.parse(req.query));
+  const orders = await withStoreNames(
+    await Order.find(filter).sort({ createdAt: -1 }).limit(EXPORT_MAX_ROWS).lean()
+  );
+  const pkt = (d?: Date) => (d ? new Date(d).toLocaleString("en-GB", { timeZone: "Asia/Karachi" }) : "");
+  const header = [
+    "Order #",
+    "Placed (PKT)",
+    "Status",
+    "Shop",
+    "Buyer",
+    "Phone",
+    "Email",
+    "City",
+    "Address",
+    "Account",
+    "Items",
+    "Subtotal (PKR)",
+    "Delivery (PKR)",
+    "Total (PKR)",
+    "Payment",
+    "Note",
+  ];
+  const rows = orders.map((o) => [
+    `#${String(o._id).slice(-6).toUpperCase()}`,
+    pkt(o.createdAt),
+    o.status,
+    o.storeName,
+    o.customerName,
+    o.customerPhone,
+    o.customerEmail,
+    o.customerCity,
+    o.customerAddress,
+    o.customerId ? "Buyer account" : "Guest",
+    o.items.map((i) => `${i.name} x${i.quantity}`).join("; "),
+    o.subtotal,
+    o.deliveryFee,
+    o.total,
+    o.paymentMethod === "cod" ? "Cash on Delivery" : o.paymentMethod,
+    o.note,
+  ]);
+  const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-orders-${stamp}.csv"`);
   res.send(`\uFEFF${csv}\r\n`);
 });

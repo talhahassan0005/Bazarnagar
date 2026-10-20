@@ -5,6 +5,9 @@ import { setSellerSession, setAdminSession, setCustomerSession, logout as logout
 import type {
   ActivityLogFilters,
   ActivityLogPage,
+  AdminBuyer,
+  AdminOrderFilters,
+  AdminOrdersPage,
   AdminReview,
   AdSettings,
   Banner,
@@ -342,6 +345,13 @@ export const apiSlice = createApi({
       query: () => "/admin/sellers",
       providesTags: ["Seller"],
     }),
+    getAdminOrders: builder.query<AdminOrdersPage, AdminOrderFilters & { page: number }>({
+      query: (params) => ({ url: "/admin/orders", params }),
+      providesTags: ["Order"],
+    }),
+    getBuyers: builder.query<AdminBuyer[], { q?: string }>({
+      query: (params) => ({ url: "/admin/buyers", params }),
+    }),
     getAllStores: builder.query<Store[], void>({
       query: () => "/admin/stores",
       providesTags: ["Store"],
@@ -581,6 +591,8 @@ export const {
   useReviewPaymentRequestMutation,
   useUpdateManualPaymentSettingsMutation,
   useGetAllSellersQuery,
+  useGetBuyersQuery,
+  useGetAdminOrdersQuery,
   useGetAllStoresQuery,
   useGetAllProductsQuery,
   useGetActivityLogsQuery,

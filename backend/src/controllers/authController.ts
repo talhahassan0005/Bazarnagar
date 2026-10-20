@@ -10,6 +10,7 @@ import { PasswordReset } from "../models/PasswordReset";
 import { signToken } from "../lib/jwt";
 import { sendMail } from "../lib/mailer";
 import { COUNTRIES } from "../lib/countries";
+import { logBuyerRegistered } from "../lib/activityLog";
 import {
   RESET_TTL_MINUTES,
   appLink,
@@ -118,9 +119,11 @@ export const signupCustomer = asyncHandler(async (req: Request, res: Response) =
     country: data.country,
     email: data.email,
     passwordHash,
+    lastLoginAt: new Date(),
   });
 
   sendWelcome(customer.email, welcomeBuyerEmail(customer.name));
+  await logBuyerRegistered(customer);
 
   const token = signToken({ sub: customer.id, role: "customer" });
   res.status(201).json({ token, customer: customer.toJSON() });
@@ -133,6 +136,7 @@ export const loginCustomer = asyncHandler(async (req: Request, res: Response) =>
   if (!customer || !(await customer.comparePassword(data.password))) {
     throw new ApiError(401, "Invalid email or password");
   }
+  await Customer.updateOne({ _id: customer._id }, { lastLoginAt: new Date() });
   const token = signToken({ sub: customer.id, role: "customer" });
   res.json({ token, customer: customer.toJSON() });
 });

@@ -2,6 +2,7 @@ import { MODERATION_META } from "@/lib/constants";
 import type {
   DeliveryOption,
   ModerationStatus,
+  OrderStatus,
   ProductStatus,
   StockStatus,
   SubscriptionStatus,
@@ -61,6 +62,22 @@ export function DeliveryBadge({ option, fee }: { option: DeliveryOption; fee?: n
   return (
     <Badge tone="blue">
       {fee ? `Delivery ${formatPrice(fee)}` : "Free delivery"}
+    </Badge>
+  );
+}
+
+const ORDER_STATUS_TONE: Record<OrderStatus, BadgeTone> = {
+  pending: "amber",
+  confirmed: "blue",
+  shipped: "brand",
+  delivered: "green",
+  cancelled: "red",
+};
+
+export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  return (
+    <Badge tone={ORDER_STATUS_TONE[status]} className="capitalize">
+      {status}
     </Badge>
   );
 }

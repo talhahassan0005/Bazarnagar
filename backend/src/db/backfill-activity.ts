@@ -1,8 +1,8 @@
 /**
- * Backfill the admin activity log for stores and products that existed before
+ * Backfill the admin activity log for stores, products and buyers that existed before
  * logging was added — WITHOUT wiping any data.
  *
- * Each log entry gets the store's/product's original createdAt, so the admin
+ * Each log entry gets the store's/product's/buyer's original createdAt, so the admin
  * timeline shows them in the right order. Safe to re-run: anything that
  * already has a log entry is skipped.
  *
@@ -14,6 +14,7 @@ import { ActivityLog } from "../models/ActivityLog";
 import { Seller } from "../models/Seller";
 import { Store } from "../models/Store";
 import { Product } from "../models/Product";
+import { Customer } from "../models/Customer";
 
 async function backfill(): Promise<void> {
   await connectDB();
@@ -21,7 +22,7 @@ async function backfill(): Promise<void> {
   const [sellers, stores, logged] = await Promise.all([
     Seller.find(),
     Store.find(),
-    ActivityLog.find({}, { type: 1, storeId: 1, productId: 1 }),
+    ActivityLog.find({}, { type: 1, storeId: 1, productId: 1, customerId: 1 }),
   ]);
   const sellerById = new Map(sellers.map((s) => [s.id, s]));
   const storeById = new Map(stores.map((s) => [s.id, s]));
@@ -29,6 +30,7 @@ async function backfill(): Promise<void> {
     logged.filter((l) => l.type === "store.created").map((l) => l.storeId?.toString())
   );
   const loggedProducts = new Set(logged.map((l) => l.productId?.toString()).filter(Boolean));
+  const loggedBuyers = new Set(logged.map((l) => l.customerId?.toString()).filter(Boolean));
 
   const entries: Record<string, unknown>[] = [];
 
@@ -73,6 +75,17 @@ async function backfill(): Promise<void> {
       },
       createdAt: product.createdAt,
       updatedAt: product.createdAt,
+    });
+  }
+
+  for await (const customer of Customer.find()) {
+    if (loggedBuyers.has(customer.id)) continue;
+    entries.push({
+      type: "buyer.registered",
+      customerId: customer._id,
+      snapshot: { buyerName: customer.name, buyerEmail: customer.email },
+      createdAt: customer.createdAt,
+      updatedAt: customer.createdAt,
     });
   }
 

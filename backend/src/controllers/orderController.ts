@@ -74,6 +74,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
     subtotal,
     deliveryFee,
     total: subtotal + deliveryFee,
+    statusHistory: [{ status: "pending", at: new Date() }],
   });
   sendOrderPlacedEmail(order, store.name);
 
@@ -154,6 +155,7 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
 
   const changed = order.status !== status;
   order.status = status;
+  if (changed) order.statusHistory = [...(order.statusHistory ?? []), { status, at: new Date() }];
   await order.save();
 
   // Only email the buyer on a real change, so re-saving doesn't spam them.

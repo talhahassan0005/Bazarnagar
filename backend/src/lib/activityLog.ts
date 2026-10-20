@@ -2,10 +2,11 @@ import { ActivityLog } from "../models/ActivityLog";
 import type { SellerDoc } from "../models/Seller";
 import type { StoreDoc } from "../models/Store";
 import type { ProductDoc } from "../models/Product";
+import type { CustomerDoc } from "../models/Customer";
 
 /**
- * Record a store creation / product addition. Logging must never block or
- * fail the seller's request, so errors are only reported to the console.
+ * Record a store creation, product addition or buyer signup. Logging must never block or
+ * fail the request that triggered it, so errors are only reported to the console.
  */
 async function record(entry: Parameters<typeof ActivityLog.create>[0]): Promise<void> {
   try {
@@ -51,5 +52,13 @@ export function logProductCreated(
       productName: product.name,
       price: product.price,
     },
+  });
+}
+
+export function logBuyerRegistered(customer: CustomerDoc): Promise<void> {
+  return record({
+    type: "buyer.registered",
+    customerId: customer._id,
+    snapshot: { buyerName: customer.name, buyerEmail: customer.email },
   });
 }

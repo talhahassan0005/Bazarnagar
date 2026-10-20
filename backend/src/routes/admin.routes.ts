@@ -2,6 +2,10 @@ import { Router } from "express";
 import { loginAdmin } from "../controllers/authController";
 import {
   getAllSellers,
+  getBuyers,
+  exportBuyers,
+  getAdminOrders,
+  exportAdminOrders,
   getAllStores,
   getAllProducts,
   getOverview,
@@ -56,6 +60,10 @@ router.get("/search-logs", getSearchLogs);
 router.get("/search-logs/export", exportSearchLogs);
 
 router.get("/sellers", getAllSellers);
+router.get("/buyers", getBuyers);
+router.get("/buyers/export", exportBuyers);
+router.get("/orders", getAdminOrders);
+router.get("/orders/export", exportAdminOrders);
 router.patch("/sellers/:id", updateSeller);
 router.get("/sellers/:id/payments", getSellerPayments);
 router.post("/sellers/:id/payments", recordPayment);

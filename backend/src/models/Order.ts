@@ -38,6 +38,8 @@ export interface OrderDoc extends Document {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** When the order reached each status. Missing on orders placed before this was tracked. */
+  statusHistory?: { status: OrderStatus; at: Date }[];
   createdAt: Date;
 }
 
@@ -74,6 +76,19 @@ const orderSchema = new Schema<OrderDoc>(
     },
     paymentMethod: { type: String, enum: ["cod", "card", "online"], default: "cod" },
     paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
+    // No default: older orders simply have no history (the UI falls back to createdAt).
+    statusHistory: {
+      type: [
+        new Schema(
+          {
+            status: { type: String, enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"], required: true },
+            at: { type: Date, required: true },
+          },
+          { _id: false }
+        ),
+      ],
+      default: undefined,
+    },
   },
   baseSchemaOptions
 );

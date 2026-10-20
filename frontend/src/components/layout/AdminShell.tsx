@@ -17,6 +17,8 @@ import {
   BarChart3,
   HardDrive,
   SearchCheck,
+  ShoppingBag,
+  ClipboardList,
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import type { NavItem } from "./SidebarNav";
@@ -27,8 +29,10 @@ const NAV: NavItem[] = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
 
   { group: "Marketplace", label: "Sellers", href: "/admin/sellers", icon: Users },
+  { group: "Marketplace", label: "Buyers", href: "/admin/buyers", icon: ShoppingBag },
   { group: "Marketplace", label: "Stores", href: "/admin/stores", icon: Store },
   { group: "Marketplace", label: "Products", href: "/admin/products", icon: Package },
+  { group: "Marketplace", label: "Orders", href: "/admin/orders", icon: ClipboardList },
 
   { group: "Moderation", label: "Product Review", href: "/admin/moderation", icon: ShieldCheck },
   { group: "Moderation", label: "Customer Reviews", href: "/admin/reviews", icon: Star },

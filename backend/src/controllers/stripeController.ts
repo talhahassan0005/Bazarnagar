@@ -78,6 +78,7 @@ export const createStripeCheckout = asyncHandler(async (req: Request, res: Respo
     subtotal,
     deliveryFee,
     total,
+    statusHistory: [{ status: "pending", at: new Date() }],
     paymentMethod: "online",
     paymentStatus: "unpaid",
   });

@@ -343,6 +343,10 @@ export interface Order {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** Set when a logged-in buyer placed the order (otherwise a guest). */
+  customerId?: string;
+  /** When the order reached each status; missing on older orders. */
+  statusHistory?: { status: OrderStatus; at: string }[];
   createdAt: string;
 }
 
@@ -440,18 +444,21 @@ export interface DashboardMetrics {
 
 /* ── Admin activity log & data summary ───────────────────────────────────── */
 
-export type ActivityType = "store.created" | "product.created";
+export type ActivityType = "store.created" | "product.created" | "buyer.registered";
 
 export interface ActivityLog {
   id: string;
   type: ActivityType;
   sellerId?: string;
+  customerId?: string;
   storeId?: string;
   productId?: string;
   /** Details as they were when the event happened. */
   snapshot: {
     sellerName?: string;
     sellerEmail?: string;
+    buyerName?: string;
+    buyerEmail?: string;
     storeName?: string;
     storeSlug?: string;
     city?: string;
@@ -554,4 +561,34 @@ export interface SearchLogPage {
   total: number;
   page: number;
   pages: number;
+}
+
+/** Admin buyers list: an account plus its order activity. */
+export interface AdminBuyer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country?: string;
+  createdAt: string;
+  lastLoginAt?: string;
+  orders: number;
+  totalSpent: number;
+  lastOrderAt: string | null;
+}
+
+/** Admin orders list filters (dates are ISO bounds). */
+export interface AdminOrderFilters {
+  status?: OrderStatus;
+  q?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface AdminOrdersPage {
+  items: (Order & { storeName: string; storeSlug: string })[];
+  total: number;
+  page: number;
+  pages: number;
+  summary: { byStatus: Record<OrderStatus, number>; value: number };
 }

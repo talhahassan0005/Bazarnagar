@@ -9,6 +9,8 @@ export interface CustomerDoc extends Document {
   /** Picked at signup. Missing on accounts created before the field existed. */
   country?: string;
   passwordHash: string;
+  /** Last successful sign-in (or signup). Missing for accounts that haven't logged in since it was added. */
+  lastLoginAt?: Date;
   createdAt: Date;
   comparePassword(plain: string): Promise<boolean>;
 }
@@ -20,6 +22,7 @@ const customerSchema = new Schema<CustomerDoc>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     country: { type: String, trim: true },
     passwordHash: { type: String, required: true },
+    lastLoginAt: Date,
   },
   baseSchemaOptions
 );

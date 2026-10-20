@@ -16,7 +16,14 @@ const FILTERS: { label: string; value?: ActivityType }[] = [
   { label: "All" },
   { label: "Stores created", value: "store.created" },
   { label: "Products added", value: "product.created" },
+  { label: "Buyers joined", value: "buyer.registered" },
 ];
+
+const EVENT_BADGE: Record<ActivityType, { label: string; tone: "blue" | "green" | "orange" }> = {
+  "store.created": { label: "Store created", tone: "blue" },
+  "product.created": { label: "Product added", tone: "green" },
+  "buyer.registered": { label: "Buyer joined", tone: "orange" },
+};
 
 /** "YYYY-MM-DD" from a date input → ISO bound of that day in the admin's timezone. */
 function dayBound(date: string, end: boolean): string | undefined {
@@ -83,27 +90,31 @@ export default function AdminActivityPage() {
     },
     {
       header: "Event",
-      cell: (l) =>
-        l.type === "store.created" ? (
-          <Badge tone="blue">Store created</Badge>
-        ) : (
-          <Badge tone="green">Product added</Badge>
-        ),
+      cell: (l) => {
+        const badge = EVENT_BADGE[l.type];
+        return <Badge tone={badge?.tone ?? "gray"}>{badge?.label ?? l.type}</Badge>;
+      },
     },
     {
       header: "Details",
-      cell: (l) => (
-        <div>
-          <p className="font-medium text-slate-800">
-            {l.type === "product.created" ? l.snapshot.productName : l.snapshot.storeName}
-          </p>
-          <p className="text-xs text-slate-400">
-            {l.type === "product.created"
-              ? [l.snapshot.storeName, l.snapshot.category].filter(Boolean).join(" · ")
-              : [l.snapshot.category, l.snapshot.city].filter(Boolean).join(" · ")}
-          </p>
-        </div>
-      ),
+      cell: (l) =>
+        l.type === "buyer.registered" ? (
+          <div>
+            <p className="font-medium text-slate-800">{l.snapshot.buyerName}</p>
+            <p className="text-xs text-slate-400">{l.snapshot.buyerEmail}</p>
+          </div>
+        ) : (
+          <div>
+            <p className="font-medium text-slate-800">
+              {l.type === "product.created" ? l.snapshot.productName : l.snapshot.storeName}
+            </p>
+            <p className="text-xs text-slate-400">
+              {l.type === "product.created"
+                ? [l.snapshot.storeName, l.snapshot.category].filter(Boolean).join(" · ")
+                : [l.snapshot.category, l.snapshot.city].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+        ),
     },
     {
       header: "Price",
@@ -146,7 +157,7 @@ export default function AdminActivityPage() {
     <>
       <PageHeader
         title="Activity Log"
-        description="Every store created and product added on the platform, newest first."
+        description="Every store created, product added and buyer who joined, newest first."
         action={
           <Button
             variant="outline"
@@ -174,7 +185,7 @@ export default function AdminActivityPage() {
           <div className="min-w-0 flex-1">
             <Input
               label="Search"
-              placeholder="Seller, email, store, product, city…"
+              placeholder="Seller, buyer, email, store, product, city…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
