@@ -39,7 +39,7 @@ export default function LandingPage() {
         <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl" />
         <div className="animate-fade-in-up relative mx-auto w-full max-w-4xl px-4 py-12 text-center sm:px-6 sm:py-16">
-          <p className="text-sm font-semibold text-slate-500">For shops, home businesses &amp; online sellers</p>
+         
           <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-brand-900 sm:text-6xl">
             Create a <span className="text-accent-500">free online store</span>
             <br className="hidden sm:block" /> with up to{" "}
