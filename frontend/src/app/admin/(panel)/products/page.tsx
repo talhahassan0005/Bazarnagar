@@ -55,7 +55,7 @@ export default function AdminProductsPage() {
     },
     { header: "Price", hideOnMobile: true, cell: (p) => formatPrice(p.price) },
     { header: "Views", hideOnMobile: true, cell: (p) => formatCount(p.views) },
-    { header: "WhatsApp clicks", hideOnMobile: true, cell: (p) => formatCount(p.whatsappClicks) },
+    { header: "WhatsApp inquiries", hideOnMobile: true, cell: (p) => formatCount(p.whatsappClicks) },
     { header: "Add to cart", hideOnMobile: true, cell: (p) => formatCount(p.addToCartClicks ?? 0) },
     { header: "Buy now", hideOnMobile: true, cell: (p) => formatCount(p.buyNowClicks ?? 0) },
     { header: "Searches", hideOnMobile: true, cell: (p) => formatCount(p.searchCount ?? 0) },

@@ -101,6 +101,7 @@ export default function DashboardPage() {
         <StatCard
           label="WhatsApp clicks"
           value={formatCount(m.whatsappClicks)}
+          hint="Product inquiries + shop WhatsApp button"
           icon={<MessageCircle className="h-5 w-5" />}
           tone="leaf"
         />

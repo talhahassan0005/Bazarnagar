@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Search, SearchX, Tags } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, StatCardSkeleton, TableSkeleton } from "@/components/ui";
+import { ChevronLeft, ChevronRight, Download, ExternalLink, Search, SearchX, Tags } from "lucide-react";
+import { Button, Card, CardBody, CardHeader, Input, StatCardSkeleton, TableSkeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard } from "@/components/domain/StatCard";
-import { useGetSearchInsightsQuery } from "@/store/apiSlice";
-import { cn, formatCount } from "@/lib/utils";
+import { DataTable, type Column } from "@/components/domain/DataTable";
+import { useGetSearchInsightsQuery, useGetSearchLogsQuery } from "@/store/apiSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { addToast } from "@/store/uiSlice";
+import { downloadFile } from "@/lib/api";
+import { cn, formatCount, getErrorMessage } from "@/lib/utils";
+import type { SearchLogEntry } from "@/lib/types";
 
 type Range = "7" | "30" | "all";
 const RANGES: { value: Range; label: string }[] = [
@@ -23,6 +28,133 @@ function RankedList({ empty, children }: { empty: string; children: React.ReactN
     <p className="py-6 text-center text-sm text-slate-400">{empty}</p>
   ) : (
     <ol className="divide-y divide-slate-100">{children}</ol>
+  );
+}
+
+/** Every individual search with its time — filterable and downloadable as CSV. */
+function SearchLogSection({ range }: { range: Range }) {
+  const dispatch = useAppDispatch();
+  const [page, setPage] = useState(1);
+  const [input, setInput] = useState("");
+  const [q, setQ] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const { data, isLoading, isFetching } = useGetSearchLogsQuery(
+    { days: range, q: q || undefined, page },
+    { refetchOnMountOrArgChange: true }
+  );
+
+  async function downloadCsv() {
+    setDownloading(true);
+    try {
+      await downloadFile("/admin/search-logs/export", { days: range, q: q || undefined }, "bazaarnagar-searches.csv");
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Could not download the CSV"), "error"));
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  const columns: Column<SearchLogEntry>[] = [
+    {
+      header: "When",
+      cell: (l) => <span className="whitespace-nowrap text-slate-600">{when(l.createdAt)}</span>,
+    },
+    { header: "Keyword", cell: (l) => <span className="font-medium text-slate-800">{l.query}</span> },
+    {
+      header: "Filters",
+      hideOnMobile: true,
+      cell: (l) => [l.category, l.city].filter(Boolean).join(" · ") || <span className="text-slate-300">—</span>,
+    },
+    {
+      header: "Results",
+      className: "text-right",
+      cell: (l) => (
+        <span className={l.resultCount === 0 ? "font-semibold text-amber-700" : "text-slate-700"}>
+          {formatCount(l.resultCount)}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <div className="mt-8">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Search log</h2>
+          <p className="text-sm text-slate-500">Every search with its time and keyword, newest first.</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={downloadCsv}
+          loading={downloading}
+          disabled={data?.total === 0}
+          leftIcon={<Download className="h-4 w-4" />}
+        >
+          Download CSV
+        </Button>
+      </div>
+
+      <form
+        className="mb-3 flex max-w-md gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setQ(input.trim());
+          setPage(1);
+        }}
+      >
+        <div className="min-w-0 flex-1">
+          <Input placeholder="Filter by keyword…" value={input} onChange={(e) => setInput(e.target.value)} />
+        </div>
+        <Button type="submit" variant="outline" leftIcon={<Search className="h-4 w-4" />}>
+          Filter
+        </Button>
+      </form>
+
+      {isLoading ? (
+        <TableSkeleton />
+      ) : (
+        <div className={cn(isFetching && "opacity-60 transition-opacity")}>
+          <DataTable
+            columns={columns}
+            rows={data?.items ?? []}
+            empty={
+              <p className="py-10 text-center text-sm text-slate-400">
+                {q ? "No searches match that keyword." : "No searches in this period yet."}
+              </p>
+            }
+          />
+        </div>
+      )}
+
+      {data && data.pages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
+          <span>
+            Page {data.page} of {data.pages} · {formatCount(data.total)} searches
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              leftIcon={<ChevronLeft className="h-4 w-4" />}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page >= data.pages}
+              onClick={() => setPage((p) => p + 1)}
+              rightIcon={<ChevronRight className="h-4 w-4" />}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -150,6 +282,9 @@ export default function AdminSearchInsightsPage() {
           </div>
         </div>
       )}
+
+      {/* key resets paging/filter when the date range changes */}
+      <SearchLogSection key={range} range={range} />
     </>
   );
 }

@@ -93,7 +93,7 @@ export default function ProductDetailPage() {
             )}
             {product.whatsappClicks != null && (
               <span className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" /> {formatCount(product.whatsappClicks)} WhatsApp clicks
+                <MessageCircle className="h-4 w-4" /> {formatCount(product.whatsappClicks)} WhatsApp inquiries
               </span>
             )}
             {product.addToCartClicks != null && (

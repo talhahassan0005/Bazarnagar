@@ -120,7 +120,7 @@ export default function ProductsPage() {
                       )}
                     </div>
                     <p className="mt-0.5 text-xs text-slate-400">
-                      {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} WhatsApp ·{" "}
+                      {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} WhatsApp inquiries ·{" "}
                       {formatCount(p.addToCartClicks ?? 0)} add to cart · {formatCount(p.buyNowClicks ?? 0)} buy now
                     </p>
                   </div>

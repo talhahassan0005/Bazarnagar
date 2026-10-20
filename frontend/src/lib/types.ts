@@ -538,3 +538,20 @@ export interface SearchInsights {
   zeroResultTerms: { query: string; count: number; lastSearched: string }[];
   topProducts: { productId: string; name: string; storeName: string; storeSlug: string; searches: number }[];
 }
+
+/** One logged keyword search (admin search log). */
+export interface SearchLogEntry {
+  id: string;
+  query: string;
+  category?: string;
+  city?: string;
+  resultCount: number;
+  createdAt: string;
+}
+
+export interface SearchLogPage {
+  items: SearchLogEntry[];
+  total: number;
+  page: number;
+  pages: number;
+}

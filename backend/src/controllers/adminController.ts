@@ -628,3 +628,62 @@ export const updateBoostConfig = asyncHandler(async (req: Request, res: Response
   await BoostPricing.findOneAndUpdate({ key: "boost" }, { $set: data }, { upsert: true });
   res.json(await getBoostPricing());
 });
+
+/* ------------------------------- Search log ------------------------------ */
+
+const searchLogQuerySchema = z.object({
+  days: z.enum(["7", "30", "all"]).default("30"),
+  /** Filter to searches whose keyword contains this text. */
+  q: z.string().trim().max(100).optional(),
+});
+
+function searchLogFilter({ days, q }: z.infer<typeof searchLogQuerySchema>) {
+  const filter: Record<string, unknown> = {};
+  if (days !== "all") filter.createdAt = { $gte: new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000) };
+  if (q) filter.query = { $regex: escapeRegex(q.toLowerCase()) };
+  return filter;
+}
+
+/** GET /api/admin/search-logs — every keyword search with its time, newest first. */
+export const getSearchLogs = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit, ...rest } = searchLogQuerySchema
+    .extend({
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(100).default(25),
+    })
+    .parse(req.query);
+  const filter = searchLogFilter(rest);
+  const [items, total] = await Promise.all([
+    SearchLog.find(filter, { productIds: 0 })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    SearchLog.countDocuments(filter),
+  ]);
+  res.json({
+    items: items.map((i) => i.toJSON()),
+    total,
+    page,
+    pages: Math.max(1, Math.ceil(total / limit)),
+  });
+});
+
+/** GET /api/admin/search-logs/export — the search log as CSV (Pakistan time). */
+export const exportSearchLogs = asyncHandler(async (req: Request, res: Response) => {
+  const filter = searchLogFilter(searchLogQuerySchema.parse(req.query));
+  const logs = await SearchLog.find(filter, { productIds: 0 }).sort({ createdAt: -1 }).limit(EXPORT_MAX_ROWS).lean();
+
+  const header = ["Date & time (PKT)", "Keyword", "Category", "City", "Results"];
+  const rows = logs.map((l) => [
+    new Date(l.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Karachi" }),
+    l.query,
+    l.category,
+    l.city,
+    l.resultCount,
+  ]);
+  const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-searches-${stamp}.csv"`);
+  res.send(`\uFEFF${csv}\r\n`);
+});

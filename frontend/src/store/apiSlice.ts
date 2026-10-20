@@ -17,6 +17,7 @@ import type {
   DashboardMetrics,
   DataSummary,
   SearchInsights,
+  SearchLogPage,
   StorageUsage,
   ManualPaymentSettings,
   ModerationStatus,
@@ -357,6 +358,9 @@ export const apiSlice = createApi({
       query: () => "/admin/data-summary",
       providesTags: ["Store", "Product"],
     }),
+    getSearchLogs: builder.query<SearchLogPage, { days: "7" | "30" | "all"; q?: string; page: number }>({
+      query: (params) => ({ url: "/admin/search-logs", params }),
+    }),
     getSearchInsights: builder.query<SearchInsights, "7" | "30" | "all">({
       query: (days) => ({ url: "/admin/search-insights", params: { days } }),
     }),
@@ -583,6 +587,7 @@ export const {
   useGetDataSummaryQuery,
   useGetStorageUsageQuery,
   useGetSearchInsightsQuery,
+  useGetSearchLogsQuery,
   useModerateProductMutation,
   useUpdateSellerMutation,
   useUpdateStoreStatusMutation,

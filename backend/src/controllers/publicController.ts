@@ -232,13 +232,10 @@ export const trackButtonClick = asyncHandler(async (req: Request, res: Response)
   const product = await Product.findById(req.params.id).select("storeId");
   if (!product) return res.json({ ok: true });
 
-  if (req.user?.role !== "admin") {
-    const store = await Store.findById(product.storeId).select("sellerId");
-    const isOwner = req.user?.role === "seller" && store?.sellerId.toString() === req.user.id;
-    if (store && !isOwner) {
-      const inc = { $inc: { [BUTTON_FIELD[button]]: 1 } };
-      await Promise.all([Product.updateOne({ _id: product._id }, inc), Store.updateOne({ _id: store._id }, inc)]);
-    }
+  const store = await Store.findById(product.storeId).select("sellerId");
+  if (store && !isOwnerOrAdmin(req, store.sellerId)) {
+    const inc = { $inc: { [BUTTON_FIELD[button]]: 1 } };
+    await Promise.all([Product.updateOne({ _id: product._id }, inc), Store.updateOne({ _id: store._id }, inc)]);
   }
   res.json({ ok: true });
 });
@@ -248,20 +245,31 @@ export const trackButtonClick = asyncHandler(async (req: Request, res: Response)
  * WhatsApp button (header / banner / contact), not a specific product's.
  */
 export const trackStoreWhatsappClick = asyncHandler(async (req: Request, res: Response) => {
-  if (isValidObjectId(req.params.id)) {
-    await Store.updateOne({ _id: req.params.id, status: "active" }, { $inc: { whatsappClicks: 1 } });
+  if (!isValidObjectId(req.params.id)) return res.json({ ok: true });
+  const store = await Store.findOne({ _id: req.params.id, status: "active" }).select("sellerId");
+  if (store && !isOwnerOrAdmin(req, store.sellerId)) {
+    await Store.updateOne({ _id: store._id }, { $inc: { whatsappClicks: 1 } });
   }
   res.json({ ok: true });
 });
 
+/** True when the request comes from an admin or the store's own seller — their taps aren't counted. */
+function isOwnerOrAdmin(req: Request, storeSellerId: unknown): boolean {
+  if (req.user?.role === "admin") return true;
+  return req.user?.role === "seller" && String(storeSellerId) === req.user.id;
+}
+
+/** POST /api/public/products/:id/whatsapp-click — "Inquire on WhatsApp" on a product. */
 export const trackWhatsappClick = asyncHandler(async (req: Request, res: Response) => {
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
-    { $inc: { whatsappClicks: 1 } },
-    { new: true }
-  );
-  if (product) {
-    await Store.findByIdAndUpdate(product.storeId, { $inc: { whatsappClicks: 1 } });
+  if (!isValidObjectId(req.params.id)) return res.json({ ok: true });
+  const product = await Product.findById(req.params.id).select("storeId");
+  if (!product) return res.json({ ok: true });
+  const store = await Store.findById(product.storeId).select("sellerId");
+  if (store && !isOwnerOrAdmin(req, store.sellerId)) {
+    await Promise.all([
+      Product.updateOne({ _id: product._id }, { $inc: { whatsappClicks: 1 } }),
+      Store.updateOne({ _id: store._id }, { $inc: { whatsappClicks: 1 } }),
+    ]);
   }
   res.json({ ok: true });
 });

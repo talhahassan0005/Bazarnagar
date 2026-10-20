@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
         <StatCard
           label="WhatsApp clicks"
           value={formatCount(m.whatsappClicks)}
-          hint="Inquiry button taps"
+          hint="Product inquiries + shop WhatsApp button"
           tone="leaf"
           icon={<MessageCircle className="h-5 w-5" />}
         />
@@ -87,7 +87,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium text-slate-700">{p.name}</p>
                   <span className="shrink-0 text-xs text-slate-400">
-                    {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} WhatsApp ·{" "}
+                    {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} WhatsApp inquiries ·{" "}
                     {formatCount(p.addToCartClicks ?? 0)} add to cart · {formatCount(p.buyNowClicks ?? 0)} buy now
                   </span>
                 </div>

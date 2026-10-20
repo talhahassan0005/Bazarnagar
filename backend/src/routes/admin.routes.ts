@@ -10,6 +10,8 @@ import {
   getDataSummary,
   getStorageUsage,
   getSearchInsights,
+  getSearchLogs,
+  exportSearchLogs,
   updateSeller,
   updateStore,
   moderateProductStatus,
@@ -50,6 +52,8 @@ router.get("/activity/export", exportActivityLogs);
 router.get("/data-summary", getDataSummary);
 router.get("/storage", getStorageUsage);
 router.get("/search-insights", getSearchInsights);
+router.get("/search-logs", getSearchLogs);
+router.get("/search-logs/export", exportSearchLogs);
 
 router.get("/sellers", getAllSellers);
 router.patch("/sellers/:id", updateSeller);
