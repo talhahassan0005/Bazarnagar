@@ -34,6 +34,9 @@ function OrderDetails({ order, onClose }: { order: AdminOrder; onClose: () => vo
   const history = order.statusHistory?.length
     ? order.statusHistory
     : [{ status: "pending" as OrderStatus, at: order.createdAt }];
+  // Orders placed before subtotal/delivery were stored don't have them.
+  const subtotal = order.subtotal ?? order.items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const deliveryFee = order.deliveryFee ?? 0;
 
   return (
     <Modal open onClose={onClose} title={`Order ${orderNo(order.id)}`}>
@@ -74,8 +77,8 @@ function OrderDetails({ order, onClose }: { order: AdminOrder; onClose: () => vo
             ))}
           </ul>
           <div className="mt-2 space-y-0.5 text-right text-slate-500">
-            <p>Subtotal {formatPrice(order.subtotal)}</p>
-            <p>Delivery {order.deliveryFee ? formatPrice(order.deliveryFee) : "Free"}</p>
+            <p>Subtotal {formatPrice(subtotal)}</p>
+            <p>Delivery {deliveryFee ? formatPrice(deliveryFee) : "Free"}</p>
             <p className="text-base font-bold text-slate-900">Total {formatPrice(order.total)}</p>
             <p className="text-xs">{order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod}</p>
           </div>

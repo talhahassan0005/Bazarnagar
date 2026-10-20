@@ -26,7 +26,8 @@ function emailData(order: OrderDoc, storeName: string): OrderEmailData {
     customerAddress: order.customerAddress,
     customerCity: order.customerCity,
     items: order.items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
-    subtotal: order.subtotal,
+    // Orders placed before subtotal was stored don't have it.
+    subtotal: order.subtotal ?? order.items.reduce((s, i) => s + i.price * i.quantity, 0),
     deliveryFee: order.deliveryFee ?? 0,
     total: order.total,
   };
