@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MessageCircle, PackageX, Pencil, Plus, TrendingUp } from "lucide-react";
+import { Eye, MessageCircle, PackageX, Pencil, Plus, ShoppingCart, TrendingUp, Zap } from "lucide-react";
 import {
   Button,
   Card,
@@ -33,8 +33,8 @@ export default function DashboardPage() {
       <>
         <Skeleton className="mb-6 h-8 w-56" />
         <Skeleton className="mb-6 h-20 w-full rounded-2xl" />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
         </div>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard
           label="Shop views"
           value={formatCount(m.shopViews)}
@@ -103,6 +103,18 @@ export default function DashboardPage() {
           value={formatCount(m.whatsappClicks)}
           icon={<MessageCircle className="h-5 w-5" />}
           tone="leaf"
+        />
+        <StatCard
+          label="Add to cart clicks"
+          value={formatCount(m.addToCartClicks)}
+          icon={<ShoppingCart className="h-5 w-5" />}
+          tone="brand"
+        />
+        <StatCard
+          label="Buy now clicks"
+          value={formatCount(m.buyNowClicks)}
+          icon={<Zap className="h-5 w-5" />}
+          tone="accent"
         />
         <StatCard
           label="Out of stock"

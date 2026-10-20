@@ -19,7 +19,7 @@ import type { Plan, Product } from "@/lib/types";
 
 export type ProductFormValues = Omit<
   Product,
-  "id" | "storeId" | "moderationStatus" | "views" | "whatsappClicks" | "createdAt"
+  "id" | "storeId" | "moderationStatus" | "views" | "whatsappClicks" | "addToCartClicks" | "buyNowClicks" | "createdAt"
 >;
 
 const EMPTY: ProductFormValues = {

@@ -38,6 +38,8 @@ export interface ProductDoc extends Document {
   boostedUntil?: Date;
   views: number;
   whatsappClicks: number;
+  addToCartClicks: number;
+  buyNowClicks: number;
   createdAt: Date;
 }
 
@@ -78,6 +80,8 @@ const productSchema = new Schema<ProductDoc>(
     boostedUntil: { type: Date, index: true },
     views: { type: Number, default: 0 },
     whatsappClicks: { type: Number, default: 0 },
+    addToCartClicks: { type: Number, default: 0 },
+    buyNowClicks: { type: Number, default: 0 },
   },
   baseSchemaOptions
 );

@@ -9,6 +9,7 @@ import {
   searchProducts,
   trackWhatsappClick,
   trackStoreWhatsappClick,
+  trackButtonClick,
 } from "../controllers/publicController";
 import { createOrder, getOrdersByIds } from "../controllers/orderController";
 import {
@@ -36,6 +37,7 @@ router.get("/products/:id", optionalAuthenticate, getProduct);
 router.get("/products/:id/related", getRelatedProducts);
 router.post("/products/:id/whatsapp-click", trackWhatsappClick);
 router.post("/stores/:id/whatsapp-click", trackStoreWhatsappClick);
+router.post("/products/:id/button-click", optionalAuthenticate, trackButtonClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
 router.post("/orders", optionalAuthenticate, createOrder);

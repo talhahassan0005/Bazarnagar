@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MessageCircle, TrendingUp } from "lucide-react";
+import { Eye, MessageCircle, ShoppingCart, TrendingUp, Zap } from "lucide-react";
 import { Card, CardBody, CardHeader, StatCardSkeleton, Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard } from "@/components/domain/StatCard";
@@ -16,8 +16,8 @@ export default function AnalyticsPage() {
     return (
       <>
         <Skeleton className="mb-6 h-8 w-44" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
         </div>
@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
         description="Shop views, product views and WhatsApp clicks."
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Shop views"
           value={formatCount(m.shopViews)}
@@ -58,6 +58,20 @@ export default function AnalyticsPage() {
           tone="leaf"
           icon={<MessageCircle className="h-5 w-5" />}
         />
+        <StatCard
+          label="Add to cart clicks"
+          value={formatCount(m.addToCartClicks)}
+          hint="Shoppers adding to cart"
+          tone="brand"
+          icon={<ShoppingCart className="h-5 w-5" />}
+        />
+        <StatCard
+          label="Buy now clicks"
+          value={formatCount(m.buyNowClicks)}
+          hint="Shoppers going straight to checkout"
+          tone="gold"
+          icon={<Zap className="h-5 w-5" />}
+        />
       </div>
 
       <Card className="mt-6">
@@ -73,7 +87,8 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium text-slate-700">{p.name}</p>
                   <span className="shrink-0 text-xs text-slate-400">
-                    {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} clicks
+                    {formatCount(p.views)} views · {formatCount(p.whatsappClicks)} WhatsApp ·{" "}
+                    {formatCount(p.addToCartClicks ?? 0)} add to cart · {formatCount(p.buyNowClicks ?? 0)} buy now
                   </span>
                 </div>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">

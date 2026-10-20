@@ -378,6 +378,8 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
     shopViews: store?.views ?? 0,
     productViews: products.reduce((sum, p) => sum + p.views, 0),
     whatsappClicks: store?.whatsappClicks ?? 0,
+    addToCartClicks: store?.addToCartClicks ?? 0,
+    buyNowClicks: store?.buyNowClicks ?? 0,
   });
 });
 

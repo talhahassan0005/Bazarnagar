@@ -6,6 +6,7 @@ import { Button } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addItem } from "@/store/cartSlice";
 import { addToast } from "@/store/uiSlice";
+import { useTrackButtonClickMutation } from "@/store/apiSlice";
 import { buildCartItem } from "@/lib/cart";
 import type { Product, Store } from "@/lib/types";
 
@@ -28,6 +29,7 @@ export function AddToCartButton({
   const dispatch = useAppDispatch();
   const router = useRouter();
   const isCustomer = useAppSelector((s) => s.auth.role === "customer");
+  const [trackClick] = useTrackButtonClickMutation();
   const disabled = outOfStock(product);
 
   return (
@@ -39,6 +41,8 @@ export function AddToCartButton({
       disabled={disabled}
       leftIcon={<ShoppingCart className="h-4 w-4" />}
       onClick={() => {
+        // Count the intent (seller/admin analytics) — never blocks the action.
+        trackClick({ productId: product.id, button: "add_to_cart" }).catch(() => {});
         if (!isCustomer) {
           dispatch(addToast("Please log in to add items to your cart", "info"));
           router.push("/login");
@@ -68,6 +72,7 @@ export function BuyNowButton({
   const dispatch = useAppDispatch();
   const router = useRouter();
   const isCustomer = useAppSelector((s) => s.auth.role === "customer");
+  const [trackClick] = useTrackButtonClickMutation();
   const disabled = outOfStock(product);
 
   return (
@@ -79,6 +84,7 @@ export function BuyNowButton({
       disabled={disabled}
       leftIcon={<Zap className="h-4 w-4" />}
       onClick={() => {
+        trackClick({ productId: product.id, button: "buy_now" }).catch(() => {});
         if (!isCustomer) {
           dispatch(addToast("Please log in to continue", "info"));
           router.push("/login");

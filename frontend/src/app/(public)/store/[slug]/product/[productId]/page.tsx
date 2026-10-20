@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight, Eye, MessageCircle, PlayCircle, Store as StoreIcon } from "lucide-react";
+import { ChevronRight, Eye, MessageCircle, PlayCircle, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge, Button, EmptyState, LoadingPanel, ProductCardSkeleton, Skeleton } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
@@ -94,6 +94,16 @@ export default function ProductDetailPage() {
             {product.whatsappClicks != null && (
               <span className="flex items-center gap-1">
                 <MessageCircle className="h-4 w-4" /> {formatCount(product.whatsappClicks)} WhatsApp clicks
+              </span>
+            )}
+            {product.addToCartClicks != null && (
+              <span className="flex items-center gap-1">
+                <ShoppingCart className="h-4 w-4" /> {formatCount(product.addToCartClicks)} add to cart
+              </span>
+            )}
+            {product.buyNowClicks != null && (
+              <span className="flex items-center gap-1">
+                <Zap className="h-4 w-4" /> {formatCount(product.buyNowClicks)} buy now
               </span>
             )}
           </div>

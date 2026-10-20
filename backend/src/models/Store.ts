@@ -56,6 +56,8 @@ export interface StoreDoc extends Document {
   status: StoreStatus;
   views: number;
   whatsappClicks: number;
+  addToCartClicks: number;
+  buyNowClicks: number;
 }
 
 const landingSchema = new Schema<StoreLanding>(
@@ -126,6 +128,8 @@ const storeSchema = new Schema<StoreDoc>(
     },
     views: { type: Number, default: 0 },
     whatsappClicks: { type: Number, default: 0 },
+    addToCartClicks: { type: Number, default: 0 },
+    buyNowClicks: { type: Number, default: 0 },
   },
   baseSchemaOptions
 );

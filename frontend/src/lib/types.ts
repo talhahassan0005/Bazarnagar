@@ -133,6 +133,8 @@ export interface Store {
   /** Seller/admin only — public endpoints omit views and whatsappClicks. */
   views: number;
   whatsappClicks: number;
+  addToCartClicks: number;
+  buyNowClicks: number;
 }
 
 export type StockStatus = "in_stock" | "out_of_stock";
@@ -174,6 +176,8 @@ export interface Product {
   /** Seller/admin only — public endpoints omit views and whatsappClicks. */
   views: number;
   whatsappClicks: number;
+  addToCartClicks: number;
+  buyNowClicks: number;
   createdAt: string;
 }
 
@@ -430,6 +434,8 @@ export interface DashboardMetrics {
   shopViews: number;
   productViews: number;
   whatsappClicks: number;
+  addToCartClicks: number;
+  buyNowClicks: number;
 }
 
 /* ── Admin activity log & data summary ───────────────────────────────────── */

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { isValidObjectId } from "mongoose";
+import { z } from "zod";
 import { Store } from "../models/Store";
 import { Product, type ProductDoc } from "../models/Product";
 import { asyncHandler } from "../lib/helpers";
@@ -217,6 +218,31 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
 });
 
 /** POST /api/public/products/:id/whatsapp-click — track an inquiry click. */
+const BUTTON_FIELD = { add_to_cart: "addToCartClicks", buy_now: "buyNowClicks" } as const;
+const buttonClickSchema = z.object({ button: z.enum(["add_to_cart", "buy_now"]) });
+
+/**
+ * POST /api/public/products/:id/button-click — a shopper tapped "Add to cart"
+ * or "Buy now". Counted on the product and its store; taps by the product's
+ * own seller or an admin aren't counted (so testing doesn't inflate stats).
+ */
+export const trackButtonClick = asyncHandler(async (req: Request, res: Response) => {
+  const { button } = buttonClickSchema.parse(req.body);
+  if (!isValidObjectId(req.params.id)) return res.json({ ok: true });
+  const product = await Product.findById(req.params.id).select("storeId");
+  if (!product) return res.json({ ok: true });
+
+  if (req.user?.role !== "admin") {
+    const store = await Store.findById(product.storeId).select("sellerId");
+    const isOwner = req.user?.role === "seller" && store?.sellerId.toString() === req.user.id;
+    if (store && !isOwner) {
+      const inc = { $inc: { [BUTTON_FIELD[button]]: 1 } };
+      await Promise.all([Product.updateOne({ _id: product._id }, inc), Store.updateOne({ _id: store._id }, inc)]);
+    }
+  }
+  res.json({ ok: true });
+});
+
 /**
  * POST /api/public/stores/:id/whatsapp-click — a shopper tapped the shop's own
  * WhatsApp button (header / banner / contact), not a specific product's.

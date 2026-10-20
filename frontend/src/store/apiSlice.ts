@@ -132,6 +132,13 @@ export const apiSlice = createApi({
       providesTags: ["Product"],
     }),
 
+    trackButtonClick: builder.mutation<{ ok: boolean }, { productId: string; button: "add_to_cart" | "buy_now" }>({
+      query: ({ productId, button }) => ({
+        url: `/public/products/${productId}/button-click`,
+        method: "POST",
+        body: { button },
+      }),
+    }),
     trackStoreWhatsappClick: builder.mutation<{ ok: boolean }, string>({
       query: (storeId) => ({ url: `/public/stores/${storeId}/whatsapp-click`, method: "POST" }),
     }),
@@ -518,6 +525,7 @@ export const {
   useGetMeQuery,
   useTrackWhatsappClickMutation,
   useTrackStoreWhatsappClickMutation,
+  useTrackButtonClickMutation,
   useGetPublicStoresQuery,
   useGetStoreBySlugQuery,
   useGetStoreProductsQuery,

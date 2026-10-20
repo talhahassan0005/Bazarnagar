@@ -85,6 +85,8 @@ export const STORES: Store[] = [
     status: "active",
     views: 420,
     whatsappClicks: 38,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
   },
   {
     id: "store_2",
@@ -106,6 +108,8 @@ export const STORES: Store[] = [
     status: "active",
     views: 980,
     whatsappClicks: 112,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
   },
   {
     id: "store_3",
@@ -125,6 +129,8 @@ export const STORES: Store[] = [
     status: "active",
     views: 150,
     whatsappClicks: 9,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
   },
 ];
 
@@ -147,6 +153,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "approved",
     views: 210,
     whatsappClicks: 24,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-04-01",
   },
   {
@@ -166,6 +174,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "approved",
     views: 96,
     whatsappClicks: 7,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-04-10",
   },
   {
@@ -185,6 +195,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "pending",
     views: 40,
     whatsappClicks: 2,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-05-02",
   },
   {
@@ -206,6 +218,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "approved",
     views: 530,
     whatsappClicks: 61,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-03-15",
   },
   {
@@ -225,6 +239,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "approved",
     views: 310,
     whatsappClicks: 28,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-04-22",
   },
   {
@@ -244,6 +260,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "flagged",
     views: 88,
     whatsappClicks: 5,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-05-12",
   },
   {
@@ -264,6 +282,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "approved",
     views: 120,
     whatsappClicks: 14,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-05-01",
   },
   {
@@ -283,6 +303,8 @@ export const PRODUCTS: Product[] = [
     moderationStatus: "needs_edit",
     views: 33,
     whatsappClicks: 1,
+    addToCartClicks: 0,
+    buyNowClicks: 0,
     createdAt: "2026-05-18",
   },
 ];

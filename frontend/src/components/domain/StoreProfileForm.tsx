@@ -9,7 +9,7 @@ import { CitySelect } from "./CitySelect";
 import { slugify } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 
-type StoreFormValues = Omit<Store, "id" | "sellerId" | "status" | "views" | "whatsappClicks">;
+type StoreFormValues = Omit<Store, "id" | "sellerId" | "status" | "views" | "whatsappClicks" | "addToCartClicks" | "buyNowClicks">;
 
 const EMPTY: StoreFormValues = {
   name: "",
