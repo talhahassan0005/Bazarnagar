@@ -85,7 +85,7 @@ export function HeroPreview() {
 
           {/* Product grid */}
           <div className="my-3 grid grid-cols-2 gap-2">
-            {PRODUCTS.map((p) => (
+            {PRODUCTS.slice(0, 2).map((p) => (
               <div key={p.name} className="overflow-hidden rounded-xl border border-slate-100">
                 {/* Gradient sits underneath as a graceful fallback for the photo. */}
                 <div className={`relative aspect-[4/3] bg-gradient-to-br ${p.grad}`}>
