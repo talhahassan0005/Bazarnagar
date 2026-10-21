@@ -17,7 +17,8 @@
     "backfill:storage": "tsx src/db/backfill-storage.ts",
     "add:products": "tsx src/db/add-products.ts",
     "migrate:r2": "tsx src/db/migrate-images-to-r2.ts",
-    "copy:r2": "tsx src/db/copy-r2-bucket.ts"
+    "copy:r2": "tsx src/db/copy-r2-bucket.ts",
+    "rewrite:image-urls": "tsx src/db/rewrite-image-urls.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
