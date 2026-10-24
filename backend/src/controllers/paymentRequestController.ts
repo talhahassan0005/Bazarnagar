@@ -7,7 +7,8 @@ import { Store } from "../models/Store";
 import { Payment } from "../models/Payment";
 import { Product } from "../models/Product";
 import { DAY_MS } from "../lib/boost";
-import { addBillingPeriod, getLivePlanPrice } from "../lib/plans";
+import { addBillingPeriod } from "../lib/plans";
+import { PAYMENT_CURRENCIES, quotePlan } from "../lib/paymentPricing";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
 async function currentSeller(req: Request) {
@@ -60,20 +61,23 @@ const createRequestSchema = z.object({
   method: z.enum(["bank", "jazzcash", "easypaisa"]),
   reference: z.string().min(3, "Enter the transaction ID / reference number"),
   proofUrl: z.string().trim().url("Upload a screenshot of your payment receipt"),
+  currency: z.enum(PAYMENT_CURRENCIES).default("PKR"),
 });
 
 /** POST /api/seller/subscription/manual-request — submit a manual payment for admin review. */
 export const createPaymentRequest = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const data = createRequestSchema.parse(req.body);
-  // Charge what the pricing page shows (admin-set), not the built-in default.
-  const amount = await getLivePlanPrice(data.planId);
+  // Charge what the pricing page shows (admin-set), plus tax for USD.
+  const quote = await quotePlan(data.planId, data.currency);
 
   const request = await PaymentRequest.create({
     sellerId: seller._id,
     purpose: "plan",
     planId: data.planId,
-    amount,
+    amount: quote.total,
+    currency: quote.currency,
+    taxAmount: quote.tax,
     method: data.method,
     reference: data.reference,
     proofUrl: data.proofUrl,
@@ -162,12 +166,15 @@ export const reviewPaymentRequest = asyncHandler(async (req: Request, res: Respo
     seller.subscriptionStartedAt = now;
     seller.subscriptionEndsAt = addBillingPeriod(now);
     seller.autoRenew = false;
+    seller.billingCurrency = request.currency ?? "PKR";
     await seller.save();
 
     await Payment.create({
       sellerId: seller._id,
       planId: request.planId,
       amount: request.amount,
+      currency: request.currency ?? "PKR",
+      taxAmount: request.taxAmount,
       method: request.method,
       paidAt: now,
       notes: `Manual payment approved (ref: ${request.reference})`,

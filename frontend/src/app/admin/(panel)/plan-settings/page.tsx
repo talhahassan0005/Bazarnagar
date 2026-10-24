@@ -12,10 +12,12 @@ import {
   useGetAdminBoostConfigQuery,
   useUpdateAdminBoostConfigMutation,
   useGetSubscriptionSettingsQuery,
+  useGetPlanPaymentConfigQuery,
+  useUpdatePlanPaymentConfigMutation,
   useUpdateSubscriptionSettingsMutation,
 } from "@/store/apiSlice";
 import { formatPrice, formatUsd, getErrorMessage } from "@/lib/utils";
-import type { BoostPricing, Plan, PlanId, SubscriptionSettings } from "@/lib/types";
+import type { BoostPricing, Plan, PlanId, PlanPaymentConfig, SubscriptionSettings } from "@/lib/types";
 
 const UNLIMITED = 1_000_000;
 
@@ -222,6 +224,7 @@ export default function AdminPlanSettingsPage() {
         })}
       </div>
 
+      <PaymentCurrencySection />
       <ExpiryPolicySection />
       <BoostPricingSection />
     </>
@@ -335,6 +338,77 @@ function ExpiryPolicySection() {
               />
             </div>
           )}
+          <div className="flex gap-2">
+            <Button size="sm" loading={saving} disabled={!form} onClick={save} leftIcon={<Check className="h-3.5 w-3.5" />}>
+              Save
+            </Button>
+            {form && (
+              <Button size="sm" variant="outline" onClick={() => setForm(null)} leftIcon={<X className="h-3.5 w-3.5" />}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Plan payment fees: tax when a seller outside Pakistan pays in USD (PKR has
+ * none), and a card fee when anyone pays online by card.
+ */
+function PaymentCurrencySection() {
+  const dispatch = useAppDispatch();
+  const { data, isLoading } = useGetPlanPaymentConfigQuery();
+  const [update, { isLoading: saving }] = useUpdatePlanPaymentConfigMutation();
+  // Local edits; null means "showing the saved values".
+  const [form, setForm] = useState<PlanPaymentConfig | null>(null);
+  const values = form ?? data ?? { usdTaxPercent: 0, cardFeePercent: 0 };
+  const exampleTax = (10 * values.usdTaxPercent) / 100;
+  const exampleCard = ((10 + exampleTax) * values.cardFeePercent) / 100;
+  const usd = (n: number) => formatUsd(Math.round(n * 100) / 100);
+
+  async function save() {
+    try {
+      await update(values).unwrap();
+      dispatch(addToast("Payment fees updated", "success"));
+      setForm(null);
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
+    }
+  }
+
+  return (
+    <div className="mt-10">
+      <PageHeader
+        title="Payment Currency, Tax & Card Fee"
+        description="Sellers choose where they pay from. Pakistan pays the PKR price with no tax; other countries pay the plan's USD price plus tax. Paying online by card adds the card fee."
+      />
+      {isLoading ? (
+        <LoadingPanel label="Loading…" />
+      ) : (
+        <Card className="max-w-xl space-y-4 p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Tax on USD payments (%)"
+              value={values.usdTaxPercent}
+              onChange={(v) => setForm({ ...values, usdTaxPercent: v })}
+              hint="Outside Pakistan only. 0 = no tax"
+            />
+            <Field
+              label="Card fee (%)"
+              value={values.cardFeePercent}
+              onChange={(v) => setForm({ ...values, cardFeePercent: v })}
+              hint="Online card payments (PKR & USD). 0 = none"
+            />
+          </div>
+          <p className="text-sm text-slate-500">
+            Example — a $10 plan from outside Pakistan:{" "}
+            <span className="font-semibold text-slate-900">{usd(10 + exampleTax)}</span> by bank transfer,{" "}
+            <span className="font-semibold text-slate-900">{usd(10 + exampleTax + exampleCard)}</span> by card. Set each
+            plan&apos;s USD price above.
+          </p>
           <div className="flex gap-2">
             <Button size="sm" loading={saving} disabled={!form} onClick={save} leftIcon={<Check className="h-3.5 w-3.5" />}>
               Save

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Star } from "lucide-react";
 import { Button, Skeleton } from "@/components/ui";
 import { PaymentHelpLink } from "@/components/domain/PaymentHelpLink";
+import { usePlanPaymentConfig } from "@/components/domain/PaymentCurrencySelect";
 import { useGetPublicPlanConfigQuery } from "@/store/apiSlice";
 import { useAppSelector } from "@/store/hooks";
 import { PLAN_LIST } from "@/lib/constants";
@@ -24,7 +25,7 @@ function limitFeatures(plan: Plan): string[] {
   return out;
 }
 
-function PlanCard({ plan, currency, ctaHref }: { plan: Plan; currency: Currency; ctaHref: string }) {
+function PlanCard({ plan, currency, ctaHref, usdTaxPercent }: { plan: Plan; currency: Currency; ctaHref: string; usdTaxPercent: number }) {
   const dark = plan.highlighted;
   const free = plan.price === 0;
   const usd = currency === "USD";
@@ -62,6 +63,11 @@ function PlanCard({ plan, currency, ctaHref }: { plan: Plan; currency: Currency;
       {!free && !usd && (
         <p className={cn("mt-1.5 text-xs font-medium", dark ? "text-white/75" : "text-slate-500")}>
           Just {formatPrice(Math.ceil(plan.price / 30))}/day
+        </p>
+      )}
+      {usd && !free && !noUsd && usdTaxPercent > 0 && (
+        <p className={cn("mt-1.5 text-xs font-medium", dark ? "text-white/75" : "text-slate-500")}>
+          + {usdTaxPercent}% tax for payments from outside Pakistan
         </p>
       )}
       {noUsd && (
@@ -109,6 +115,7 @@ export function PricingPlans() {
   const { data, isLoading } = useGetPublicPlanConfigQuery();
   const role = useAppSelector((s) => s.auth.role);
   const [currency, setCurrency] = useState<Currency>("PKR");
+  const { usdTaxPercent } = usePlanPaymentConfig();
 
   // Live settings; the built-in plans only while they load / if the API is down.
   const plans = (data ?? (isLoading ? [] : PLAN_LIST)).filter((p) => p.enabled ?? true);
@@ -149,7 +156,7 @@ export function PricingPlans() {
       ) : (
         <div className={cn("mx-auto grid items-stretch gap-6", cols, plans.length <= 2 ? "max-w-5xl" : "max-w-7xl")}>
           {plans.map((p) => (
-            <PlanCard key={p.id} plan={p} currency={currency} ctaHref={ctaHref} />
+            <PlanCard key={p.id} plan={p} currency={currency} ctaHref={ctaHref} usdTaxPercent={usdTaxPercent} />
           ))}
         </div>
       )}

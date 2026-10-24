@@ -153,14 +153,17 @@ export const stripeWebhook = asyncHandler(async (req: Request, res: Response) =>
         console.error(`[stripe] webhook: seller not found sellerId=${metadata.seller_id}`);
       } else {
         const planId = metadata.plan_id as PlanId;
-        const plan = getPlan(planId);
         const now = new Date();
+        // What was actually charged (older sessions have no currency → PKR list price).
+        const currency = metadata.currency === "USD" ? "USD" : "PKR";
+        const amount = session.amount_total != null ? session.amount_total / 100 : getPlan(planId).price;
 
         seller.planId = planId;
         seller.subscriptionStatus = "active";
         seller.subscriptionStartedAt = now;
         seller.subscriptionEndsAt = addBillingPeriod(now);
         seller.autoRenew = false;
+        seller.billingCurrency = currency;
 
         if (typeof session.customer === "string") seller.stripeCustomerId = session.customer;
         if (typeof session.payment_intent === "string") {
@@ -178,7 +181,10 @@ export const stripeWebhook = asyncHandler(async (req: Request, res: Response) =>
         await Payment.create({
           sellerId: seller._id,
           planId,
-          amount: plan.price,
+          amount,
+          currency,
+          taxAmount: metadata.tax ? Number(metadata.tax) || 0 : 0,
+          cardFeeAmount: metadata.card_fee ? Number(metadata.card_fee) || 0 : 0,
           method: "card",
           paidAt: now,
           notes: "Subscription via Stripe",

@@ -12,7 +12,7 @@ import {
   useReviewPaymentRequestMutation,
   useUpdateManualPaymentSettingsMutation,
 } from "@/store/apiSlice";
-import { formatPrice, getErrorMessage } from "@/lib/utils";
+import { formatMoney, getErrorMessage } from "@/lib/utils";
 import { PLANS } from "@/lib/constants";
 import type { ManualPaymentSettings, PaymentRequest } from "@/lib/types";
 
@@ -136,7 +136,7 @@ export default function AdminPaymentRequestsPage() {
                             {r.sellerName} <span className="text-slate-400">· {r.sellerEmail}</span>
                           </p>
                           <p className="mt-1 text-sm text-slate-600">
-                            {describe(r)} — {formatPrice(r.amount)} via {r.method}
+                            {describe(r)} — {formatMoney(r.amount, r.currency)}{r.taxAmount ? ` (incl. ${formatMoney(r.taxAmount, r.currency)} tax)` : ""} via {r.method}
                           </p>
                           {r.purpose === "boost" && (
                             <p className="mt-1 text-xs font-medium text-amber-700">
@@ -196,7 +196,7 @@ export default function AdminPaymentRequestsPage() {
                         <tr key={r.id}>
                           <td className="px-4 py-3">{r.sellerName}</td>
                           <td className="px-4 py-3">{describe(r)}</td>
-                          <td className="px-4 py-3">{formatPrice(r.amount)}</td>
+                          <td className="px-4 py-3">{formatMoney(r.amount, r.currency)}</td>
                           <td className="px-4 py-3">
                             {r.proofUrl ? (
                               <a href={r.proofUrl} target="_blank" rel="noopener noreferrer">

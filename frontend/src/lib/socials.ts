@@ -8,12 +8,14 @@ import {
   FaReddit,
   FaTiktok,
   FaXTwitter,
+  FaYoutube,
 } from "react-icons/fa6";
 
 export type SocialPlatform =
   | "website"
   | "instagram"
   | "facebook"
+  | "youtube"
   | "tiktok"
   | "linkedin"
   | "twitter"
@@ -56,6 +58,14 @@ export const SOCIALS: SocialConfig[] = [
     placeholder: "page name or link",
     className: "text-[#1877F2]",
     profileUrl: (h) => `https://facebook.com/${h}`,
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    icon: FaYoutube,
+    placeholder: "channel link or @handle",
+    className: "text-[#FF0000]",
+    profileUrl: (h) => `https://youtube.com/@${h}`,
   },
   {
     key: "tiktok",

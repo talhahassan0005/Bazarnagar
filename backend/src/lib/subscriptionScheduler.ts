@@ -7,6 +7,7 @@ import { addBillingPeriod, getLivePlanLimit, getPlan } from "./plans";
 import { syncPlanVisibility } from "./planVisibility";
 import { getSubscriptionSettings, warningDays } from "./subscriptionSettings";
 import { sendMail } from "./mailer";
+import { quotePlan } from "./paymentPricing";
 import { planDowngradedEmail, planExpiryWarningEmail } from "./emails";
 import { chargeSavedCard } from "./stripe";
 
@@ -34,13 +35,17 @@ export async function processSubscriptions(): Promise<void> {
   });
 
   for (const seller of toRenew) {
-    const plan = getPlan(seller.planId);
-    const success = await chargeSavedCard(
-      seller.stripeCustomerId!,
-      seller.stripePaymentMethodId!,
-      plan.price,
-      `Bazaarnagar ${seller.planId} plan renewal`
-    );
+    // Renew in the currency they last paid in, at today's admin-set price (+ USD tax).
+    const quote = await quotePlan(seller.planId, seller.billingCurrency ?? "PKR", "card").catch(() => null);
+    const success =
+      quote != null &&
+      (await chargeSavedCard(
+        seller.stripeCustomerId!,
+        seller.stripePaymentMethodId!,
+        quote.total,
+        `Bazaarnagar ${seller.planId} plan renewal`,
+        quote.currency
+      ));
 
     if (success) {
       const base = seller.subscriptionEndsAt && seller.subscriptionEndsAt > now
@@ -52,7 +57,10 @@ export async function processSubscriptions(): Promise<void> {
       await Payment.create({
         sellerId: seller._id,
         planId: seller.planId,
-        amount: plan.price,
+        amount: quote!.total,
+        currency: quote!.currency,
+        taxAmount: quote!.tax,
+        cardFeeAmount: quote!.cardFee,
         method: "card",
         paidAt: now,
         notes: "Auto-renewal via saved card",

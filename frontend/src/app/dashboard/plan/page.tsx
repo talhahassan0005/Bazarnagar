@@ -9,6 +9,12 @@ import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
 import { ManualPaymentModal } from "@/components/domain/ManualPaymentModal";
 import { PaymentHelpLink } from "@/components/domain/PaymentHelpLink";
+import {
+  PaymentCurrencySelect,
+  defaultCurrency,
+  quoteFor,
+  usePlanPaymentConfig,
+} from "@/components/domain/PaymentCurrencySelect";
 import { useAppDispatch } from "@/store/hooks";
 import {
   useGetSellerQuery,
@@ -23,8 +29,8 @@ import {
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
 import { PLANS } from "@/lib/constants";
-import { formatPrice, getErrorMessage } from "@/lib/utils";
-import type { Plan, PlanId } from "@/lib/types";
+import { formatMoney, formatPrice, getErrorMessage } from "@/lib/utils";
+import type { PaymentCurrency, Plan, PlanId } from "@/lib/types";
 
 function StatusBanner({ status, endsAt, daysRemaining, isFree, downgradeAt }: {
   status: string;
@@ -131,6 +137,10 @@ export default function PlanPage() {
   // Plan awaiting a "card vs. manual" payment-method choice.
   const [choosingPlan, setChoosingPlan] = useState<Plan | null>(null);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Pakistan pays in PKR; other countries in USD (+ admin tax). Starts from the signup country.
+  const [payCurrencyChoice, setPayCurrency] = useState<PaymentCurrency | null>(null);
+  const payCurrency = payCurrencyChoice ?? defaultCurrency(seller.data?.country);
+  const paymentConfig = usePlanPaymentConfig();
 
   function clearPendingPoll() {
     if (pollTimer.current) clearInterval(pollTimer.current);
@@ -260,7 +270,7 @@ export default function PlanPage() {
 
   async function handleSubscribe(plan: Plan) {
     try {
-      const { url } = await checkout(plan.id).unwrap();
+      const { url } = await checkout({ planId: plan.id, currency: payCurrency }).unwrap();
       // Remember that a payment is pending so that even if the browser
       // redirect back is delayed or interrupted, we still detect activation
       // via polling.
@@ -443,12 +453,10 @@ export default function PlanPage() {
       {choosingPlan && (
         <Modal open onClose={() => setChoosingPlan(null)} title="Choose how to pay">
           <div className="space-y-3">
-            <p className="text-sm text-slate-600">
-              {choosingPlan.name} — {formatPrice(choosingPlan.price)}/mo
-            </p>
+            <PaymentCurrencySelect plan={choosingPlan} currency={payCurrency} onChange={setPayCurrency} />
             <button
               type="button"
-              disabled={checkingOut}
+              disabled={checkingOut || !quoteFor(choosingPlan, payCurrency, paymentConfig).available}
               className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-300 hover:bg-brand-50 disabled:opacity-60"
               onClick={() => handleSubscribe(choosingPlan)}
             >
@@ -457,7 +465,18 @@ export default function PlanPage() {
                 <span className="block font-medium text-slate-900">
                   {checkingOut ? "Redirecting to Stripe…" : "Pay with card"}
                 </span>
-                <span className="block text-xs text-slate-500">Via Stripe — plan activates instantly.</span>
+                <span className="block text-xs text-slate-500">
+                  Via Stripe — plan activates instantly.{" "}
+                  {quoteFor(choosingPlan, payCurrency, paymentConfig).available && (
+                    <>
+                      Total{" "}
+                      <strong>
+                        {formatMoney(quoteFor(choosingPlan, payCurrency, paymentConfig, "card").total, payCurrency)}
+                      </strong>
+                      {paymentConfig.cardFeePercent > 0 && ` (incl. ${paymentConfig.cardFeePercent}% card fee)`}
+                    </>
+                  )}
+                </span>
               </span>
             </button>
             <button
@@ -473,7 +492,9 @@ export default function PlanPage() {
               <span>
                 <span className="block font-medium text-slate-900">Pay manually</span>
                 <span className="block text-xs text-slate-500">
-                  Bank transfer / JazzCash / EasyPaisa — reviewed by our team, activates within 24 hours.
+                  {payCurrency === "PKR"
+                    ? "JazzCash QR / bank transfer / EasyPaisa — reviewed by our team, activates within 24 hours."
+                    : "International bank transfer — reviewed by our team, activates within 24 hours."}
                 </span>
               </span>
             </button>
@@ -486,6 +507,7 @@ export default function PlanPage() {
         <ManualPaymentModal
           plans={planList}
           defaultPlanId={manualPlanId ?? current.id}
+          defaultCurrency={payCurrency}
           onClose={() => {
             setManualPaymentOpen(false);
             setManualPlanId(null);
@@ -516,7 +538,7 @@ export default function PlanPage() {
                         {new Date(p.paidAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-900 capitalize">{p.planId}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(p.amount)}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{formatMoney(p.amount, p.currency)}</td>
                       <td className="px-4 py-3 text-slate-600 capitalize">{p.method}</td>
                       <td className="px-4 py-3 text-slate-400">{p.notes ?? "—"}</td>
                     </tr>

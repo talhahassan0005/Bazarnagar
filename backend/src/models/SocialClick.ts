@@ -6,6 +6,7 @@ export const SOCIAL_PLATFORMS = [
   "website",
   "instagram",
   "facebook",
+  "youtube",
   "tiktok",
   "linkedin",
   "twitter",

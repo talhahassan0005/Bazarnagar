@@ -263,12 +263,25 @@ export interface ProductReviews extends ProductRating {
 
 /* -------------------------------- Payments -------------------------------- */
 
+/** Plan payments: Pakistan pays in PKR (no tax), other countries in USD + admin tax. */
+export type PaymentCurrency = "PKR" | "USD";
+
+export interface PlanPaymentConfig {
+  /** Tax added to USD plan payments, in percent. */
+  usdTaxPercent: number;
+  /** Fee added to online card payments, in percent of price + tax. */
+  cardFeePercent: number;
+}
+
 export interface Payment {
   id: string;
   sellerId: string;
   /** A plan id, or "boost" for a verified product-boost payment. */
   planId: PlanId | "boost";
   amount: number;
+  /** Missing on older records (PKR). */
+  currency?: PaymentCurrency;
+  taxAmount?: number;
   method: string;
   paidAt: string;
   notes?: string;
@@ -296,6 +309,9 @@ export interface PaymentRequest {
   days?: number;
   amount: number;
   method: PaymentRequestMethod;
+  /** Missing on older requests (PKR). */
+  currency?: PaymentCurrency;
+  taxAmount?: number;
   reference: string;
   proofUrl?: string;
   status: PaymentRequestStatus;

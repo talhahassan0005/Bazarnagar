@@ -63,6 +63,11 @@ export function formatUsd(value: number): string {
   return `$${value.toLocaleString("en-US", { minimumFractionDigits: cents, maximumFractionDigits: 2 })}`;
 }
 
+/** PKR or USD amount, e.g. formatMoney(500) -> "Rs. 500", formatMoney(7, "USD") -> "$7". */
+export function formatMoney(value: number, currency: "PKR" | "USD" = "PKR"): string {
+  return currency === "USD" ? formatUsd(value) : formatPrice(value);
+}
+
 /** Human-readable file size, e.g. 1536 -> "1.5 KB". */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

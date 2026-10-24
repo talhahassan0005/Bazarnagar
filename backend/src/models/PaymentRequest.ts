@@ -20,7 +20,14 @@ export interface PaymentRequestDoc extends Document {
   /** Boost payments only: which product, for how many days. */
   productId?: Types.ObjectId;
   days?: number;
+  /** Total to pay, in `currency` (tax included). */
   amount: number;
+  /** PKR for Pakistan, USD for other countries. Missing on older requests (PKR). */
+  currency?: "PKR" | "USD";
+  /** Tax included in `amount` (USD payments only). */
+  taxAmount?: number;
+  /** Card fee included in `amount` (online card payments only). */
+  cardFeeAmount?: number;
   method: PaymentRequestMethod;
   reference: string;
   proofUrl?: string;
@@ -37,6 +44,9 @@ const paymentRequestSchema = new Schema<PaymentRequestDoc>(
     productId: { type: Schema.Types.ObjectId, ref: "Product" },
     days: { type: Number, min: 1 },
     amount: { type: Number, required: true, min: 0 },
+    currency: { type: String, enum: ["PKR", "USD"], default: "PKR" },
+    taxAmount: { type: Number, min: 0 },
+    cardFeeAmount: { type: Number, min: 0 },
     method: { type: String, enum: ["bank", "jazzcash", "easypaisa"], required: true },
     reference: { type: String, required: true, trim: true },
     proofUrl: String,

@@ -51,6 +51,11 @@ export async function createOrderCheckoutSession(input: OrderCheckoutInput): Pro
 
 export interface SubscriptionCheckoutInput {
   amount: number;
+  /** "PKR" or "USD" — Stripe wants it lower-case. */
+  currency: string;
+  /** Recorded on the session so the webhook stores exactly what was charged. */
+  tax: number;
+  cardFee: number;
   sellerId: string;
   planId: string;
   customerEmail?: string;
@@ -75,7 +80,7 @@ export async function createSubscriptionCheckoutSession(
     line_items: [
       {
         price_data: {
-          currency: env.stripeCurrency,
+          currency: input.currency.toLowerCase(),
           product_data: { name: `Bazaarnagar ${input.planId} plan subscription` },
           unit_amount: Math.round(input.amount * 100),
         },
@@ -84,7 +89,15 @@ export async function createSubscriptionCheckoutSession(
     ],
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
-    metadata: { kind: "subscription", seller_id: input.sellerId, plan_id: input.planId },
+    metadata: {
+      kind: "subscription",
+      seller_id: input.sellerId,
+      plan_id: input.planId,
+      currency: input.currency,
+      amount: String(input.amount),
+      tax: String(input.tax),
+      card_fee: String(input.cardFee),
+    },
     payment_intent_data: { setup_future_usage: "off_session" },
   });
   if (!session.url) throw new Error("Stripe did not return a checkout URL");
@@ -108,13 +121,14 @@ export async function chargeSavedCard(
   customerId: string,
   paymentMethodId: string,
   amount: number,
-  description: string
+  description: string,
+  currency: string = env.stripeCurrency
 ): Promise<boolean> {
   if (!stripeEnabled) return false;
   try {
     const intent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
-      currency: env.stripeCurrency,
+      currency: currency.toLowerCase(),
       customer: customerId,
       payment_method: paymentMethodId,
       off_session: true,

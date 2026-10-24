@@ -37,6 +37,8 @@ import type {
   Plan,
   PlanId,
   PlanConfigInput,
+  PlanPaymentConfig,
+  PaymentCurrency,
   SubscriptionSettings,
   Product,
   ProductReviews,
@@ -307,8 +309,8 @@ export const apiSlice = createApi({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
     }),
-    subscriptionCheckout: builder.mutation<{ url: string; orderId: string; planId: string }, PlanId>({
-      query: (planId) => ({ url: "/seller/subscription/checkout", method: "POST", body: { planId } }),
+    subscriptionCheckout: builder.mutation<{ url: string; orderId: string; planId: string }, { planId: PlanId; currency: PaymentCurrency }>({
+      query: (body) => ({ url: "/seller/subscription/checkout", method: "POST", body }),
       invalidatesTags: ["Seller"],
     }),
     getSubscriptionStatus: builder.query<{
@@ -342,7 +344,7 @@ export const apiSlice = createApi({
     getManualPaymentSettings: builder.query<ManualPaymentSettings, void>({
       query: () => "/seller/manual-payment-settings",
     }),
-    createPaymentRequest: builder.mutation<PaymentRequest, { planId: PlanId; method: PaymentRequestMethod; reference: string; proofUrl?: string }>({
+    createPaymentRequest: builder.mutation<PaymentRequest, { planId: PlanId; method: PaymentRequestMethod; reference: string; proofUrl?: string; currency: PaymentCurrency }>({
       query: (body) => ({ url: "/seller/subscription/manual-request", method: "POST", body }),
       invalidatesTags: ["PaymentRequest"],
     }),
@@ -444,6 +446,14 @@ export const apiSlice = createApi({
     }),
 
     // ── Admin Plan Config ─────────────────────────────────────────────────
+    getPlanPaymentConfig: builder.query<PlanPaymentConfig, void>({
+      query: () => "/public/plan-payment-config",
+      providesTags: ["Seller"],
+    }),
+    updatePlanPaymentConfig: builder.mutation<PlanPaymentConfig, PlanPaymentConfig>({
+      query: (body) => ({ url: "/admin/plan-payment-config", method: "PATCH", body }),
+      invalidatesTags: ["Seller"],
+    }),
     getPublicPlanConfig: builder.query<Plan[], void>({
       query: () => "/public/plans",
       providesTags: ["Seller"],
@@ -664,6 +674,8 @@ export const {
   useGetAdminPlanConfigQuery,
   useUpdateAdminPlanConfigMutation,
   useGetSubscriptionSettingsQuery,
+  useGetPlanPaymentConfigQuery,
+  useUpdatePlanPaymentConfigMutation,
   useUpdateSubscriptionSettingsMutation,
   useGetAdminBoostConfigQuery,
   useUpdateAdminBoostConfigMutation,

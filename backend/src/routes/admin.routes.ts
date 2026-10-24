@@ -30,6 +30,8 @@ import {
   updatePlanConfig,
   getSubscriptionSettingsHandler,
   updateSubscriptionSettings,
+  getPaymentConfigHandler,
+  updatePaymentConfig,
   getBoostConfig,
   updateBoostConfig,
 } from "../controllers/adminController";
@@ -92,6 +94,8 @@ router.get("/plan-config", getPlanConfig);
 router.patch("/plan-config", updatePlanConfig);
 router.get("/subscription-settings", getSubscriptionSettingsHandler);
 router.patch("/subscription-settings", updateSubscriptionSettings);
+router.get("/plan-payment-config", getPaymentConfigHandler);
+router.patch("/plan-payment-config", updatePaymentConfig);
 router.get("/boost-config", getBoostConfig);
 router.patch("/boost-config", updateBoostConfig);
 

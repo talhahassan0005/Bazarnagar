@@ -13,6 +13,7 @@ import { newStoreReview, queueStoreReview } from "../lib/storeReview";
 import { SOCIAL_PLATFORMS } from "../models/SocialClick";
 import { socialClickReport, socialClicksQuerySchema } from "../lib/socialClicks";
 import { getSubscriptionSettings } from "../lib/subscriptionSettings";
+import { PAYMENT_CURRENCIES, quotePlan } from "../lib/paymentPricing";
 import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
@@ -391,6 +392,7 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
 
 const checkoutSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
+  currency: z.enum(PAYMENT_CURRENCIES).default("PKR"),
 });
 
 /**
@@ -401,17 +403,20 @@ const checkoutSchema = z.object({
  */
 export const subscriptionCheckout = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
-  const { planId } = checkoutSchema.parse(req.body);
-  const plan = getPlan(planId);
+  const { planId, currency } = checkoutSchema.parse(req.body);
+  const quote = await quotePlan(planId, currency, "card");
 
   if (!stripeEnabled) {
     throw new ApiError(503, "Payment gateway is not configured. Please contact support.");
   }
 
-  console.log(`[subscription] checkout start sellerId=${seller.id} planId=${planId}`);
+  console.log(`[subscription] checkout start sellerId=${seller.id} planId=${planId} ${quote.currency} ${quote.total}`);
 
   const { url, sessionId } = await createSubscriptionCheckoutSession({
-    amount: plan.price,
+    amount: quote.total,
+    currency: quote.currency,
+    tax: quote.tax,
+    cardFee: quote.cardFee,
     sellerId: seller.id,
     planId,
     customerEmail: seller.email,

@@ -19,7 +19,7 @@ import {
   getPaymentConfig,
 } from "../controllers/stripeController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
-import { getPlanConfig } from "../controllers/adminController";
+import { getPlanConfig, getPaymentConfigHandler } from "../controllers/adminController";
 import { getActiveBanners } from "../controllers/bannerController";
 import { getAdSettings } from "../controllers/adSettingsController";
 import { optionalAuthenticate } from "../middleware/auth";
@@ -27,6 +27,7 @@ import { optionalAuthenticate } from "../middleware/auth";
 const router = Router();
 
 router.get("/plans", getPlanConfig);
+router.get("/plan-payment-config", getPaymentConfigHandler);
 router.get("/banners", getActiveBanners);
 router.get("/ad-settings", getAdSettings);
 router.get("/search", searchProducts);

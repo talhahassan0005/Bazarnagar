@@ -19,6 +19,7 @@ import { sinceFilter, socialClickReport, socialClicksQuerySchema } from "../lib/
 import { PLANS } from "../lib/plans";
 import { syncPlanVisibility } from "../lib/planVisibility";
 import { getSubscriptionSettings } from "../lib/subscriptionSettings";
+import { getPaymentConfig } from "../lib/paymentPricing";
 import { Settings } from "../models/Settings";
 import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
@@ -1055,4 +1056,23 @@ export const updateSubscriptionSettings = asyncHandler(async (req: Request, res:
   const data = subscriptionSettingsSchema.parse(req.body);
   await Settings.findOneAndUpdate({ key: "subscription" }, { $set: data }, { upsert: true });
   res.json(await getSubscriptionSettings());
+});
+
+/* ---------------------------- Payment config ----------------------------- */
+
+/** GET /api/admin/plan-payment-config (also public at /api/public/plan-payment-config) — USD tax % and card fee %. */
+export const getPaymentConfigHandler = asyncHandler(async (_req: Request, res: Response) => {
+  res.json(await getPaymentConfig());
+});
+
+const paymentConfigSchema = z.object({
+  usdTaxPercent: z.number().min(0).max(100),
+  cardFeePercent: z.number().min(0).max(100),
+});
+
+/** PATCH /api/admin/plan-payment-config */
+export const updatePaymentConfig = asyncHandler(async (req: Request, res: Response) => {
+  const data = paymentConfigSchema.parse(req.body);
+  await Settings.findOneAndUpdate({ key: "payment" }, { $set: data }, { upsert: true });
+  res.json(await getPaymentConfig());
 });

@@ -36,6 +36,8 @@ export interface SellerDoc extends Document {
   kycCnicBack?: string;
   kycSubmittedAt?: Date;
   kycRejectionReason?: string;
+  /** Currency of the seller's last plan payment — card auto-renewals charge in it. */
+  billingCurrency?: "PKR" | "USD";
   /** Plan-expiry warning emails sent since the plan expired (reset on renewal). */
   expiryWarningsSent?: number;
   /** Paid plan the seller was moved to Free from, when it lapsed. */
@@ -78,6 +80,7 @@ const sellerSchema = new Schema<SellerDoc>(
     kycCnicBack: { type: String },
     kycSubmittedAt: { type: Date },
     kycRejectionReason: { type: String },
+    billingCurrency: { type: String, enum: ["PKR", "USD"] },
     expiryWarningsSent: { type: Number, default: 0 },
     downgradedFromPlanId: { type: String },
   },

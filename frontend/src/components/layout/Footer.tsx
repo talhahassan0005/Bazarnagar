@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { BrandMark } from "./Logo";
-import { SITE_EMAIL, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_UR } from "@/lib/constants";
+import { SITE_EMAIL, SITE_NAME, SITE_SOCIALS, SITE_TAGLINE, SITE_TAGLINE_UR } from "@/lib/constants";
+import { storeSocials } from "@/lib/socials";
 
 export function Footer() {
   return (
@@ -26,6 +27,23 @@ export function Footer() {
               <Mail className="h-3.5 w-3.5" />
               {SITE_EMAIL}
             </Link>
+            {storeSocials(SITE_SOCIALS).length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {storeSocials(SITE_SOCIALS).map(({ key, label, icon: Icon, href, className }) => (
+                  <a
+                    key={key}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`${SITE_NAME} on ${label}`}
+                    aria-label={`${SITE_NAME} on ${label}`}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow"
+                  >
+                    <Icon className={`h-4 w-4 ${className}`} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Platform */}

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 import { ShareStoreButton } from "@/components/domain/ShareStoreButton";
 import { StoreWhatsAppLink } from "./StoreWhatsAppLink";
+import { StoreSocialLinks } from "./StoreSocialLinks";
 
 /** Themed hero for a store's customizable landing page. */
 export function StoreLandingHero({
@@ -40,6 +41,12 @@ export function StoreLandingHero({
       />
 
       <div className="relative mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+        {/* Seller's social links — top-right of the hero (below the buttons on phones) */}
+        <StoreSocialLinks
+          store={store}
+          className="order-last sm:absolute sm:right-6 sm:top-6 sm:order-none sm:justify-end lg:right-8"
+        />
+
         <div className="flex items-center gap-4">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/80 bg-white text-2xl font-bold text-slate-700 shadow-lg">
             {store.logoUrl ? (

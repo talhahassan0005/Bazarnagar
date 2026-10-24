@@ -119,6 +119,19 @@ export const SITE_TAGLINE_UR = "آپ کی دکان، ایک لنک میں";
 export const SITE_DOMAIN = "bazaarnagar.com";
 /** Contact email shown on legal / support pages. */
 export const SITE_EMAIL = "info@bazaarnagar.com";
+
+/**
+ * Bazaarnagar's own social pages, shown as icons in the footer. Leave a value
+ * empty to hide that icon. Handles or full links both work (see lib/socials).
+ */
+export const SITE_SOCIALS: Partial<Record<import("./socials").SocialPlatform, string>> = {
+  facebook: "",
+  instagram: "",
+  youtube: "",
+  tiktok: "",
+  linkedin: "",
+  twitter: "",
+};
 /** Support phone / WhatsApp, in international digits (no +) and display form. */
 export const SITE_PHONE = "923241201757";
 export const SITE_PHONE_DISPLAY = "+92 324 1201757";
