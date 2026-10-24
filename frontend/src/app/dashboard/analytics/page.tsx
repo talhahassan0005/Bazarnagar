@@ -1,16 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { Eye, MessageCircle, ShoppingCart, TrendingUp, Zap } from "lucide-react";
 import { Card, CardBody, CardHeader, StatCardSkeleton, Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard } from "@/components/domain/StatCard";
 import { useAppSelector } from "@/store/hooks";
-import { useGetDashboardMetricsQuery, useGetMyProductsQuery } from "@/store/apiSlice";
+import { useGetDashboardMetricsQuery, useGetMyProductsQuery, useGetMySocialClicksQuery, useGetMyStoreQuery } from "@/store/apiSlice";
+import { SocialClicksReport } from "@/components/domain/SocialClicksReport";
+import { storeSocials } from "@/lib/socials";
+import type { SocialClickPeriod } from "@/lib/types";
 import { formatCount } from "@/lib/utils";
 
 export default function AnalyticsPage() {
   const metrics = useGetDashboardMetricsQuery();
   const products = useGetMyProductsQuery();
+  const store = useGetMyStoreQuery();
+  const [period, setPeriod] = useState<SocialClickPeriod>("30");
+  const social = useGetMySocialClicksQuery(period, { refetchOnMountOrArgChange: true });
 
   if (metrics.isLoading || products.isLoading) {
     return (
@@ -34,7 +41,7 @@ export default function AnalyticsPage() {
     <>
       <PageHeader
         title="Analytics"
-        description="Shop views, product views and WhatsApp clicks."
+        description="Shop views, product views, WhatsApp and social link clicks."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -71,6 +78,16 @@ export default function AnalyticsPage() {
           hint="Shoppers going straight to checkout"
           tone="gold"
           icon={<Zap className="h-5 w-5" />}
+        />
+      </div>
+
+      <div className="mt-6">
+        <SocialClicksReport
+          data={social.data}
+          isLoading={social.isLoading || social.isFetching}
+          platforms={storeSocials(store.data?.socials).map((s) => s.key)}
+          period={period}
+          onPeriod={setPeriod}
         />
       </div>
 

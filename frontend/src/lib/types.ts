@@ -1,3 +1,5 @@
+import type { SocialPlatform } from "./socials";
+
 /**
  * Shared domain types for Bazaarnagar (Prototype 1).
  * These mirror the entities described in the SRS and are used by both the
@@ -15,6 +17,37 @@ export interface Plan {
   videoLimit: number; // videos per product (0 = not allowed)
   highlights?: string[];
   enabled?: boolean;
+  /** Separate US-dollar price / month for overseas sellers (0 = not offered). Admin-set. */
+  priceUsd?: number;
+  /** Pricing page card text (admin-set). */
+  tagline?: string;
+  description?: string;
+  features?: string[];
+  /** The "Recommended" card on the pricing page. */
+  highlighted?: boolean;
+}
+
+/** Editable plan fields sent by the admin Plan Settings page. */
+/** Admin: what happens when a paid plan expires and isn't renewed. */
+export interface SubscriptionSettings {
+  /** true: warn (3 emails) during the grace period, then move to Free. false: keep the paid plan's features. */
+  downgradeAfterExpiry: boolean;
+  graceDays: number;
+}
+
+export interface PlanConfigInput {
+  planId: PlanId;
+  price: number;
+  productLimit: number;
+  imageLimit: number;
+  videoLimit: number;
+  enabled?: boolean;
+  priceUsd?: number;
+  name?: string;
+  tagline?: string;
+  description?: string;
+  features?: string[];
+  highlighted?: boolean;
 }
 
 /** Featured-product "boost" pricing — any seller pays per day; admin-editable. */
@@ -118,18 +151,25 @@ export interface Store {
   showInSearch: boolean;
   /** Seller toggle — is the shop currently open for orders? */
   isOpen?: boolean;
-  socials?: {
-    instagram?: string;
-    facebook?: string;
-    tiktok?: string;
-  };
+  /** Handles or links, keyed by platform (see lib/socials). */
+  socials?: Partial<Record<SocialPlatform, string>>;
   deliveryInfo?: string;
+  /** Shop doesn't deliver: no online orders — customers contact on WhatsApp. */
+  noDelivery?: boolean;
   paymentInfo?: string;
   /** Seller-customizable landing page config (optional). */
   landing?: StoreLanding;
   /** Seller's payout details (optional). */
   payout?: StorePayout;
   status: StoreStatus;
+  /** Admin review queue (set when the store is created or edited). */
+  review?: {
+    status: "pending" | "reviewed";
+    reason: "created" | "updated";
+    changes: string[];
+    requestedAt: string;
+    reviewedAt?: string;
+  };
   /** Seller/admin only — public endpoints omit views and whatsappClicks. */
   views: number;
   whatsappClicks: number;
@@ -151,6 +191,8 @@ export type ModerationStatus =
 
 export interface Product {
   id: string;
+  /** Over the plan's product limit (e.g. after moving to Free): hidden from customers, still visible to the seller. */
+  hiddenOverPlanLimit?: boolean;
   storeId: string;
   name: string;
   category: string;
@@ -429,6 +471,29 @@ export interface Conversation {
   customer?: Pick<Customer, "id" | "name" | "phone">;
 }
 
+/** Social link taps of one store, per platform and per day (Pakistan dates, newest first). */
+export interface SocialClickReport {
+  total: number;
+  totals: Partial<Record<SocialPlatform, number>>;
+  days: { date: string; total: number; counts: Partial<Record<SocialPlatform, number>> }[];
+}
+
+export type SocialClickPeriod = "7" | "30" | "90" | "all";
+
+/** Admin: a store's social link clicks in the chosen period. */
+export interface AdminSocialClickRow {
+  id: string;
+  storeId: string;
+  storeName: string;
+  storeSlug: string;
+  sellerName: string;
+  sellerEmail: string;
+  platforms: SocialPlatform[];
+  total: number;
+  totals: Partial<Record<SocialPlatform, number>>;
+  lastClickAt?: string;
+}
+
 export interface DashboardMetrics {
   productsUsed: number;
   productLimit: number;
@@ -591,4 +656,11 @@ export interface AdminOrdersPage {
   page: number;
   pages: number;
   summary: { byStatus: Record<OrderStatus, number>; value: number };
+}
+
+/** A store in the admin review queue, with its seller. */
+export interface StoreReviewItem extends Store {
+  sellerName: string;
+  sellerEmail: string;
+  sellerPhone: string;
 }

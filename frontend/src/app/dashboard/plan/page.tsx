@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CreditCard, Landmark, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban } from "lucide-react";
+import { CreditCard, Landmark, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban, EyeOff } from "lucide-react";
 import { Button, Card, CardBody, CardHeader, Modal, Skeleton, Toggle } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
 import { ManualPaymentModal } from "@/components/domain/ManualPaymentModal";
+import { PaymentHelpLink } from "@/components/domain/PaymentHelpLink";
 import { useAppDispatch } from "@/store/hooks";
 import {
   useGetSellerQuery,
@@ -25,12 +26,37 @@ import { PLANS } from "@/lib/constants";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
 import type { Plan, PlanId } from "@/lib/types";
 
-function StatusBanner({ status, endsAt, daysRemaining, isFree }: {
+function StatusBanner({ status, endsAt, daysRemaining, isFree, downgradeAt }: {
   status: string;
   endsAt: string | null;
   daysRemaining: number;
   isFree: boolean;
+  /** When a lapsed plan moves to Free (null = it keeps its features). */
+  downgradeAt?: string | null;
 }) {
+  const lapsed = !isFree && (status === "expired" || status === "cancelled") && endsAt && new Date(endsAt) < new Date();
+  if (lapsed) {
+    const on = downgradeAt
+      ? new Date(downgradeAt).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })
+      : null;
+    return (
+      <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          Your plan has expired.{" "}
+          {on ? (
+            <>
+              Renew before <strong>{on}</strong> — after that your shop moves to the <strong>Free plan</strong> and
+              products over the Free limit are hidden from customers (you&apos;ll still see them here).
+            </>
+          ) : (
+            "Please renew to keep your plan."
+          )}
+        </span>
+      </div>
+    );
+  }
+
   const date = endsAt
     ? new Date(endsAt).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })
     : null;
@@ -306,7 +332,24 @@ export default function PlanPage() {
               </div>
             </div>
           )}
-          <StatusBanner status={status} endsAt={endsAt} daysRemaining={daysRemaining} isFree={isFree} />
+          <StatusBanner
+            status={status}
+            endsAt={endsAt}
+            daysRemaining={daysRemaining}
+            isFree={isFree}
+            downgradeAt={sub.data?.downgradeAt}
+          />
+          {(sub.data?.hiddenProducts ?? 0) > 0 && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <strong>{sub.data!.hiddenProducts} product{sub.data!.hiddenProducts > 1 ? "s are" : " is"}</strong>{" "}
+                hidden from your shop because they&apos;re over your plan&apos;s product limit
+                {sub.data?.downgradedFromPlanId ? " after your paid plan wasn't renewed" : ""}. Renew or upgrade and
+                they&apos;ll show to customers again right away.
+              </span>
+            </div>
+          )}
 
           {manualRequests.data?.some((r) => r.status === "pending" && r.purpose !== "boost") && (
             <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
@@ -434,6 +477,7 @@ export default function PlanPage() {
                 </span>
               </span>
             </button>
+            <PaymentHelpLink className="pt-2" />
           </div>
         </Modal>
       )}

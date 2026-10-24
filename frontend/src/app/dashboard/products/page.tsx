@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
-import { Button, Card, TableSkeleton, EmptyState, Modal } from "@/components/ui";
+import { Badge, Button, Card, TableSkeleton, EmptyState, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import {
   ModerationBadge,
@@ -63,6 +63,17 @@ export default function ProductsPage() {
           </Button>
         }
       />
+
+      {list.some((p) => p.hiddenOverPlanLimit) && (
+        <Card className="mb-4 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <strong>{list.filter((p) => p.hiddenOverPlanLimit).length} product(s)</strong> are hidden from your shop
+          because they&apos;re over your plan&apos;s product limit — only you can see them.{" "}
+          <a href="/dashboard/plan" className="font-medium underline">
+            Renew or upgrade
+          </a>{" "}
+          to show them to customers again.
+        </Card>
+      )}
 
       {atLimit && (
         <Card className="mb-4 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
@@ -131,8 +142,9 @@ export default function ProductsPage() {
                 <div className="col-span-2">
                   <StockBadge status={p.stockStatus} />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 flex flex-wrap gap-1">
                   <ModerationBadge status={p.moderationStatus} />
+                  {p.hiddenOverPlanLimit && <Badge tone="amber">Hidden · over plan limit</Badge>}
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
                   <button

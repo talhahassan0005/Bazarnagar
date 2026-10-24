@@ -5,6 +5,7 @@ import { Navigation } from "lucide-react";
 import { Card, CardBody, CardHeader, Button, Input, Select, Textarea, Toggle } from "@/components/ui";
 import { ImageUpload } from "./ImageUpload";
 import { CATEGORIES } from "@/lib/constants";
+import { SOCIALS } from "@/lib/socials";
 import { CitySelect } from "./CitySelect";
 import { slugify } from "@/lib/utils";
 import type { Store } from "@/lib/types";
@@ -26,7 +27,7 @@ const EMPTY: StoreFormValues = {
   isOpen: true,
   logoUrl: "",
   coverUrl: "",
-  socials: { instagram: "", facebook: "", tiktok: "" },
+  socials: {},
   deliveryInfo: "",
   paymentInfo: "",
 };
@@ -201,28 +202,31 @@ export function StoreProfileForm({
         </CardBody>
       </Card>
 
-      {/* Social + extra info */}
+      {/* Social links */}
       <Card>
-        <CardHeader title="Social & policies" subtitle="Optional links and shop info." />
+        <CardHeader
+          title="Social links"
+          subtitle="Add the ones you use — they show as icons on your shop, and you can see how many people tap each in Analytics."
+        />
         <CardBody className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Instagram"
-            value={v.socials?.instagram ?? ""}
-            placeholder="username"
-            onChange={(e) => set("socials", { ...v.socials, instagram: e.target.value })}
-          />
-          <Input
-            label="Facebook"
-            value={v.socials?.facebook ?? ""}
-            placeholder="page name"
-            onChange={(e) => set("socials", { ...v.socials, facebook: e.target.value })}
-          />
-          <Input
-            label="TikTok"
-            value={v.socials?.tiktok ?? ""}
-            placeholder="username"
-            onChange={(e) => set("socials", { ...v.socials, tiktok: e.target.value })}
-          />
+          {SOCIALS.map(({ key, label, icon: Icon, placeholder, className }) => (
+            <Input
+              key={key}
+              label={label}
+              value={v.socials?.[key] ?? ""}
+              placeholder={placeholder}
+              maxLength={200}
+              leftAddon={<Icon className={className} />}
+              onChange={(e) => set("socials", { ...v.socials, [key]: e.target.value })}
+            />
+          ))}
+        </CardBody>
+      </Card>
+
+      {/* Extra info */}
+      <Card>
+        <CardHeader title="Shop info" subtitle="Delivery, payment and opening status." />
+        <CardBody className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Delivery information"
             value={v.deliveryInfo ?? ""}
@@ -235,6 +239,14 @@ export function StoreProfileForm({
             placeholder="COD / bank transfer"
             onChange={(e) => set("paymentInfo", e.target.value)}
           />
+          <div className="sm:col-span-2">
+            <Toggle
+              label="We don't deliver"
+              description="Customers can't order online (no Add to cart / Buy now) — they'll contact you on WhatsApp instead. You can also turn off delivery for single products."
+              checked={v.noDelivery ?? false}
+              onChange={(val) => set("noDelivery", val)}
+            />
+          </div>
           <div className="sm:col-span-2">
             <Toggle
               label="Shop is open for orders"

@@ -1,5 +1,6 @@
 import { Schema, model, type Document, type Types } from "mongoose";
 import { baseSchemaOptions } from "./_base";
+import { SOCIAL_PLATFORMS, type SocialPlatform } from "./SocialClick";
 
 export type StoreStatus = "active" | "inactive" | "pending";
 export type StoreTheme = "brand" | "emerald" | "rose" | "amber" | "dark";
@@ -48,12 +49,17 @@ export interface StoreDoc extends Document {
   showLocation: boolean;
   showInSearch: boolean;
   isOpen: boolean;
-  socials?: { instagram?: string; facebook?: string; tiktok?: string };
+  /** Handles or links, keyed by platform (see SOCIAL_PLATFORMS). */
+  socials?: Partial<Record<SocialPlatform, string>>;
   deliveryInfo?: string;
+  /** Shop doesn't deliver: no online orders (cart / buy now) — customers contact on WhatsApp. */
+  noDelivery?: boolean;
   paymentInfo?: string;
   landing?: StoreLanding;
   payout?: StorePayout;
   status: StoreStatus;
+  /** Admin review queue: set when the store is created or edited. Missing = never queued. */
+  review?: StoreReview;
   views: number;
   whatsappClicks: number;
   addToCartClicks: number;
@@ -78,6 +84,27 @@ const landingSchema = new Schema<StoreLanding>(
     aboutTitle: String,
     aboutText: String,
     showContact: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
+/** Whether an admin still needs to check a newly created or edited store. */
+export interface StoreReview {
+  status: "pending" | "reviewed";
+  reason: "created" | "updated";
+  /** Store fields changed since the last review (empty for a new store). */
+  changes: string[];
+  requestedAt: Date;
+  reviewedAt?: Date;
+}
+
+const reviewSchema = new Schema<StoreReview>(
+  {
+    status: { type: String, enum: ["pending", "reviewed"], required: true },
+    reason: { type: String, enum: ["created", "updated"], required: true },
+    changes: { type: [String], default: [] },
+    requestedAt: { type: Date, required: true },
+    reviewedAt: Date,
   },
   { _id: false }
 );
@@ -112,15 +139,13 @@ const storeSchema = new Schema<StoreDoc>(
     showLocation: { type: Boolean, default: true },
     showInSearch: { type: Boolean, default: true },
     isOpen: { type: Boolean, default: true },
-    socials: {
-      instagram: String,
-      facebook: String,
-      tiktok: String,
-    },
+    socials: Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p, String])),
     deliveryInfo: String,
+    noDelivery: { type: Boolean, default: false },
     paymentInfo: String,
     landing: { type: landingSchema, default: undefined },
     payout: { type: payoutSchema, default: undefined },
+    review: { type: reviewSchema, default: undefined },
     status: {
       type: String,
       enum: ["active", "inactive", "pending"],

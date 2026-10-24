@@ -8,6 +8,7 @@ export interface EmailContent {
 }
 
 export const RESET_TTL_MINUTES = 30;
+export const VERIFY_TTL_HOURS = 24;
 
 /** Absolute link into the frontend, e.g. appLink("/dashboard"). */
 export function appLink(path: string): string {
@@ -60,6 +61,29 @@ export function resetPasswordEmail(name: string, link: string): EmailContent {
   };
 }
 
+export function verifyEmailEmail(name: string, link: string): EmailContent {
+  const footnote = `The link expires in ${VERIFY_TTL_HOURS} hours. If you didn't create a Bazaarnagar account, you can ignore this email.`;
+  return {
+    subject: "Verify your email to activate your Bazaarnagar shop",
+    text: [
+      `Hi ${name},`,
+      "",
+      "Thanks for signing up to sell on Bazaarnagar! Please confirm your email address to activate your account:",
+      link,
+      "",
+      footnote,
+    ].join("\n"),
+    html: layout({
+      heading: "Verify your email",
+      body: `<p>Hi ${escapeHtml(name)},</p>
+  <p>Thanks for signing up to sell on Bazaarnagar! Click the button below to confirm your email address and activate your seller account.</p>
+  <p style="font-size:13px;color:#64748b">Or copy this link into your browser:<br><a href="${link}" style="color:#e85d2c;word-break:break-all">${link}</a></p>`,
+      button: { label: "Verify my email", href: link },
+      footnote,
+    }),
+  };
+}
+
 export function welcomeSellerEmail(name: string): EmailContent {
   const dashboard = appLink("/dashboard");
   const steps = [
@@ -87,6 +111,75 @@ export function welcomeSellerEmail(name: string): EmailContent {
       body: `<p>Your seller account is ready, and you're on the <strong>free plan</strong>. Get your shop online in three steps:</p>
   ${listHtml(steps)}`,
       button: { label: "Go to your dashboard", href: dashboard },
+      footnote,
+    }),
+  };
+}
+
+export function planExpiryWarningEmail(o: {
+  name: string;
+  planName: string;
+  daysLeft: number;
+  freeLimit: number;
+  productCount: number;
+  warning: number;
+}): EmailContent {
+  const link = appLink("/dashboard/plan");
+  const days = o.daysLeft <= 1 ? "1 day" : `${o.daysLeft} days`;
+  const hidden = Math.max(o.productCount - o.freeLimit, 0);
+  const effect =
+    hidden > 0
+      ? `Only your first ${o.freeLimit} products will stay visible to customers; the other ${hidden} will be hidden from your shop until you renew.`
+      : `The Free plan allows up to ${o.freeLimit} products.`;
+  const footnote = "Already renewed? You can ignore this email.";
+  return {
+    subject: `${o.warning === 3 ? "Last reminder: " : ""}Your ${o.planName} plan has expired. Renew within ${days}`,
+    text: [
+      `Hi ${o.name},`,
+      "",
+      `Your Bazaarnagar ${o.planName} plan has expired. Please renew within ${days}, otherwise your shop will be moved to the Free plan.`,
+      effect,
+      "",
+      `Renew now: ${link}`,
+      "",
+      footnote,
+    ].join("\n"),
+    html: layout({
+      heading: `Your ${escapeHtml(o.planName)} plan has expired`,
+      body: `<p>Hi ${escapeHtml(o.name)},</p>
+  <p>Please renew within <strong>${days}</strong>, otherwise your shop will be moved to the <strong>Free plan</strong>.</p>
+  <p>${effect}</p>`,
+      button: { label: "Renew my plan", href: link },
+      footnote,
+    }),
+  };
+}
+
+export function planDowngradedEmail(o: { name: string; planName: string; freeLimit: number; hiddenCount: number }): EmailContent {
+  const link = appLink("/dashboard/plan");
+  const effect =
+    o.hiddenCount > 0
+      ? `Your first ${o.freeLimit} products are still live. The other ${o.hiddenCount} are hidden from customers (you can still see them in your dashboard) and will show again as soon as you renew.`
+      : "All your products are still live.";
+  const footnote = "Questions? Just reply to this email.";
+  return {
+    subject: "Your shop has moved to the Free plan",
+    text: [
+      `Hi ${o.name},`,
+      "",
+      `Your ${o.planName} plan wasn't renewed, so your shop is now on the Free plan.`,
+      effect,
+      "",
+      `Renew any time: ${link}`,
+      "",
+      footnote,
+    ].join("\n"),
+    html: layout({
+      heading: "Your shop is now on the Free plan",
+      body: `<p>Hi ${escapeHtml(o.name)},</p>
+  <p>Your <strong>${escapeHtml(o.planName)}</strong> plan wasn't renewed, so your shop has moved to the Free plan.</p>
+  <p>${effect}</p>`,
+      button: { label: "Renew my plan", href: link },
       footnote,
     }),
   };

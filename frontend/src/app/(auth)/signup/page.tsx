@@ -7,6 +7,7 @@ import { Button, Input, Select } from "@/components/ui";
 import { COUNTRY_OPTIONS, DEFAULT_COUNTRY } from "@/lib/countries";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
+import { VerifyEmailNotice } from "@/components/auth/VerifyEmailNotice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { useSignupSellerMutation, useSignupCustomerMutation } from "@/store/apiSlice";
@@ -37,14 +38,15 @@ function SignupForm() {
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState<string>(DEFAULT_COUNTRY);
   const [password, setPassword] = useState("");
+  /** Set once a seller signs up: they verify by email before logging in. */
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       if (role === "seller") {
-        await signupSeller({ name, phone, email, country, password }).unwrap();
-        dispatch(addToast("Account created — let's set up your store.", "success"));
-        router.push("/dashboard/store");
+        const res = await signupSeller({ name, phone, email, country, password }).unwrap();
+        setSentTo(res.email);
       } else {
         await signupCustomer({ name, phone, email, country, password }).unwrap();
         dispatch(addToast("Account created!", "success"));
@@ -53,6 +55,19 @@ function SignupForm() {
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Signup failed"), "error"));
     }
+  }
+
+  if (sentTo) {
+    return (
+      <AuthCard
+        title="Verify your email"
+        subtitle="One last step to activate your seller account."
+        icon={<UserPlus className="h-5 w-5" />}
+        footer={{ text: "Already verified?", linkText: "Log in", href: "/login?role=seller" }}
+      >
+        <VerifyEmailNotice email={sentTo} />
+      </AuthCard>
+    );
   }
 
   return (

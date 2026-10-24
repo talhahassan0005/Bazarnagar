@@ -73,7 +73,7 @@ const FEATURES = [
   {
     icon: ImagePlus,
     title: "Product gallery",
-    desc: "Upload multiple photos per product (depending on your plan). Paid plans also support product videos.",
+    desc: `Upload up to ${PLANS.starter.imageLimit} photos per product on the Free plan, or up to ${PLANS.basic.imageLimit} on paid plans.`,
   },
   {
     icon: Star,

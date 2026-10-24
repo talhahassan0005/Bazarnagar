@@ -13,6 +13,7 @@ import { ChatWidget } from "@/components/domain/ChatWidget";
 import { StarRating } from "@/components/storefront/StarRating";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButtons";
+import { canOrderOnline } from "@/lib/cart";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { CodNotice } from "@/components/domain/CodNotice";
 import {
@@ -67,7 +68,7 @@ export default function ProductDetailPage() {
             <Badge tone="brand">{product.category}</Badge>
             <StockBadge status={product.stockStatus} />
             {product.negotiable && <Badge tone="amber">Negotiable</Badge>}
-            <DeliveryBadge option={product.deliveryOption} fee={product.deliveryFee} />
+            <DeliveryBadge option={store.noDelivery ? "not_available" : product.deliveryOption} fee={product.deliveryFee} />
             {product.condition && (
               <Badge tone="gray" className="capitalize">
                 {product.condition}
@@ -166,20 +167,36 @@ export default function ProductDetailPage() {
             <ChevronRight className="h-4 w-4 text-slate-400" />
           </Link>
 
-          <div className="mt-6 space-y-3">
-            <BuyNowButton product={product} store={store} fullWidth />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <AddToCartButton product={product} store={store} size="lg" fullWidth />
+          {canOrderOnline(product, store) ? (
+            <div className="mt-6 space-y-3">
+              <BuyNowButton product={product} store={store} fullWidth />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <AddToCartButton product={product} store={store} size="lg" fullWidth />
+                <WhatsAppButton
+                  product={product}
+                  store={store}
+                  size="lg"
+                  fullWidth
+                  label={product.negotiable ? "Negotiate on WhatsApp" : "Inquire on WhatsApp"}
+                />
+              </div>
+              <CodNotice compact />
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3">
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <span className="font-semibold text-slate-800">No delivery.</span> This item can&apos;t be ordered
+                online — contact the seller on WhatsApp to buy it or arrange pickup.
+              </p>
               <WhatsAppButton
                 product={product}
                 store={store}
                 size="lg"
                 fullWidth
-                label={product.negotiable ? "Negotiate on WhatsApp" : "Inquire on WhatsApp"}
+                label={product.negotiable ? "Negotiate on WhatsApp" : "Contact seller on WhatsApp"}
               />
             </div>
-            <CodNotice compact />
-          </div>
+          )}
         </div>
       </div>
 

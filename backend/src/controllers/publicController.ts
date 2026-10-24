@@ -7,9 +7,10 @@ import { asyncHandler } from "../lib/helpers";
 import { ratingSummary } from "./reviewController";
 import { withoutStats } from "../lib/publicJson";
 import { SearchLog, SEARCH_LOG_MAX_PRODUCTS } from "../models/SearchLog";
+import { SocialClick, SOCIAL_PLATFORMS } from "../models/SocialClick";
 
 /** Only products customers may see publicly (SRS §7). */
-const PUBLIC_PRODUCT_FILTER = { status: "active", moderationStatus: "approved" } as const;
+const PUBLIC_PRODUCT_FILTER = { status: "active", moderationStatus: "approved", hiddenOverPlanLimit: { $ne: true } } as const;
 
 /** Sort actively-boosted (featured) products first, then newest. */
 function boostFirst(a: ProductDoc, b: ProductDoc): number {
@@ -103,7 +104,8 @@ export const getProduct = asyncHandler(async (req: Request, res: Response) => {
   // Unapproved/inactive products are only visible to their own seller or an
   // admin (e.g. previewing/editing before approval) — never to the public,
   // so a stray direct link can't expose a rejected/pending listing.
-  const isPublic = product.status === "active" && product.moderationStatus === "approved";
+  const isPublic =
+    product.status === "active" && product.moderationStatus === "approved" && !product.hiddenOverPlanLimit;
   const isOwner = req.user?.role === "seller" && store?.sellerId.toString() === req.user.id;
   const isAdmin = req.user?.role === "admin";
   if (!isPublic && !isOwner && !isAdmin) return res.json(null);
@@ -254,6 +256,23 @@ export const trackStoreWhatsappClick = asyncHandler(async (req: Request, res: Re
   const store = await Store.findOne({ _id: req.params.id, status: "active" }).select("sellerId");
   if (store && !isOwnerOrAdmin(req, store.sellerId)) {
     await Store.updateOne({ _id: store._id }, { $inc: { whatsappClicks: 1 } });
+  }
+  res.json({ ok: true });
+});
+
+const socialClickSchema = z.object({ platform: z.enum(SOCIAL_PLATFORMS) });
+
+/**
+ * POST /api/public/stores/:id/social-click — a shopper tapped one of the shop's
+ * social links. Logged with the time so sellers see clicks by day; only links
+ * the shop actually shows are counted, and not the seller's own or admin taps.
+ */
+export const trackSocialClick = asyncHandler(async (req: Request, res: Response) => {
+  const { platform } = socialClickSchema.parse(req.body);
+  if (!isValidObjectId(req.params.id)) return res.json({ ok: true });
+  const store = await Store.findOne({ _id: req.params.id, status: "active" }).select("sellerId socials");
+  if (store && store.socials?.[platform] && !isOwnerOrAdmin(req, store.sellerId)) {
+    await SocialClick.create({ storeId: store._id, platform });
   }
   res.json({ ok: true });
 });

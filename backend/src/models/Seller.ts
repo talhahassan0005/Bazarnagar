@@ -18,6 +18,8 @@ export interface SellerDoc extends Document {
   /** Picked at signup. Missing on accounts created before the field existed. */
   country?: string;
   passwordHash: string;
+  /** false until the seller clicks the emailed link. Missing on accounts from before verification existed (treated as verified). */
+  emailVerified?: boolean;
   status: SellerStatus;
   planId: PlanId;
   subscriptionStatus: SubscriptionStatus;
@@ -34,6 +36,10 @@ export interface SellerDoc extends Document {
   kycCnicBack?: string;
   kycSubmittedAt?: Date;
   kycRejectionReason?: string;
+  /** Plan-expiry warning emails sent since the plan expired (reset on renewal). */
+  expiryWarningsSent?: number;
+  /** Paid plan the seller was moved to Free from, when it lapsed. */
+  downgradedFromPlanId?: PlanId;
   createdAt: Date;
   comparePassword(plain: string): Promise<boolean>;
 }
@@ -45,6 +51,7 @@ const sellerSchema = new Schema<SellerDoc>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     country: { type: String, trim: true },
     passwordHash: { type: String, required: true },
+    emailVerified: Boolean,
     status: {
       type: String,
       enum: ["pending", "active", "inactive", "suspended"],
@@ -71,9 +78,30 @@ const sellerSchema = new Schema<SellerDoc>(
     kycCnicBack: { type: String },
     kycSubmittedAt: { type: Date },
     kycRejectionReason: { type: String },
+    expiryWarningsSent: { type: Number, default: 0 },
+    downgradedFromPlanId: { type: String },
   },
   baseSchemaOptions
 );
+
+// A plan change (upgrade, renewal, move to Free) re-checks which products are
+// public; a fresh active subscription clears old expiry warnings.
+sellerSchema.pre("save", function () {
+  this.$locals.planChanged = this.isModified("planId");
+  if (this.isModified("subscriptionStatus") && this.subscriptionStatus === "active" && this.planId !== "starter") {
+    this.expiryWarningsSent = 0;
+    this.downgradedFromPlanId = undefined;
+  }
+});
+sellerSchema.post("save", async function (doc) {
+  if (!doc.$locals.planChanged) return;
+  try {
+    const { syncPlanVisibility } = await import("../lib/planVisibility");
+    await syncPlanVisibility(doc);
+  } catch (err) {
+    console.error("Failed to sync product visibility:", err);
+  }
+});
 
 sellerSchema.methods.comparePassword = function (plain: string) {
   return bcrypt.compare(plain, this.passwordHash);

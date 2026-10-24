@@ -123,9 +123,13 @@ export function HomeCatalog() {
       {/* Inline category filter bar (sentinel) */}
       <section ref={filterBarRef} className="border-y border-slate-200 bg-white">
         <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-brand-900">Shop by category</h2>
-            <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold text-brand-900">Shop by category</h2>
+          {/* Near me / Advanced search sit on the same row as the chips */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="w-full min-w-0 md:w-auto md:flex-1">
+              <ChipBar />
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
               <Button variant={coords ? "primary" : "outline"} size="sm" loading={locating}
                 leftIcon={<Navigation className="h-4 w-4" />} onClick={nearMe}>
                 {coords ? "Showing nearby" : "Near me"}
@@ -134,9 +138,6 @@ export function HomeCatalog() {
                 Advanced search →
               </Link>
             </div>
-          </div>
-          <div className="mt-4">
-            <ChipBar />
           </div>
           {geoError && <p className="mt-3 text-xs font-medium text-red-500">{geoError}</p>}
           {coords && !geoError && (

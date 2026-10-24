@@ -57,6 +57,12 @@ export function formatPrice(value: number): string {
   return `Rs. ${value.toLocaleString("en-PK")}`;
 }
 
+/** US-dollar price, e.g. 7 -> "$7", 7.5 -> "$7.50". */
+export function formatUsd(value: number): string {
+  const cents = Number.isInteger(value) ? 0 : 2;
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: cents, maximumFractionDigits: 2 })}`;
+}
+
 /** Human-readable file size, e.g. 1536 -> "1.5 KB". */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

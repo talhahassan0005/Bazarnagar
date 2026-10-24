@@ -21,7 +21,11 @@ import type {
   DataSummary,
   SearchInsights,
   SearchLogPage,
+  SocialClickPeriod,
+  SocialClickReport,
+  AdminSocialClickRow,
   StorageUsage,
+  StoreReviewItem,
   ManualPaymentSettings,
   ModerationStatus,
   Order,
@@ -32,6 +36,8 @@ import type {
   PaymentRequestStatus,
   Plan,
   PlanId,
+  PlanConfigInput,
+  SubscriptionSettings,
   Product,
   ProductReviews,
   ProductWithStore,
@@ -45,6 +51,7 @@ import type {
   StorePayout,
   SubscriptionStatus,
 } from "@/lib/types";
+import type { SocialPlatform } from "@/lib/socials";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -81,8 +88,15 @@ export const apiSlice = createApi({
     loginSeller: builder.mutation<SellerAuthResponse, { email: string; password: string }>({
       query: (body) => ({ url: "/auth/login", method: "POST", body }),
     }),
-    signupSeller: builder.mutation<SellerAuthResponse, SignupInput>({
+    /** No session yet: the seller must click the emailed verification link. */
+    signupSeller: builder.mutation<{ needsVerification: true; email: string }, SignupInput>({
       query: (body) => ({ url: "/auth/signup", method: "POST", body }),
+    }),
+    verifyEmail: builder.mutation<SellerAuthResponse, { token: string }>({
+      query: (body) => ({ url: "/auth/verify-email", method: "POST", body }),
+    }),
+    resendVerification: builder.mutation<{ ok: true }, { email: string }>({
+      query: (body) => ({ url: "/auth/resend-verification", method: "POST", body }),
     }),
     loginAdmin: builder.mutation<AdminAuthResponse, { email: string; password: string }>({
       query: (body) => ({ url: "/admin/login", method: "POST", body }),
@@ -136,6 +150,9 @@ export const apiSlice = createApi({
       providesTags: ["Product"],
     }),
 
+    trackSocialClick: builder.mutation<{ ok: boolean }, { storeId: string; platform: SocialPlatform }>({
+      query: ({ storeId, platform }) => ({ url: `/public/stores/${storeId}/social-click`, method: "POST", body: { platform } }),
+    }),
     trackButtonClick: builder.mutation<{ ok: boolean }, { productId: string; button: "add_to_cart" | "buy_now" }>({
       query: ({ productId, button }) => ({
         url: `/public/products/${productId}/button-click`,
@@ -244,6 +261,9 @@ export const apiSlice = createApi({
       query: () => "/seller/products",
       providesTags: ["Product"],
     }),
+    getMySocialClicks: builder.query<SocialClickReport, SocialClickPeriod>({
+      query: (days) => ({ url: "/seller/social-clicks", params: { days } }),
+    }),
     getDashboardMetrics: builder.query<DashboardMetrics, void>({
       query: () => "/seller/dashboard",
       providesTags: ["Product"],
@@ -298,6 +318,9 @@ export const apiSlice = createApi({
       autoRenew: boolean;
       daysRemaining: number;
       hasCardToken: boolean;
+      downgradeAt: string | null;
+      hiddenProducts: number;
+      downgradedFromPlanId: PlanId | null;
     }, void>({
       query: () => "/seller/subscription/status",
       providesTags: ["Seller"],
@@ -374,6 +397,12 @@ export const apiSlice = createApi({
     getSearchInsights: builder.query<SearchInsights, "7" | "30" | "all">({
       query: (days) => ({ url: "/admin/search-insights", params: { days } }),
     }),
+    getAdminSocialClicks: builder.query<AdminSocialClickRow[], SocialClickPeriod>({
+      query: (days) => ({ url: "/admin/social-clicks", params: { days } }),
+    }),
+    getStoreSocialClicks: builder.query<SocialClickReport, { storeId: string; days: SocialClickPeriod }>({
+      query: ({ storeId, days }) => ({ url: `/admin/stores/${storeId}/social-clicks`, params: { days } }),
+    }),
     getStorageUsage: builder.query<StorageUsage, "paid" | "all">({
       query: (scope) => ({ url: "/admin/storage", params: { scope } }),
     }),
@@ -387,6 +416,14 @@ export const apiSlice = createApi({
     }),
     updateStoreStatus: builder.mutation<Store, { id: string; status: StoreStatus }>({
       query: ({ id, status }) => ({ url: `/admin/stores/${id}`, method: "PATCH", body: { status } }),
+      invalidatesTags: ["Store"],
+    }),
+    getStoreReviews: builder.query<StoreReviewItem[], "pending" | "reviewed">({
+      query: (status) => ({ url: "/admin/store-reviews", params: { status } }),
+      providesTags: ["Store"],
+    }),
+    markStoreReviewed: builder.mutation<Store, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/review`, method: "PATCH" }),
       invalidatesTags: ["Store"],
     }),
     getSellerPayments: builder.query<Payment[], string>({
@@ -409,12 +446,21 @@ export const apiSlice = createApi({
     // ── Admin Plan Config ─────────────────────────────────────────────────
     getPublicPlanConfig: builder.query<Plan[], void>({
       query: () => "/public/plans",
+      providesTags: ["Seller"],
+    }),
+    getSubscriptionSettings: builder.query<SubscriptionSettings, void>({
+      query: () => "/admin/subscription-settings",
+      providesTags: ["Seller"],
+    }),
+    updateSubscriptionSettings: builder.mutation<SubscriptionSettings, SubscriptionSettings>({
+      query: (body) => ({ url: "/admin/subscription-settings", method: "PATCH", body }),
+      invalidatesTags: ["Seller"],
     }),
     getAdminPlanConfig: builder.query<Plan[], void>({
       query: () => "/admin/plan-config",
       providesTags: ["Seller"],
     }),
-    updateAdminPlanConfig: builder.mutation<Plan, { planId: PlanId; price: number; productLimit: number; imageLimit: number; videoLimit: number; enabled?: boolean }>({
+    updateAdminPlanConfig: builder.mutation<Plan, PlanConfigInput>({
       query: (body) => ({ url: "/admin/plan-config", method: "PATCH", body }),
       invalidatesTags: ["Seller"],
     }),
@@ -487,7 +533,7 @@ export function setupAuthListeners(startListening: AppStartListening) {
   });
 
   startListening({
-    matcher: apiSlice.endpoints.signupSeller.matchFulfilled,
+    matcher: apiSlice.endpoints.verifyEmail.matchFulfilled,
     effect: (action, api) => {
       setToken(action.payload.token);
       api.dispatch(setSellerSession(action.payload.seller));
@@ -531,6 +577,8 @@ export function setupAuthListeners(startListening: AppStartListening) {
 export const {
   useLoginSellerMutation,
   useSignupSellerMutation,
+  useVerifyEmailMutation,
+  useResendVerificationMutation,
   useLoginAdminMutation,
   useLoginCustomerMutation,
   useSignupCustomerMutation,
@@ -600,15 +648,23 @@ export const {
   useGetStorageUsageQuery,
   useGetSearchInsightsQuery,
   useGetSearchLogsQuery,
+  useTrackSocialClickMutation,
+  useGetMySocialClicksQuery,
+  useGetAdminSocialClicksQuery,
+  useGetStoreSocialClicksQuery,
   useModerateProductMutation,
   useUpdateSellerMutation,
   useUpdateStoreStatusMutation,
+  useGetStoreReviewsQuery,
+  useMarkStoreReviewedMutation,
   useGetSellerPaymentsQuery,
   useRecordPaymentMutation,
   useGetAllReviewsQuery,
   useModerateReviewMutation,
   useGetAdminPlanConfigQuery,
   useUpdateAdminPlanConfigMutation,
+  useGetSubscriptionSettingsQuery,
+  useUpdateSubscriptionSettingsMutation,
   useGetAdminBoostConfigQuery,
   useUpdateAdminBoostConfigMutation,
   useGetPublicPlanConfigQuery,

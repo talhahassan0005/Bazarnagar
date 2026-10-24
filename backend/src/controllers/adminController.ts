@@ -14,7 +14,12 @@ import { UploadLog } from "../models/UploadLog";
 import { SearchLog } from "../models/SearchLog";
 import { Customer } from "../models/Customer";
 import { Order } from "../models/Order";
+import { SocialClick, SOCIAL_PLATFORMS } from "../models/SocialClick";
+import { sinceFilter, socialClickReport, socialClicksQuerySchema } from "../lib/socialClicks";
 import { PLANS } from "../lib/plans";
+import { syncPlanVisibility } from "../lib/planVisibility";
+import { getSubscriptionSettings } from "../lib/subscriptionSettings";
+import { Settings } from "../models/Settings";
 import { addBillingPeriod } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
 import { env } from "../config/env";
@@ -429,6 +434,7 @@ export const updateSeller = asyncHandler(async (req: Request, res: Response) => 
   const data = updateSellerSchema.parse(req.body);
   const seller = await Seller.findByIdAndUpdate(req.params.id, data, { new: true });
   if (!seller) throw new ApiError(404, "Seller not found");
+  if (data.planId) await syncPlanVisibility(seller);
   // Approving clears any earlier rejection note.
   if (data.status === "active" && seller.kycRejectionReason) {
     seller.kycRejectionReason = undefined;
@@ -593,10 +599,21 @@ export const getPlanConfig = asyncHandler(async (_req: Request, res: Response) =
   const saved = await PlanConfig.find();
   const savedById = new Map(saved.map((p) => [p.planId, p]));
   const result = Object.values(PLANS).map((plan) => {
-    const override = savedById.get(plan.id);
-    return override
-      ? { ...plan, price: override.price, productLimit: override.productLimit, imageLimit: override.imageLimit, videoLimit: override.videoLimit, enabled: override.enabled }
-      : { ...plan, enabled: true };
+    const o = savedById.get(plan.id);
+    return {
+      ...plan,
+      price: o?.price ?? plan.price,
+      productLimit: o?.productLimit ?? plan.productLimit,
+      imageLimit: o?.imageLimit ?? plan.imageLimit,
+      videoLimit: o?.videoLimit ?? plan.videoLimit,
+      enabled: o?.enabled ?? true,
+      priceUsd: o?.priceUsd ?? 0,
+      name: o?.name?.trim() || plan.name,
+      tagline: o?.tagline ?? "",
+      description: o?.description ?? "",
+      features: o?.features ?? [],
+      highlighted: o?.highlighted ?? false,
+    };
   });
   res.json(result);
 });
@@ -608,6 +625,12 @@ const planConfigSchema = z.object({
   imageLimit: z.number().int().positive(),
   videoLimit: z.number().int().min(0),
   enabled: z.boolean().optional(),
+  priceUsd: z.number().nonnegative().max(100000).optional(),
+  name: z.string().trim().max(40).optional(),
+  tagline: z.string().trim().max(60).optional(),
+  description: z.string().trim().max(400).optional(),
+  features: z.array(z.string().trim().min(1).max(120)).max(15).optional(),
+  highlighted: z.boolean().optional(),
 });
 
 /** PATCH /api/admin/plan-config — upsert a plan's config. */
@@ -618,6 +641,10 @@ export const updatePlanConfig = asyncHandler(async (req: Request, res: Response)
     { ...data, enabled: data.enabled ?? true },
     { upsert: true, new: true }
   );
+  // Only one plan is the "Recommended" card at a time.
+  if (data.highlighted) {
+    await PlanConfig.updateMany({ planId: { $ne: data.planId } }, { $set: { highlighted: false } });
+  }
   res.json(config.toJSON());
 });
 
@@ -915,4 +942,117 @@ export const exportAdminOrders = asyncHandler(async (req: Request, res: Response
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-orders-${stamp}.csv"`);
   res.send(`\uFEFF${csv}\r\n`);
+});
+
+/* ------------------------------ Store review ----------------------------- */
+
+const storeReviewQuerySchema = z.object({ status: z.enum(["pending", "reviewed"]).default("pending") });
+
+/**
+ * GET /api/admin/store-reviews?status=pending|reviewed — stores queued for a
+ * check after being created or edited (newest request first).
+ */
+export const getStoreReviews = asyncHandler(async (req: Request, res: Response) => {
+  const { status } = storeReviewQuerySchema.parse(req.query);
+  const stores = await Store.find({ "review.status": status }).sort(
+    status === "pending" ? { "review.requestedAt": -1 } : { "review.reviewedAt": -1 }
+  ).limit(200);
+  const sellers = await Seller.find({ _id: { $in: stores.map((s) => s.sellerId) } }).select("name email phone");
+  const sellerById = new Map(sellers.map((s) => [s.id, s]));
+  res.json(
+    stores.map((s) => {
+      const seller = sellerById.get(String(s.sellerId));
+      return {
+        ...s.toJSON(),
+        sellerName: seller?.name ?? "Unknown seller",
+        sellerEmail: seller?.email ?? "",
+        sellerPhone: seller?.phone ?? "",
+      };
+    })
+  );
+});
+
+/** PATCH /api/admin/stores/:id/review — mark a queued store as checked. */
+export const markStoreReviewed = asyncHandler(async (req: Request, res: Response) => {
+  const store = await Store.findById(req.params.id);
+  if (!store) throw new ApiError(404, "Store not found");
+  if (store.review?.status !== "pending") throw new ApiError(400, "This store isn't waiting for review");
+  store.review = { ...store.review, status: "reviewed", reviewedAt: new Date() };
+  await store.save();
+  res.json(store.toJSON());
+});
+
+/**
+ * GET /api/admin/social-clicks?days=7|30|90|all — every store that has social
+ * links (or got clicks), with its clicks per platform; most clicked first.
+ */
+export const getSocialClicksByStore = asyncHandler(async (req: Request, res: Response) => {
+  const { days } = socialClicksQuerySchema.parse(req.query);
+  const rows: { _id: { storeId: unknown; platform: string }; n: number; last: Date }[] = await SocialClick.aggregate([
+    { $match: sinceFilter(days) },
+    { $group: { _id: { storeId: "$storeId", platform: "$platform" }, n: { $sum: 1 }, last: { $max: "$createdAt" } } },
+  ]);
+  const clicks = new Map<string, { totals: Record<string, number>; total: number; lastClickAt?: Date }>();
+  for (const { _id, n, last } of rows) {
+    const c = clicks.get(String(_id.storeId)) ?? { totals: {}, total: 0 };
+    c.totals[_id.platform] = n;
+    c.total += n;
+    if (!c.lastClickAt || last > c.lastClickAt) c.lastClickAt = last;
+    clicks.set(String(_id.storeId), c);
+  }
+
+  const hasSocials = SOCIAL_PLATFORMS.map((p) => ({ [`socials.${p}`]: { $nin: [null, ""] } }));
+  const stores = await Store.find({ $or: [{ _id: { $in: [...clicks.keys()] } }, ...hasSocials] }).select(
+    "name slug sellerId socials"
+  );
+  const sellers = await Seller.find({ _id: { $in: stores.map((s) => s.sellerId) } }).select("name email");
+  const sellerById = new Map(sellers.map((s) => [s.id, s]));
+
+  res.json(
+    stores
+      .map((s) => {
+        const seller = sellerById.get(String(s.sellerId));
+        const c = clicks.get(s.id);
+        return {
+          id: s.id,
+          storeId: s.id,
+          storeName: s.name,
+          storeSlug: s.slug,
+          sellerName: seller?.name ?? "Unknown seller",
+          sellerEmail: seller?.email ?? "",
+          platforms: SOCIAL_PLATFORMS.filter((p) => s.socials?.[p]),
+          total: c?.total ?? 0,
+          totals: c?.totals ?? {},
+          lastClickAt: c?.lastClickAt,
+        };
+      })
+      .sort((a, b) => b.total - a.total || a.storeName.localeCompare(b.storeName))
+  );
+});
+
+/** GET /api/admin/stores/:id/social-clicks?days=… — one store's social link clicks by day. */
+export const getStoreSocialClicks = asyncHandler(async (req: Request, res: Response) => {
+  const { days } = socialClicksQuerySchema.parse(req.query);
+  const store = await Store.findById(req.params.id).select("_id");
+  if (!store) throw new ApiError(404, "Store not found");
+  res.json(await socialClickReport(String(store._id), days));
+});
+
+/* ------------------------- Subscription settings ------------------------- */
+
+/** GET /api/admin/subscription-settings — what happens when a paid plan expires. */
+export const getSubscriptionSettingsHandler = asyncHandler(async (_req: Request, res: Response) => {
+  res.json(await getSubscriptionSettings());
+});
+
+const subscriptionSettingsSchema = z.object({
+  downgradeAfterExpiry: z.boolean(),
+  graceDays: z.number().int().min(1).max(60),
+});
+
+/** PATCH /api/admin/subscription-settings */
+export const updateSubscriptionSettings = asyncHandler(async (req: Request, res: Response) => {
+  const data = subscriptionSettingsSchema.parse(req.body);
+  await Settings.findOneAndUpdate({ key: "subscription" }, { $set: data }, { upsert: true });
+  res.json(await getSubscriptionSettings());
 });

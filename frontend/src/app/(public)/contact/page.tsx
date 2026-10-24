@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { CopyEmailButton } from "@/components/domain/CopyEmailButton";
+import { PaymentHelpBox } from "@/components/domain/PaymentHelpBox";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SITE_PHONE_DISPLAY } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -75,6 +77,11 @@ export default function ContactPage() {
       </section>
 
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
+        {/* Payment help — only when arriving from a payment screen (?topic=payment) */}
+        <Suspense>
+          <PaymentHelpBox />
+        </Suspense>
+
         {/* Contact options */}
         <div className="grid gap-5 md:grid-cols-2">
           <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md sm:p-8">

@@ -262,7 +262,7 @@ export function ProductForm({
             onChange={(e) => set("deliveryOption", e.target.value as ProductFormValues["deliveryOption"])}
             options={[
               { value: "available", label: "Available" },
-              { value: "not_available", label: "Not available" },
+              { value: "not_available", label: "No delivery (WhatsApp only, no online orders)" },
               { value: "negotiable", label: "Negotiable" },
             ]}
           />

@@ -22,7 +22,7 @@ export function errorHandler(
   }
 
   if (err instanceof ApiError) {
-    return res.status(err.status).json({ error: err.message });
+    return res.status(err.status).json({ error: err.message, ...(err.code && { code: err.code }) });
   }
 
   // Zod request-validation error → clean 400 with a readable message.

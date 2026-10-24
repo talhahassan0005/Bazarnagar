@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addItem } from "@/store/cartSlice";
 import { addToast } from "@/store/uiSlice";
 import { useTrackButtonClickMutation } from "@/store/apiSlice";
-import { buildCartItem } from "@/lib/cart";
+import { buildCartItem, canOrderOnline } from "@/lib/cart";
 import type { Product, Store } from "@/lib/types";
 
 const outOfStock = (p: Product) => p.stockStatus === "out_of_stock";
@@ -31,6 +31,8 @@ export function AddToCartButton({
   const isCustomer = useAppSelector((s) => s.auth.role === "customer");
   const [trackClick] = useTrackButtonClickMutation();
   const disabled = outOfStock(product);
+  // No delivery: ordering happens on WhatsApp instead.
+  if (!canOrderOnline(product, store)) return null;
 
   return (
     <Button
@@ -74,6 +76,7 @@ export function BuyNowButton({
   const isCustomer = useAppSelector((s) => s.auth.role === "customer");
   const [trackClick] = useTrackButtonClickMutation();
   const disabled = outOfStock(product);
+  if (!canOrderOnline(product, store)) return null;
 
   return (
     <Button

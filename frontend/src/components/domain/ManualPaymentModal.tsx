@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Landmark } from "lucide-react";
+import { Download, Landmark } from "lucide-react";
 import { Button, Input, Modal, Select } from "@/components/ui";
 import { ImageUpload } from "@/components/domain/ImageUpload";
+import { PaymentHelpLink } from "@/components/domain/PaymentHelpLink";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import {
@@ -19,36 +20,78 @@ export const PAYMENT_METHODS: { value: PaymentRequestMethod; label: string }[] =
   { value: "easypaisa", label: "EasyPaisa" },
 ];
 
-/** "Send Rs X to:" box listing the admin's bank / JazzCash / EasyPaisa details. */
+/** Platform JazzCash / Raast QR (frontend/public) and its till ID. */
+const JAZZCASH_QR = "/JazzCash-QR.jpeg";
+const JAZZCASH_TILL_ID = "983903291";
+
+/** Scan-to-pay JazzCash QR, with a download for paying from the same phone. */
+function JazzCashQr({ amount }: { amount: number | null }) {
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 sm:flex-row sm:items-start">
+      <a href={JAZZCASH_QR} target="_blank" rel="noopener noreferrer" className="shrink-0">
+        <img
+          src={JAZZCASH_QR}
+          alt="JazzCash QR code to pay Bazaar Nagar"
+          className="w-44 rounded-lg border border-amber-200 bg-white shadow-sm"
+        />
+      </a>
+      <div className="text-sm text-slate-700">
+        <p className="font-semibold text-slate-900">
+          Scan &amp; pay {amount != null ? formatPrice(amount) : ""}
+        </p>
+        <ol className="mt-2 list-decimal space-y-1 pl-4 text-slate-600">
+          <li>Open JazzCash (or any bank app with Raast QR) and scan this code.</li>
+          <li>Pay the exact amount and take a screenshot of the receipt.</li>
+          <li>Upload the screenshot below and submit — we&apos;ll activate your plan once it&apos;s verified.</li>
+        </ol>
+        <p className="mt-2 text-xs text-slate-500">
+          No QR scanner? Dial <strong>*786*10#</strong> and enter Till ID <strong>{JAZZCASH_TILL_ID}</strong>.
+        </p>
+        <a
+          href={JAZZCASH_QR}
+          download="BazaarNagar-JazzCash-QR.jpeg"
+          className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"
+        >
+          <Download className="h-3.5 w-3.5" /> Download QR (to scan from your gallery)
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/** QR code plus a "Send Rs X to:" box listing the admin's bank / JazzCash / EasyPaisa details. */
 export function PayToDetails({ amount }: { amount: number | null }) {
   const { data: settings, isLoading } = useGetManualPaymentSettingsQuery();
+  const hasDetails = Boolean(settings?.bankAccountNumber || settings?.jazzcashNumber || settings?.easypaisaNumber);
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
-      <p className="mb-2 flex items-center gap-1.5 font-medium text-slate-700">
-        <Landmark className="h-4 w-4" /> Send {amount != null ? formatPrice(amount) : "—"} to:
-      </p>
-      {isLoading ? (
-        <p className="text-slate-400">Loading payment details…</p>
-      ) : settings ? (
-        <ul className="space-y-1 text-slate-600">
-          {settings.bankAccountNumber && (
-            <li>
-              <span className="text-slate-400">Bank:</span> {settings.bankName} —{" "}
-              {settings.bankAccountTitle} — {settings.bankAccountNumber}
-            </li>
-          )}
-          {settings.jazzcashNumber && (
-            <li><span className="text-slate-400">JazzCash:</span> {settings.jazzcashNumber}</li>
-          )}
-          {settings.easypaisaNumber && (
-            <li><span className="text-slate-400">EasyPaisa:</span> {settings.easypaisaNumber}</li>
-          )}
-          {settings.instructions && <li className="pt-1 text-xs text-slate-500">{settings.instructions}</li>}
-          {!settings.bankAccountNumber && !settings.jazzcashNumber && !settings.easypaisaNumber && (
-            <li className="text-amber-600">Payment details haven&apos;t been set up yet — please contact support.</li>
-          )}
-        </ul>
-      ) : null}
+    <div className="space-y-3">
+      <JazzCashQr amount={amount} />
+      {(isLoading || hasDetails) && (
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
+          <p className="mb-2 flex items-center gap-1.5 font-medium text-slate-700">
+            <Landmark className="h-4 w-4" /> Or send {amount != null ? formatPrice(amount) : "—"} to:
+          </p>
+          {isLoading ? (
+            <p className="text-slate-400">Loading payment details…</p>
+          ) : settings ? (
+            <ul className="space-y-1 text-slate-600">
+              {settings.bankAccountNumber && (
+                <li>
+                  <span className="text-slate-400">Bank:</span> {settings.bankName} —{" "}
+                  {settings.bankAccountTitle} — {settings.bankAccountNumber}
+                </li>
+              )}
+              {settings.jazzcashNumber && (
+                <li><span className="text-slate-400">JazzCash:</span> {settings.jazzcashNumber}</li>
+              )}
+              {settings.easypaisaNumber && (
+                <li><span className="text-slate-400">EasyPaisa:</span> {settings.easypaisaNumber}</li>
+              )}
+              {settings.instructions && <li className="pt-1 text-xs text-slate-500">{settings.instructions}</li>}
+            </ul>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
@@ -67,7 +110,7 @@ export function ManualPaymentModal({
   const [createRequest, { isLoading: submitting }] = useCreatePaymentRequestMutation();
 
   const [planId, setPlanId] = useState<PlanId>(defaultPlanId);
-  const [method, setMethod] = useState<PaymentRequestMethod>("bank");
+  const [method, setMethod] = useState<PaymentRequestMethod>("jazzcash");
   const [reference, setReference] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -80,8 +123,12 @@ export function ManualPaymentModal({
       dispatch(addToast("Enter the transaction ID / reference number", "error"));
       return;
     }
+    if (!proofUrl) {
+      dispatch(addToast("Upload a screenshot of your payment receipt", "error"));
+      return;
+    }
     try {
-      await createRequest({ planId, method, reference: reference.trim(), proofUrl: proofUrl || undefined }).unwrap();
+      await createRequest({ planId, method, reference: reference.trim(), proofUrl }).unwrap();
       setSubmitted(true);
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Could not submit payment request"), "error"));
@@ -140,10 +187,11 @@ export function ManualPaymentModal({
           onChange={(e) => setReference(e.target.value)}
         />
         <ImageUpload
-          label="Payment screenshot (optional)"
+          label="Payment receipt (screenshot) *"
           value={proofUrl}
           onChange={setProofUrl}
         />
+        <PaymentHelpLink className="pt-1" />
       </form>
     </Modal>
   );

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Heart, Info, LogOut, MessageCircle, PackageSearch, Search, Store as StoreIcon } from "lucide-react";
+import { ArrowRight, Heart, LogOut, MessageCircle, PackageSearch, Search, Store as StoreIcon, Tag } from "lucide-react";
 import { Logo } from "./Logo";
 import { CartLink } from "./CartLink";
 import { Button } from "@/components/ui";
@@ -55,10 +55,10 @@ export function PublicNavbar() {
             Products
           </Link>
           <Link
-            href="/about"
+            href="/pricing"
             className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 sm:inline-flex"
           >
-            About
+            Pricing
           </Link>
           {isCustomer && (
             <Link
@@ -99,11 +99,11 @@ export function PublicNavbar() {
             <StoreIcon className="h-5 w-5" />
           </Link>
           <Link
-            href="/about"
+            href="/pricing"
             className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 sm:hidden"
-            aria-label="About"
+            aria-label="Pricing"
           >
-            <Info className="h-5 w-5" />
+            <Tag className="h-5 w-5" />
           </Link>
           {isCustomer && (
             <Link

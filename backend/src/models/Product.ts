@@ -36,6 +36,8 @@ export interface ProductDoc extends Document {
   moderationReason?: string;
   /** Paid "boost" — product is featured while this date is in the future. */
   boostedUntil?: Date;
+  /** Over the seller's plan product limit (e.g. moved to Free): hidden from the public, still shown to the seller. */
+  hiddenOverPlanLimit?: boolean;
   views: number;
   whatsappClicks: number;
   addToCartClicks: number;
@@ -78,6 +80,7 @@ const productSchema = new Schema<ProductDoc>(
     },
     moderationReason: String,
     boostedUntil: { type: Date, index: true },
+    hiddenOverPlanLimit: { type: Boolean, default: false, index: true },
     views: { type: Number, default: 0 },
     whatsappClicks: { type: Number, default: 0 },
     addToCartClicks: { type: Number, default: 0 },

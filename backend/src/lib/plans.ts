@@ -24,6 +24,20 @@ export function getPlan(planId: PlanId): Plan {
   return PLANS[planId] ?? PLANS.starter;
 }
 
+/** The plan's current monthly PKR price, including the admin's Plan Settings override. */
+export async function getLivePlanPrice(planId: PlanId): Promise<number> {
+  const { PlanConfig } = await import("../models/PlanConfig");
+  const override = await PlanConfig.findOne({ planId }).select("price").lean();
+  return override?.price ?? getPlan(planId).price;
+}
+
+/** The plan's current product limit, including the admin's Plan Settings override. */
+export async function getLivePlanLimit(planId: PlanId): Promise<number> {
+  const { PlanConfig } = await import("../models/PlanConfig");
+  const override = await PlanConfig.findOne({ planId }).select("productLimit").lean();
+  return override?.productLimit ?? getPlan(planId).productLimit;
+}
+
 /* ----------------------------- Subscriptions ----------------------------- */
 
 /** Length of one billing cycle (monthly). */

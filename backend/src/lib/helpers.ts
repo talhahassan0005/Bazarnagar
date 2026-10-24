@@ -10,9 +10,12 @@ export const asyncHandler =
 /** A typed HTTP error the error middleware turns into a JSON response. */
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Optional machine-readable reason the frontend can act on, e.g. "EMAIL_NOT_VERIFIED". */
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 

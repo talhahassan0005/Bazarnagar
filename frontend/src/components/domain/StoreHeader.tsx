@@ -1,6 +1,4 @@
 import {
-  AtSign,
-  Globe,
   MapPin,
   Navigation,
   Truck,
@@ -10,6 +8,7 @@ import { Badge, Button } from "@/components/ui";
 import { StoreMap } from "@/components/storefront/StoreMap";
 import { ShareStoreButton } from "@/components/domain/ShareStoreButton";
 import { StoreWhatsAppButton } from "@/components/storefront/StoreWhatsAppLink";
+import { StoreSocialLinks } from "@/components/storefront/StoreSocialLinks";
 import type { Store } from "@/lib/types";
 
 /** Public shop page header (SRS §7.1). */
@@ -85,27 +84,9 @@ export function StoreHeader({ store }: { store: Store }) {
               <Wallet className="h-3.5 w-3.5" /> {store.paymentInfo}
             </span>
           )}
-          {store.socials?.instagram && (
-            <a
-              href={`https://instagram.com/${store.socials.instagram}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200"
-            >
-              <AtSign className="h-3.5 w-3.5" /> Instagram
-            </a>
-          )}
-          {store.socials?.facebook && (
-            <a
-              href={`https://facebook.com/${store.socials.facebook}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200"
-            >
-              <Globe className="h-3.5 w-3.5" /> Facebook
-            </a>
-          )}
         </div>
+
+        <StoreSocialLinks store={store} className="mt-4" />
 
         {store.showLocation && (store.lat != null || store.fullAddress || location) && (
           <div className="mt-4">

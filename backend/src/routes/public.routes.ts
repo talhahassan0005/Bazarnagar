@@ -10,6 +10,7 @@ import {
   trackWhatsappClick,
   trackStoreWhatsappClick,
   trackButtonClick,
+  trackSocialClick,
 } from "../controllers/publicController";
 import { createOrder, getOrdersByIds } from "../controllers/orderController";
 import {
@@ -37,6 +38,7 @@ router.get("/products/:id", optionalAuthenticate, getProduct);
 router.get("/products/:id/related", getRelatedProducts);
 router.post("/products/:id/whatsapp-click", optionalAuthenticate, trackWhatsappClick);
 router.post("/stores/:id/whatsapp-click", optionalAuthenticate, trackStoreWhatsappClick);
+router.post("/stores/:id/social-click", optionalAuthenticate, trackSocialClick);
 router.post("/products/:id/button-click", optionalAuthenticate, trackButtonClick);
 router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);

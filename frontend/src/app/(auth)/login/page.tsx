@@ -6,6 +6,7 @@ import { Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { RoleToggle, type AuthRole } from "@/components/auth/RoleToggle";
+import { VerifyEmailNotice } from "@/components/auth/VerifyEmailNotice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { useLoginSellerMutation, useLoginCustomerMutation } from "@/store/apiSlice";
@@ -33,9 +34,12 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  /** Seller whose email isn't verified yet: show the resend box instead of a toast. */
+  const [unverified, setUnverified] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setUnverified(null);
     try {
       if (role === "seller") {
         await loginSeller({ email, password }).unwrap();
@@ -47,6 +51,10 @@ function LoginForm() {
         router.push("/orders");
       }
     } catch (err) {
+      if ((err as { data?: { code?: string } })?.data?.code === "EMAIL_NOT_VERIFIED") {
+        setUnverified(email.trim().toLowerCase());
+        return;
+      }
       dispatch(addToast(getErrorMessage(err, "Login failed"), "error"));
     }
   }
@@ -63,6 +71,11 @@ function LoginForm() {
       }}
     >
       <RoleToggle role={role} onChange={setRole} />
+      {unverified && role === "seller" && (
+        <div className="mt-6">
+          <VerifyEmailNotice email={unverified} title="Verify your email to log in" />
+        </div>
+      )}
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <Input
           type="email"

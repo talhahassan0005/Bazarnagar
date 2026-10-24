@@ -19,6 +19,7 @@ import {
   boostProduct,
   getBoostPricingForSeller,
   getDashboard,
+  getMySocialClicks,
   submitKyc,
 } from "../controllers/sellerController";
 import { getSellerOrders, updateOrderStatus } from "../controllers/orderController";
@@ -51,6 +52,7 @@ router.post("/subscription/manual-request", createPaymentRequest);
 router.get("/subscription/manual-requests", getMyPaymentRequests);
 router.get("/payments", getMyPayments);
 router.get("/dashboard", getDashboard);
+router.get("/social-clicks", getMySocialClicks);
 
 router.get("/products", getMyProducts);
 router.post("/products", createProduct);

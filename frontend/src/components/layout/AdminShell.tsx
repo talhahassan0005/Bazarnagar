@@ -19,6 +19,8 @@ import {
   SearchCheck,
   ShoppingBag,
   ClipboardList,
+  ClipboardCheck,
+  Share2,
 } from "lucide-react";
 import { DashboardShell } from "./DashboardShell";
 import type { NavItem } from "./SidebarNav";
@@ -34,12 +36,14 @@ const NAV: NavItem[] = [
   { group: "Marketplace", label: "Products", href: "/admin/products", icon: Package },
   { group: "Marketplace", label: "Orders", href: "/admin/orders", icon: ClipboardList },
 
+  { group: "Moderation", label: "Store Review", href: "/admin/store-review", icon: ClipboardCheck },
   { group: "Moderation", label: "Product Review", href: "/admin/moderation", icon: ShieldCheck },
   { group: "Moderation", label: "Customer Reviews", href: "/admin/reviews", icon: Star },
 
   { group: "Insights", label: "Activity Log", href: "/admin/activity", icon: History },
   { group: "Insights", label: "Data Summary", href: "/admin/data", icon: BarChart3 },
   { group: "Insights", label: "Search Insights", href: "/admin/search-insights", icon: SearchCheck },
+  { group: "Insights", label: "Social Clicks", href: "/admin/social-clicks", icon: Share2 },
   { group: "Insights", label: "Storage Usage", href: "/admin/storage", icon: HardDrive },
 
   { group: "Billing", label: "Plans & Billing", href: "/admin/plans", icon: CreditCard },

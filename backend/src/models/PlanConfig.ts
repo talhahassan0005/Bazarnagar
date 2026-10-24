@@ -9,6 +9,15 @@ export interface IPlanConfig {
   imageLimit: number;
   videoLimit: number;
   enabled: boolean;
+  /** Separate price for overseas sellers, in US dollars / month (0 = not offered). */
+  priceUsd?: number;
+  /** Pricing page card text — falls back to the built-in plan name / empty. */
+  name?: string;
+  tagline?: string;
+  description?: string;
+  features?: string[];
+  /** Shown as the "Recommended" card on the pricing page. */
+  highlighted?: boolean;
 }
 
 const planConfigSchema = new Schema<IPlanConfig>(
@@ -19,6 +28,12 @@ const planConfigSchema = new Schema<IPlanConfig>(
     imageLimit: { type: Number, required: true },
     videoLimit: { type: Number, required: true },
     enabled: { type: Boolean, default: true },
+    priceUsd: { type: Number, default: 0 },
+    name: String,
+    tagline: String,
+    description: String,
+    features: { type: [String], default: [] },
+    highlighted: { type: Boolean, default: false },
   },
   baseSchemaOptions
 );

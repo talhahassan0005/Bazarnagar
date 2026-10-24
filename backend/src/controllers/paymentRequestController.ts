@@ -7,7 +7,7 @@ import { Store } from "../models/Store";
 import { Payment } from "../models/Payment";
 import { Product } from "../models/Product";
 import { DAY_MS } from "../lib/boost";
-import { getPlan, addBillingPeriod } from "../lib/plans";
+import { addBillingPeriod, getLivePlanPrice } from "../lib/plans";
 import { ApiError, asyncHandler } from "../lib/helpers";
 
 async function currentSeller(req: Request) {
@@ -59,20 +59,21 @@ const createRequestSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
   method: z.enum(["bank", "jazzcash", "easypaisa"]),
   reference: z.string().min(3, "Enter the transaction ID / reference number"),
-  proofUrl: z.string().optional(),
+  proofUrl: z.string().trim().url("Upload a screenshot of your payment receipt"),
 });
 
 /** POST /api/seller/subscription/manual-request — submit a manual payment for admin review. */
 export const createPaymentRequest = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const data = createRequestSchema.parse(req.body);
-  const plan = getPlan(data.planId);
+  // Charge what the pricing page shows (admin-set), not the built-in default.
+  const amount = await getLivePlanPrice(data.planId);
 
   const request = await PaymentRequest.create({
     sellerId: seller._id,
     purpose: "plan",
     planId: data.planId,
-    amount: plan.price,
+    amount,
     method: data.method,
     reference: data.reference,
     proofUrl: data.proofUrl,
@@ -155,7 +156,6 @@ export const reviewPaymentRequest = asyncHandler(async (req: Request, res: Respo
     const seller = await Seller.findById(request.sellerId);
     if (!seller) throw new ApiError(404, "Seller not found");
 
-    const plan = getPlan(request.planId as Parameters<typeof getPlan>[0]);
     const now = new Date();
     seller.planId = request.planId as typeof seller.planId;
     seller.subscriptionStatus = "active";
@@ -167,7 +167,7 @@ export const reviewPaymentRequest = asyncHandler(async (req: Request, res: Respo
     await Payment.create({
       sellerId: seller._id,
       planId: request.planId,
-      amount: plan.price,
+      amount: request.amount,
       method: request.method,
       paidAt: now,
       notes: `Manual payment approved (ref: ${request.reference})`,

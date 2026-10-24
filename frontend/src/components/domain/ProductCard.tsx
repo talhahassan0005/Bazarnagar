@@ -79,7 +79,7 @@ export function ProductCard({
 
         <div className="mt-2 flex flex-wrap gap-1">
           <StockBadge status={product.stockStatus} />
-          <DeliveryBadge option={product.deliveryOption} fee={product.deliveryFee} />
+          <DeliveryBadge option={store.noDelivery ? "not_available" : product.deliveryOption} fee={product.deliveryFee} />
         </div>
 
         {typeof distanceKm === "number" && (

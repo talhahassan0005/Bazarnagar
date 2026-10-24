@@ -36,6 +36,9 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 
   const store = await Store.findOne({ _id: data.storeId, status: "active" });
   if (!store) throw new ApiError(404, "Store not found");
+  if (store.noDelivery) {
+    throw new ApiError(400, `${store.name} doesn't deliver, so it can't take online orders. Please contact the seller on WhatsApp.`);
+  }
 
   const items = [];
   const products = [];
@@ -46,8 +49,15 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
       storeId: store._id,
       status: "active",
       moderationStatus: "approved",
+      hiddenOverPlanLimit: { $ne: true },
     });
     if (!product) throw new ApiError(400, "One or more products are no longer available");
+    if (product.deliveryOption === "not_available") {
+      throw new ApiError(
+        400,
+        `"${product.name}" isn't available for delivery, so it can't be ordered online. Please contact the seller on WhatsApp.`
+      );
+    }
     const price = effectivePrice(product.price, product.discountPrice);
     items.push({
       productId: product._id,

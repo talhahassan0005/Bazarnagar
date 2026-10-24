@@ -67,9 +67,12 @@ export default function AdminStoresPage() {
     {
       header: "Status",
       cell: (s) => (
-        <Badge tone={STATUS_TONE[s.status]} className="capitalize">
-          {s.status}
-        </Badge>
+        <div className="flex flex-wrap gap-1">
+          <Badge tone={STATUS_TONE[s.status]} className="capitalize">
+            {s.status}
+          </Badge>
+          {s.review?.status === "pending" && <Badge tone="amber">Needs review</Badge>}
+        </div>
       ),
     },
     {

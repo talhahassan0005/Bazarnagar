@@ -9,6 +9,10 @@ import { DAY_MS, getBoostPricing } from "../lib/boost";
 import { PaymentRequest } from "../models/PaymentRequest";
 import { moderateProduct } from "../lib/moderation";
 import { logProductCreated, logStoreCreated } from "../lib/activityLog";
+import { newStoreReview, queueStoreReview } from "../lib/storeReview";
+import { SOCIAL_PLATFORMS } from "../models/SocialClick";
+import { socialClickReport, socialClicksQuerySchema } from "../lib/socialClicks";
+import { getSubscriptionSettings } from "../lib/subscriptionSettings";
 import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
@@ -75,13 +79,10 @@ const storeSchema = z.object({
   showInSearch: z.boolean().optional(),
   isOpen: z.boolean().optional(),
   socials: z
-    .object({
-      instagram: z.string().optional(),
-      facebook: z.string().optional(),
-      tiktok: z.string().optional(),
-    })
+    .object(Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p, z.string().trim().max(200).optional()])))
     .optional(),
   deliveryInfo: z.string().optional(),
+  noDelivery: z.boolean().optional(),
   paymentInfo: z.string().optional(),
 });
 
@@ -107,12 +108,13 @@ export const upsertStore = asyncHandler(async (req: Request, res: Response) => {
 
   if (!store) {
     const slug = await uniqueSlug(data.name);
-    store = await Store.create({ ...data, sellerId: seller._id, slug });
+    store = await Store.create({ ...data, sellerId: seller._id, slug, review: newStoreReview() });
     seller.storeId = store._id as typeof seller.storeId;
     await seller.save();
     await logStoreCreated(seller, store);
   } else {
     Object.assign(store, data);
+    queueStoreReview(store, store.modifiedPaths());
     if (!store.slug) store.slug = await uniqueSlug(data.name, store.id);
     await store.save();
   }
@@ -141,7 +143,9 @@ export const updateStoreLanding = asyncHandler(async (req: Request, res: Respons
   const store = await Store.findById(seller.storeId);
   if (!store) throw new ApiError(404, "Store not found");
 
+  const before = JSON.stringify(store.landing ?? null);
   store.landing = landingSchema.parse(req.body);
+  if (JSON.stringify(store.landing) !== before) queueStoreReview(store, ["landing"]);
   await store.save();
   res.json(store.toJSON());
 });
@@ -432,6 +436,11 @@ export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Resp
   const daysRemaining = endsAt
     ? Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
+  const lapsePolicy = await getSubscriptionSettings();
+  const downgradeAt =
+    endsAt && seller.planId !== "starter" && lapsePolicy.downgradeAfterExpiry
+      ? new Date(endsAt.getTime() + lapsePolicy.graceDays * DAY_MS)
+      : null;
   res.json({
     planId: seller.planId,
     subscriptionStatus: seller.subscriptionStatus,
@@ -439,6 +448,12 @@ export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Resp
     autoRenew: seller.autoRenew,
     daysRemaining,
     hasCardToken: Boolean(seller.stripePaymentMethodId),
+    // When a lapsed paid plan will move to Free (null if it won't / isn't lapsing).
+    downgradeAt,
+    hiddenProducts: seller.storeId
+      ? await Product.countDocuments({ storeId: seller.storeId, hiddenOverPlanLimit: true })
+      : 0,
+    downgradedFromPlanId: seller.downgradedFromPlanId ?? null,
   });
 });
 
@@ -457,4 +472,12 @@ export const cancelSubscription = asyncHandler(async (req: Request, res: Respons
   }
   await seller.save();
   res.json({ ok: true, subscriptionStatus: seller.subscriptionStatus, subscriptionEndsAt: seller.subscriptionEndsAt });
+});
+
+/** GET /api/seller/social-clicks?days=7|30|90|all — taps on the shop's social links, by day. */
+export const getMySocialClicks = asyncHandler(async (req: Request, res: Response) => {
+  const { days } = socialClicksQuerySchema.parse(req.query);
+  const seller = await currentSeller(req);
+  if (!seller.storeId) return res.json({ total: 0, totals: {}, days: [] });
+  res.json(await socialClickReport(seller.storeId, days));
 });

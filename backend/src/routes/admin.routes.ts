@@ -18,12 +18,18 @@ import {
   exportSearchLogs,
   updateSeller,
   updateStore,
+  getStoreReviews,
+  getSocialClicksByStore,
+  getStoreSocialClicks,
+  markStoreReviewed,
   moderateProductStatus,
   removeProduct,
   recordPayment,
   getSellerPayments,
   getPlanConfig,
   updatePlanConfig,
+  getSubscriptionSettingsHandler,
+  updateSubscriptionSettings,
   getBoostConfig,
   updateBoostConfig,
 } from "../controllers/adminController";
@@ -70,6 +76,10 @@ router.post("/sellers/:id/payments", recordPayment);
 
 router.get("/stores", getAllStores);
 router.patch("/stores/:id", updateStore);
+router.get("/store-reviews", getStoreReviews);
+router.patch("/stores/:id/review", markStoreReviewed);
+router.get("/social-clicks", getSocialClicksByStore);
+router.get("/stores/:id/social-clicks", getStoreSocialClicks);
 
 router.get("/products", getAllProducts);
 router.patch("/products/:id/moderation", moderateProductStatus);
@@ -80,6 +90,8 @@ router.patch("/reviews/:id", moderateReview);
 
 router.get("/plan-config", getPlanConfig);
 router.patch("/plan-config", updatePlanConfig);
+router.get("/subscription-settings", getSubscriptionSettingsHandler);
+router.patch("/subscription-settings", updateSubscriptionSettings);
 router.get("/boost-config", getBoostConfig);
 router.patch("/boost-config", updateBoostConfig);
 

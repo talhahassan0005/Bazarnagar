@@ -7,14 +7,17 @@ import { Admin } from "../models/Admin";
 import { Customer } from "../models/Customer";
 import { Store } from "../models/Store";
 import { PasswordReset } from "../models/PasswordReset";
+import { EmailVerification } from "../models/EmailVerification";
 import { signToken } from "../lib/jwt";
 import { sendMail } from "../lib/mailer";
 import { COUNTRIES } from "../lib/countries";
 import { logBuyerRegistered } from "../lib/activityLog";
 import {
   RESET_TTL_MINUTES,
+  VERIFY_TTL_HOURS,
   appLink,
   resetPasswordEmail,
+  verifyEmailEmail,
   welcomeBuyerEmail,
   welcomeSellerEmail,
   type EmailContent,
@@ -67,12 +70,14 @@ export const signupSeller = asyncHandler(async (req: Request, res: Response) => 
     subscriptionStatus: "active",
     subscriptionStartedAt: new Date(),
     status: env.kycRequired ? "pending" : "active",
+    emailVerified: false,
   });
 
-  sendWelcome(seller.email, welcomeSellerEmail(seller.name));
+  // No session yet: the seller logs in by clicking the emailed link. If the
+  // mail fails they can resend it from the signup / login screen.
+  await sendVerificationEmail(seller).catch((err) => console.error("Failed to send verification email:", err));
 
-  const token = signToken({ sub: seller.id, role: "seller" });
-  res.status(201).json({ token, seller: seller.toJSON() });
+  res.status(201).json({ needsVerification: true, email: seller.email });
 });
 
 /** POST /api/auth/login — seller login. */
@@ -85,8 +90,85 @@ export const loginSeller = asyncHandler(async (req: Request, res: Response) => {
   if (seller.status === "suspended") {
     throw new ApiError(403, "Your account has been suspended. Contact support.");
   }
+  if (seller.emailVerified === false) {
+    throw new ApiError(
+      403,
+      "Please verify your email first. Click the link we sent to your inbox.",
+      "EMAIL_NOT_VERIFIED"
+    );
+  }
   const token = signToken({ sub: seller.id, role: "seller" });
   res.json({ token, seller: seller.toJSON() });
+});
+
+/* --------------------------- Email verification --------------------------- */
+
+/** Wait this long before another verification email can be sent. */
+const RESEND_COOLDOWN_MS = 60 * 1000;
+
+/** Email a fresh one-time verification link (older links stop working). */
+async function sendVerificationEmail(seller: InstanceType<typeof Seller>) {
+  const token = crypto.randomBytes(32).toString("hex");
+  await EmailVerification.deleteMany({ sellerId: seller._id });
+  await EmailVerification.create({
+    sellerId: seller._id,
+    tokenHash: hashToken(token),
+    expiresAt: new Date(Date.now() + VERIFY_TTL_HOURS * 60 * 60 * 1000),
+  });
+  await sendMail({ to: seller.email, ...verifyEmailEmail(seller.name, appLink(`/verify-email?token=${token}`)) });
+}
+
+const verifySchema = z.object({ token: z.string().min(32) });
+
+/**
+ * POST /api/auth/verify-email: the seller clicked the emailed link. Mark the
+ * email verified and log them straight in.
+ */
+export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+  const { token } = verifySchema.parse(req.body);
+  const record = await EmailVerification.findOne({ tokenHash: hashToken(token), expiresAt: { $gt: new Date() } });
+  if (!record) {
+    throw new ApiError(400, "This verification link is invalid or has expired. Log in to get a new one.");
+  }
+  const seller = await Seller.findById(record.sellerId);
+  await EmailVerification.deleteMany({ sellerId: record.sellerId });
+  if (!seller) throw new ApiError(404, "Account not found");
+  if (seller.status === "suspended") {
+    throw new ApiError(403, "Your account has been suspended. Contact support.");
+  }
+
+  if (seller.emailVerified === false) {
+    seller.emailVerified = true;
+    await seller.save();
+    sendWelcome(seller.email, welcomeSellerEmail(seller.name));
+  }
+
+  const jwt = signToken({ sub: seller.id, role: "seller" });
+  res.json({ token: jwt, seller: seller.toJSON() });
+});
+
+const resendSchema = z.object({ email: z.string().trim().toLowerCase().email() });
+
+/**
+ * POST /api/auth/resend-verification: send the link again. Answers the same
+ * way whether or not the email is registered, so it can't probe accounts.
+ */
+export const resendVerification = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = resendSchema.parse(req.body);
+  const seller = await Seller.findOne({ email });
+  if (seller && seller.emailVerified === false) {
+    const last = await EmailVerification.findOne({ sellerId: seller._id }).sort({ createdAt: -1 });
+    if (last && Date.now() - last.createdAt.getTime() < RESEND_COOLDOWN_MS) {
+      throw new ApiError(429, "We just sent you an email. Please wait a minute before asking again.");
+    }
+    try {
+      await sendVerificationEmail(seller);
+    } catch (err) {
+      console.error("Failed to send verification email:", err);
+      throw new ApiError(503, "We couldn't send the email right now. Please try again in a few minutes.");
+    }
+  }
+  res.json({ ok: true });
 });
 
 /** POST /api/admin/login — admin login. */

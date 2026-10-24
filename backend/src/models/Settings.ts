@@ -3,7 +3,10 @@ import { baseSchemaOptions } from "./_base";
 
 /** Singleton document — admin-editable platform settings. */
 export interface SettingsDoc extends Document {
-  key: "manual-payment";
+  key: "manual-payment" | "subscription";
+  /* key "subscription": what happens when a paid plan expires (see lib/subscriptionSettings) */
+  downgradeAfterExpiry?: boolean;
+  graceDays?: number;
   bankAccountTitle?: string;
   bankAccountNumber?: string;
   bankName?: string;
@@ -21,6 +24,8 @@ const settingsSchema = new Schema<SettingsDoc>(
     jazzcashNumber: String,
     easypaisaNumber: String,
     instructions: String,
+    downgradeAfterExpiry: Boolean,
+    graceDays: Number,
   },
   baseSchemaOptions
 );
