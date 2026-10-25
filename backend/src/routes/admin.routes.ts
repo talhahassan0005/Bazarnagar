@@ -44,6 +44,7 @@ import {
 } from "../controllers/bannerController";
 import {
   getAllPaymentRequests,
+  getManualPaymentSettings,
   reviewPaymentRequest,
   updateManualPaymentSettings,
 } from "../controllers/paymentRequestController";
@@ -106,6 +107,7 @@ router.delete("/banners/:id", deleteBanner);
 
 router.get("/payment-requests", getAllPaymentRequests);
 router.patch("/payment-requests/:id", reviewPaymentRequest);
+router.get("/manual-payment-settings", getManualPaymentSettings);
 router.patch("/manual-payment-settings", updateManualPaymentSettings);
 
 router.get("/ad-settings", getAdSettings);

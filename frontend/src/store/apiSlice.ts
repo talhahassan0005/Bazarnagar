@@ -324,6 +324,9 @@ export const apiSlice = createApi({
     getManualPaymentSettings: builder.query<ManualPaymentSettings, void>({
       query: () => "/seller/manual-payment-settings",
     }),
+    getAdminManualPaymentSettings: builder.query<ManualPaymentSettings, void>({
+      query: () => "/admin/manual-payment-settings",
+    }),
     createPaymentRequest: builder.mutation<PaymentRequest, { planId: PlanId; method: PaymentRequestMethod; reference: string; proofUrl?: string; currency: PaymentCurrency }>({
       query: (body) => ({ url: "/seller/subscription/manual-request", method: "POST", body }),
       invalidatesTags: ["PaymentRequest"],
@@ -618,6 +621,7 @@ export const {
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
   useGetManualPaymentSettingsQuery,
+  useGetAdminManualPaymentSettingsQuery,
   useCreatePaymentRequestMutation,
   useGetMyPaymentRequestsQuery,
   useGetAllPaymentRequestsQuery,

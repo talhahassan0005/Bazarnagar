@@ -8,7 +8,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import {
   useGetAllPaymentRequestsQuery,
-  useGetManualPaymentSettingsQuery,
+  useGetAdminManualPaymentSettingsQuery,
   useReviewPaymentRequestMutation,
   useUpdateManualPaymentSettingsMutation,
 } from "@/store/apiSlice";
@@ -32,11 +32,13 @@ function StatusBadge({ status }: { status: PaymentRequest["status"] }) {
 
 function SettingsForm() {
   const dispatch = useAppDispatch();
-  const { data, isLoading } = useGetManualPaymentSettingsQuery();
+  const { data, isLoading } = useGetAdminManualPaymentSettingsQuery();
   const [update, { isLoading: saving }] = useUpdateManualPaymentSettingsMutation();
   const [form, setForm] = useState<ManualPaymentSettings | null>(null);
 
-  const values = form ?? data ?? {};
+  // On first load, pre-populate the form with whatever the API returned
+  // (which already includes PAYONEER_DEFAULTS for any unset USD fields).
+  const values: ManualPaymentSettings = form ?? data ?? {};
   const set = (key: keyof ManualPaymentSettings, value: string) =>
     setForm({ ...values, [key]: value });
 
