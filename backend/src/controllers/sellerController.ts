@@ -226,8 +226,17 @@ const productSchema = z.object({
   stockStatus: z.enum(["in_stock", "out_of_stock"]).default("in_stock"),
   status: z.enum(["active", "inactive"]).default("active"),
   negotiable: z.boolean().default(false),
+  brand: z.string().trim().optional(),
   // Optional "Brand new" / "Second hand" tag; "" or null clears it.
   condition: z.preprocess((v) => (v === "" ? null : v), z.enum(["new", "used"]).nullable().optional()),
+  variants: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        options: z.array(z.object({ label: z.string().min(1), price: z.number().nonnegative() })).min(1),
+      })
+    )
+    .default([]),
   deliveryOption: z.enum(["available", "not_available", "negotiable"]).default("available"),
   deliveryFee: z.number().nonnegative().optional(),
   lat: z.number().optional(),

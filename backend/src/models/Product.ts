@@ -4,6 +4,16 @@ import { baseSchemaOptions } from "./_base";
 export type StockStatus = "in_stock" | "out_of_stock";
 export type ProductStatus = "active" | "inactive";
 export type ProductCondition = "new" | "used";
+
+export interface ProductVariantOption {
+  label: string;
+  price: number;
+}
+
+export interface ProductVariant {
+  name: string;
+  options: ProductVariantOption[];
+}
 export type DeliveryOption = "available" | "not_available" | "negotiable";
 export type ModerationStatus =
   | "pending"
@@ -25,7 +35,11 @@ export interface ProductDoc extends Document {
   stockStatus: StockStatus;
   status: ProductStatus;
   negotiable: boolean;
+  /** Optional brand name (e.g. Nike, Samsung). */
+  brand?: string;
   condition?: ProductCondition;
+  /** Flexible variants — each group has a name and price-tagged options. */
+  variants?: ProductVariant[];
   deliveryOption: DeliveryOption;
   /** Flat delivery fee for this product (PKR). Ignored when deliveryOption is "negotiable" or "not_available". */
   deliveryFee?: number;
@@ -63,7 +77,25 @@ const productSchema = new Schema<ProductDoc>(
     },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     negotiable: { type: Boolean, default: false },
+    brand: { type: String, trim: true },
     condition: { type: String, enum: ["new", "used"] },
+    variants: {
+      type: [
+        {
+          name: { type: String, required: true, trim: true },
+          options: {
+            type: [
+              {
+                label: { type: String, required: true, trim: true },
+                price: { type: Number, required: true, min: 0 },
+              },
+            ],
+            default: [],
+          },
+        },
+      ],
+      default: [],
+    },
     deliveryOption: {
       type: String,
       enum: ["available", "not_available", "negotiable"],

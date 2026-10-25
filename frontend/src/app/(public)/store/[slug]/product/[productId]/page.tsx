@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronRight, Eye, MessageCircle, PlayCircle, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
@@ -16,6 +17,7 @@ import { AddToCartButton, BuyNowButton } from "@/components/storefront/CartButto
 import { canOrderOnline } from "@/lib/cart";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { CodNotice } from "@/components/domain/CodNotice";
+import { ProductVariantSelector } from "@/components/domain/ProductVariantSelector";
 import {
   useGetProductQuery,
   useGetRelatedProductsQuery,
@@ -44,6 +46,8 @@ export default function ProductDetailPage() {
 
   const { store } = product;
   const discount = discountPercent(product);
+  const [variantPrice, setVariantPrice] = useState<number | null>(null);
+  const displayPrice = variantPrice ?? effectivePrice(product);
 
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
@@ -76,6 +80,11 @@ export default function ProductDetailPage() {
           </div>
 
           <h1 className="mt-3 text-2xl font-bold text-slate-900">{product.name}</h1>
+          {product.brand && (
+            <p className="mt-1 text-sm text-slate-500">
+              Brand: <span className="font-medium text-slate-700">{product.brand}</span>
+            </p>
+          )}
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
             {product.rating && product.rating.count > 0 && (
@@ -109,9 +118,9 @@ export default function ProductDetailPage() {
 
           <div className="mt-3 flex items-baseline gap-3">
             <span className="text-3xl font-bold text-slate-900">
-              {formatPrice(effectivePrice(product))}
+              {formatPrice(displayPrice)}
             </span>
-            {discount && (
+            {discount && !variantPrice && (
               <>
                 <span className="text-lg text-slate-400 line-through">
                   {formatPrice(product.price)}
@@ -120,6 +129,14 @@ export default function ProductDetailPage() {
               </>
             )}
           </div>
+
+          {product.variants && product.variants.length > 0 && (
+            <ProductVariantSelector
+              variants={product.variants}
+              basePrice={effectivePrice(product)}
+              onPriceChange={setVariantPrice}
+            />
+          )}
 
           {product.description && (
             <p className="mt-4 text-sm leading-relaxed text-slate-600">

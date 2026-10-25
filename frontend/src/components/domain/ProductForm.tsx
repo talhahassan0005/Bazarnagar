@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ImagePlus, Navigation, Trash2 } from "lucide-react";
+import { ImagePlus, Navigation, Plus, Trash2, X } from "lucide-react";
 import {
   Card,
   CardBody,
@@ -22,6 +22,9 @@ export type ProductFormValues = Omit<
   "id" | "storeId" | "moderationStatus" | "views" | "whatsappClicks" | "addToCartClicks" | "buyNowClicks" | "createdAt"
 >;
 
+type VariantOption = { label: string; price: number };
+type Variant = { name: string; options: VariantOption[] };
+
 const EMPTY: ProductFormValues = {
   name: "",
   category: "",
@@ -34,7 +37,9 @@ const EMPTY: ProductFormValues = {
   stockStatus: "in_stock",
   status: "active",
   negotiable: false,
+  brand: undefined,
   condition: undefined,
+  variants: [],
   deliveryOption: "available",
   deliveryFee: undefined,
 };
@@ -43,6 +48,133 @@ const EMPTY: ProductFormValues = {
  * Add/edit product form (SRS §5.4). Enforces the plan's image and video
  * limits (SRS §6) directly in the UI.
  */
+// ---------------------------------------------------------------------------
+// Variants editor
+// ---------------------------------------------------------------------------
+function VariantsEditor({
+  variants,
+  onChange,
+}: {
+  variants: Variant[];
+  onChange: (v: Variant[]) => void;
+}) {
+  function addGroup() {
+    onChange([...variants, { name: "", options: [{ label: "", price: 0 }] }]);
+  }
+  function removeGroup(gi: number) {
+    onChange(variants.filter((_, i) => i !== gi));
+  }
+  function setGroupName(gi: number, name: string) {
+    onChange(variants.map((g, i) => (i === gi ? { ...g, name } : g)));
+  }
+  function addOption(gi: number) {
+    onChange(
+      variants.map((g, i) =>
+        i === gi ? { ...g, options: [...g.options, { label: "", price: 0 }] } : g
+      )
+    );
+  }
+  function removeOption(gi: number, oi: number) {
+    onChange(
+      variants.map((g, i) =>
+        i === gi ? { ...g, options: g.options.filter((_, j) => j !== oi) } : g
+      )
+    );
+  }
+  function setOption(gi: number, oi: number, field: keyof VariantOption, val: string) {
+    onChange(
+      variants.map((g, i) =>
+        i === gi
+          ? {
+              ...g,
+              options: g.options.map((o, j) =>
+                j === oi
+                  ? { ...o, [field]: field === "price" ? (val === "" ? 0 : Number(val)) : val }
+                  : o
+              ),
+            }
+          : g
+      )
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-700">Variants (optional)</span>
+        <Button type="button" variant="outline" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={addGroup}>
+          Add variant group
+        </Button>
+      </div>
+      {variants.length === 0 && (
+        <p className="text-xs text-slate-400">
+          Add variant groups like &quot;Size&quot; or &quot;Color&quot; — each with its own price.
+        </p>
+      )}
+      {variants.map((group, gi) => (
+        <div key={gi} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Input
+              label="Group name"
+              placeholder="e.g. Size, Color, Material"
+              value={group.name}
+              onChange={(e) => setGroupName(gi, e.target.value)}
+              className="flex-1"
+            />
+            <button
+              type="button"
+              onClick={() => removeGroup(gi)}
+              className="mt-6 shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {group.options.map((opt, oi) => (
+              <div key={oi} className="flex items-end gap-2">
+                <Input
+                  label={oi === 0 ? "Option" : undefined}
+                  placeholder="e.g. Large"
+                  value={opt.label}
+                  onChange={(e) => setOption(gi, oi, "label", e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  label={oi === 0 ? "Price (Rs.)" : undefined}
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={opt.price === 0 ? "" : opt.price}
+                  onChange={(e) => setOption(gi, oi, "price", e.target.value)}
+                  className="w-32"
+                />
+                {group.options.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeOption(gi, oi)}
+                    className={`shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 ${oi === 0 ? "mb-0" : ""}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            leftIcon={<Plus className="h-3.5 w-3.5" />}
+            onClick={() => addOption(gi)}
+          >
+            Add option
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ProductForm({
   initial,
   plan,
@@ -239,6 +371,12 @@ export function ProductForm({
               { value: "inactive", label: "Inactive (hidden)" },
             ]}
           />
+          <Input
+            label="Brand (optional)"
+            placeholder="e.g. Nike, Samsung, Unbranded"
+            value={v.brand ?? ""}
+            onChange={(e) => set("brand", e.target.value || undefined)}
+          />
           <Select
             label="Condition tag (optional)"
             value={v.condition ?? ""}
@@ -251,6 +389,12 @@ export function ProductForm({
               { value: "used", label: "Second hand" },
             ]}
           />
+          <div className="sm:col-span-2">
+            <VariantsEditor
+              variants={(v.variants ?? []) as Variant[]}
+              onChange={(variants) => set("variants", variants)}
+            />
+          </div>
           <div className="space-y-4 sm:pt-7">
             <Toggle
               label="Negotiable"
