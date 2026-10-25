@@ -65,7 +65,7 @@ function LoginForm() {
       subtitle={role === "seller" ? "Log in to manage your shop and products." : "Log in to see your orders and wishlist."}
       icon={<Lock className="h-5 w-5" />}
       footer={{
-        text: "New to Bazaarnagar?",
+        text: "New to Bazarnagar?",
         linkText: role === "seller" ? "Create a store" : "Create an account",
         href: `/signup?role=${role}`,
       }}

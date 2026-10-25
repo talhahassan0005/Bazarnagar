@@ -7,24 +7,14 @@ export const env = {
   port: Number(process.env.PORT ?? 5000),
   nodeEnv: process.env.NODE_ENV ?? "development",
   clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:3000",
-  mongoUri: process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/bazaarnagar",
+  mongoUri: process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/bazarnagar",
   jwtSecret: process.env.JWT_SECRET ?? "dev-insecure-secret-change-me",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   publicUrl: process.env.PUBLIC_URL ?? "http://localhost:5000",
-  /** Frontend base URL used for payment gateway redirect (checkout return) links. */
+  /** Frontend base URL used for links in emails (verify email, reset password, renew plan). */
   appUrl: (process.env.APP_URL ?? process.env.CLIENT_ORIGIN ?? "http://localhost:3000")
     .split(",")[0]!
     .trim(),
-  // Stripe. Leave STRIPE_SECRET_KEY blank to run in mock mode (a local test
-  // gateway) — same fallback behaviour the old Safepay integration had.
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
-  // Signing secret for the webhook endpoint (dashboard → Developers →
-  // Webhooks → your endpoint → "Signing secret", starts with "whsec_").
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
-  // Stripe does not support a Pakistani merchant account/PKR settlement, so
-  // the currency actually charged depends on what the connected Stripe
-  // account supports — override via env if it isn't USD.
-  stripeCurrency: (process.env.STRIPE_CURRENCY ?? "usd").toLowerCase(),
   // Cloudflare R2 (S3-compatible) image storage. Leave blank to keep saving
   // uploads to the local ./uploads folder (served at <PUBLIC_URL>/uploads).
   r2: {
@@ -46,7 +36,7 @@ export const env = {
     port: Number(process.env.SMTP_PORT ?? 465),
     user: process.env.SMTP_USER ?? "",
     pass: process.env.SMTP_PASS ?? "",
-    /** Sender shown to recipients, e.g. `Bazaarnagar <no-reply@bazaarnagar.com>`. */
+    /** Sender shown to recipients, e.g. `Bazarnagar <no-reply@bazaarnagar.com>`. */
     from: process.env.MAIL_FROM || process.env.SMTP_USER || "",
   },
   get mailEnabled() {

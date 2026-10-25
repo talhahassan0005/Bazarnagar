@@ -70,7 +70,7 @@ export default function AdminActivityPage() {
       await downloadFile(
         "/admin/activity/export",
         { ...filters },
-        "bazaarnagar-activity.csv"
+        "bazarnagar-activity.csv"
       );
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Could not download the CSV"), "error"));

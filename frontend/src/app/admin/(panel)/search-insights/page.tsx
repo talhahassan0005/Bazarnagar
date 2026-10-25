@@ -46,7 +46,7 @@ function SearchLogSection({ range }: { range: Range }) {
   async function downloadCsv() {
     setDownloading(true);
     try {
-      await downloadFile("/admin/search-logs/export", { days: range, q: q || undefined }, "bazaarnagar-searches.csv");
+      await downloadFile("/admin/search-logs/export", { days: range, q: q || undefined }, "bazarnagar-searches.csv");
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Could not download the CSV"), "error"));
     } finally {

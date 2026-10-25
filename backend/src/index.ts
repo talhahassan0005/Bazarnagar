@@ -24,7 +24,7 @@ async function start() {
     const server = http.createServer(app);
     initSocket(server);
     server.listen(env.port, () => {
-      console.log(`✓ Bazaarnagar API running on http://localhost:${env.port}`);
+      console.log(`✓ Bazarnagar API running on http://localhost:${env.port}`);
       console.log(`  Health check: http://localhost:${env.port}/api/health`);
       startSubscriptionScheduler();
     });

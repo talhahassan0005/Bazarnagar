@@ -112,16 +112,17 @@ export const MODERATION_META: Record<
   },
 };
 
-export const SITE_NAME = "Bazaarnagar";
+export const SITE_NAME = "Bazarnagar";
 export const SITE_TAGLINE = "Your shop, in one link.";
 /** Urdu tagline from the logo. */
 export const SITE_TAGLINE_UR = "آپ کی دکان، ایک لنک میں";
+// Live domain. Switch to the new domain only once it points at the server (DNS + SSL).
 export const SITE_DOMAIN = "bazaarnagar.com";
 /** Contact email shown on legal / support pages. */
 export const SITE_EMAIL = "info@bazaarnagar.com";
 
 /**
- * Bazaarnagar's own social pages, shown as icons in the footer. Leave a value
+ * Bazarnagar's own social pages, shown as icons in the footer. Leave a value
  * empty to hide that icon. Handles or full links both work (see lib/socials).
  */
 export const SITE_SOCIALS: Partial<Record<import("./socials").SocialPlatform, string>> = {

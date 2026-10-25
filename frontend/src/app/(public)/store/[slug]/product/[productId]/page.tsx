@@ -70,9 +70,7 @@ export default function ProductDetailPage() {
             {product.negotiable && <Badge tone="amber">Negotiable</Badge>}
             <DeliveryBadge option={store.noDelivery ? "not_available" : product.deliveryOption} fee={product.deliveryFee} />
             {product.condition && (
-              <Badge tone="gray" className="capitalize">
-                {product.condition}
-              </Badge>
+              <Badge tone="gray">{product.condition === "new" ? "Brand new" : "Second hand"}</Badge>
             )}
             <WishlistButton productId={product.id} className="ml-auto" />
           </div>

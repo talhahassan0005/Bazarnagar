@@ -19,19 +19,38 @@ async function currentSeller(req: Request) {
 
 /* ------------------------------ Settings ---------------------------------- */
 
-/** GET /api/seller/manual-payment-settings — bank/JazzCash/EasyPaisa details to pay to. */
+/**
+ * Payoneer receiving account (a US bank account) for USD payments from outside
+ * Pakistan — used until the admin saves their own details.
+ */
+const PAYONEER_DEFAULTS = {
+  usdBankName: "Citibank",
+  usdBankAddress: "111 Wall Street New York, NY 10043 USA",
+  usdRoutingNumber: "031100209",
+  usdSwiftCode: "CITIUS33",
+  usdAccountNumber: "70584810002712733",
+  usdAccountType: "CHECKING",
+  usdBeneficiaryName: "Gulzar Ahmad",
+  payoneerLink: "",
+};
+
+/** GET /api/seller/manual-payment-settings — bank/JazzCash/EasyPaisa (PKR) and Payoneer (USD) details to pay to. */
 export const getManualPaymentSettings = asyncHandler(async (_req: Request, res: Response) => {
   const settings = await Settings.findOne({ key: "manual-payment" });
-  res.json(
-    settings?.toJSON() ?? {
-      bankAccountTitle: "",
-      bankAccountNumber: "",
-      bankName: "",
-      jazzcashNumber: "",
-      easypaisaNumber: "",
-      instructions: "",
-    }
+  const saved = (settings?.toJSON() ?? {}) as Record<string, unknown>;
+  const usd = Object.fromEntries(
+    Object.entries(PAYONEER_DEFAULTS).map(([k, v]) => [k, typeof saved[k] === "string" ? saved[k] : v])
   );
+  res.json({
+    bankAccountTitle: "",
+    bankAccountNumber: "",
+    bankName: "",
+    jazzcashNumber: "",
+    easypaisaNumber: "",
+    instructions: "",
+    ...saved,
+    ...usd,
+  });
 });
 
 const settingsSchema = z.object({
@@ -41,6 +60,14 @@ const settingsSchema = z.object({
   jazzcashNumber: z.string().trim().optional(),
   easypaisaNumber: z.string().trim().optional(),
   instructions: z.string().trim().optional(),
+  usdBankName: z.string().trim().optional(),
+  usdBankAddress: z.string().trim().optional(),
+  usdRoutingNumber: z.string().trim().optional(),
+  usdSwiftCode: z.string().trim().optional(),
+  usdAccountNumber: z.string().trim().optional(),
+  usdAccountType: z.string().trim().optional(),
+  usdBeneficiaryName: z.string().trim().optional(),
+  payoneerLink: z.string().trim().url().optional().or(z.literal("")),
 });
 
 /** PATCH /api/admin/manual-payment-settings — update the payment instructions shown to sellers. */
@@ -58,7 +85,7 @@ export const updateManualPaymentSettings = asyncHandler(async (req: Request, res
 
 const createRequestSchema = z.object({
   planId: z.enum(["starter", "basic", "growth", "pro"]),
-  method: z.enum(["bank", "jazzcash", "easypaisa"]),
+  method: z.enum(["bank", "jazzcash", "easypaisa", "payoneer"]),
   reference: z.string().min(3, "Enter the transaction ID / reference number"),
   proofUrl: z.string().trim().url("Upload a screenshot of your payment receipt"),
   currency: z.enum(PAYMENT_CURRENCIES).default("PKR"),
@@ -68,8 +95,12 @@ const createRequestSchema = z.object({
 export const createPaymentRequest = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
   const data = createRequestSchema.parse(req.body);
-  // Charge what the pricing page shows (admin-set), plus tax for USD.
-  const quote = await quotePlan(data.planId, data.currency);
+  // Charge what the pricing page shows (admin-set): USD adds tax, and paying
+  // online through Payoneer adds the admin's online payment fee.
+  if (data.currency === "USD" && data.method !== "payoneer") {
+    throw new ApiError(400, "Payments from outside Pakistan go through Payoneer.");
+  }
+  const quote = await quotePlan(data.planId, data.currency, data.method === "payoneer" ? "online" : "manual");
 
   const request = await PaymentRequest.create({
     sellerId: seller._id,
@@ -78,6 +109,7 @@ export const createPaymentRequest = asyncHandler(async (req: Request, res: Respo
     amount: quote.total,
     currency: quote.currency,
     taxAmount: quote.tax,
+    cardFeeAmount: quote.cardFee,
     method: data.method,
     reference: data.reference,
     proofUrl: data.proofUrl,
@@ -175,6 +207,7 @@ export const reviewPaymentRequest = asyncHandler(async (req: Request, res: Respo
       amount: request.amount,
       currency: request.currency ?? "PKR",
       taxAmount: request.taxAmount,
+      cardFeeAmount: request.cardFeeAmount,
       method: request.method,
       paidAt: now,
       notes: `Manual payment approved (ref: ${request.reference})`,

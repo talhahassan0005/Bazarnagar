@@ -54,7 +54,7 @@ export function ShopBanner({ store, placement }: { store: Store; placement: "top
         {" · "}
         Discover more shops on{" "}
         <a href="/shops" className="font-semibold underline hover:text-amber-900">
-          Bazaarnagar
+          Bazarnagar
         </a>
       </div>
     );
@@ -109,7 +109,7 @@ export function ShopBannerVertical({ store }: { store: Store }) {
         <p className="mt-2">
           Discover more shops on{" "}
           <a href="/shops" className="font-semibold underline hover:text-amber-900">
-            Bazaarnagar
+            Bazarnagar
           </a>
         </p>
       </div>

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Bazaarnagar design tokens — palette sampled directly from the brand logo
+ * Bazarnagar design tokens — palette sampled directly from the brand logo
  * (navy wordmark + orange / amber / green shop tiles).
  * Tailwind v4 reads these from @theme and generates matching utilities
  * (e.g. --color-brand-600 -> bg-brand-600 / text-brand-600 / border-brand-600).

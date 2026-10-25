@@ -24,7 +24,7 @@ function layout(opts: { heading: string; body: string; button: { label: string; 
   return `
 <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#1e293b;line-height:1.5">
   <p style="font-size:20px;font-weight:bold;margin:0 0 20px">
-    <span style="color:#1b3a5b">Bazaar</span><span style="color:#e85d2c">nagar</span>
+    <span style="color:#1b3a5b">Bazarnagar</span>
   </p>
   <h2 style="color:#1b3a5b;margin:0 0 12px">${opts.heading}</h2>
   ${opts.body}
@@ -41,11 +41,11 @@ const listHtml = (items: string[]) =>
 export function resetPasswordEmail(name: string, link: string): EmailContent {
   const footnote = `The link expires in ${RESET_TTL_MINUTES} minutes and can only be used once. If you didn't ask for this, you can ignore this email — your password won't change.`;
   return {
-    subject: "Reset your Bazaarnagar password",
+    subject: "Reset your Bazarnagar password",
     text: [
       `Hi ${name},`,
       "",
-      "We received a request to reset your Bazaarnagar password. Open this link to choose a new one:",
+      "We received a request to reset your Bazarnagar password. Open this link to choose a new one:",
       link,
       "",
       footnote,
@@ -53,7 +53,7 @@ export function resetPasswordEmail(name: string, link: string): EmailContent {
     html: layout({
       heading: "Reset your password",
       body: `<p>Hi ${escapeHtml(name)},</p>
-  <p>We received a request to reset your Bazaarnagar password. Click the button below to choose a new one.</p>
+  <p>We received a request to reset your Bazarnagar password. Click the button below to choose a new one.</p>
   <p style="font-size:13px;color:#64748b">Or copy this link into your browser:<br><a href="${link}" style="color:#e85d2c;word-break:break-all">${link}</a></p>`,
       button: { label: "Reset password", href: link },
       footnote,
@@ -62,13 +62,13 @@ export function resetPasswordEmail(name: string, link: string): EmailContent {
 }
 
 export function verifyEmailEmail(name: string, link: string): EmailContent {
-  const footnote = `The link expires in ${VERIFY_TTL_HOURS} hours. If you didn't create a Bazaarnagar account, you can ignore this email.`;
+  const footnote = `The link expires in ${VERIFY_TTL_HOURS} hours. If you didn't create a Bazarnagar account, you can ignore this email.`;
   return {
-    subject: "Verify your email to activate your Bazaarnagar shop",
+    subject: "Verify your email to activate your Bazarnagar shop",
     text: [
       `Hi ${name},`,
       "",
-      "Thanks for signing up to sell on Bazaarnagar! Please confirm your email address to activate your account:",
+      "Thanks for signing up to sell on Bazarnagar! Please confirm your email address to activate your account:",
       link,
       "",
       footnote,
@@ -76,7 +76,7 @@ export function verifyEmailEmail(name: string, link: string): EmailContent {
     html: layout({
       heading: "Verify your email",
       body: `<p>Hi ${escapeHtml(name)},</p>
-  <p>Thanks for signing up to sell on Bazaarnagar! Click the button below to confirm your email address and activate your seller account.</p>
+  <p>Thanks for signing up to sell on Bazarnagar! Click the button below to confirm your email address and activate your seller account.</p>
   <p style="font-size:13px;color:#64748b">Or copy this link into your browser:<br><a href="${link}" style="color:#e85d2c;word-break:break-all">${link}</a></p>`,
       button: { label: "Verify my email", href: link },
       footnote,
@@ -93,11 +93,11 @@ export function welcomeSellerEmail(name: string): EmailContent {
   ];
   const footnote = "Questions? Just reply to this email — we're happy to help.";
   return {
-    subject: "Welcome to Bazaarnagar — let's set up your shop",
+    subject: "Welcome to Bazarnagar — let's set up your shop",
     text: [
       `Hi ${name},`,
       "",
-      "Welcome to Bazaarnagar! Your seller account is ready, and you're on the free plan.",
+      "Welcome to Bazarnagar! Your seller account is ready, and you're on the free plan.",
       "",
       "Get your shop online in three steps:",
       ...steps.map((s, i) => `${i + 1}. ${s}`),
@@ -107,7 +107,7 @@ export function welcomeSellerEmail(name: string): EmailContent {
       footnote,
     ].join("\n"),
     html: layout({
-      heading: `Welcome to Bazaarnagar, ${escapeHtml(name)}!`,
+      heading: `Welcome to Bazarnagar, ${escapeHtml(name)}!`,
       body: `<p>Your seller account is ready, and you're on the <strong>free plan</strong>. Get your shop online in three steps:</p>
   ${listHtml(steps)}`,
       button: { label: "Go to your dashboard", href: dashboard },
@@ -137,7 +137,7 @@ export function planExpiryWarningEmail(o: {
     text: [
       `Hi ${o.name},`,
       "",
-      `Your Bazaarnagar ${o.planName} plan has expired. Please renew within ${days}, otherwise your shop will be moved to the Free plan.`,
+      `Your Bazarnagar ${o.planName} plan has expired. Please renew within ${days}, otherwise your shop will be moved to the Free plan.`,
       effect,
       "",
       `Renew now: ${link}`,
@@ -194,11 +194,11 @@ export function welcomeBuyerEmail(name: string): EmailContent {
   ];
   const footnote = "Questions? Just reply to this email — we're happy to help.";
   return {
-    subject: "Welcome to Bazaarnagar!",
+    subject: "Welcome to Bazarnagar!",
     text: [
       `Hi ${name},`,
       "",
-      "Welcome to Bazaarnagar! Your account is ready. Here's what you can do:",
+      "Welcome to Bazarnagar! Your account is ready. Here's what you can do:",
       ...perks.map((p) => `- ${p}`),
       "",
       `Start shopping: ${shop}`,
@@ -206,7 +206,7 @@ export function welcomeBuyerEmail(name: string): EmailContent {
       footnote,
     ].join("\n"),
     html: layout({
-      heading: `Welcome to Bazaarnagar, ${escapeHtml(name)}!`,
+      heading: `Welcome to Bazarnagar, ${escapeHtml(name)}!`,
       body: `<p>Your account is ready. Here's what you can do:</p>
   <ul style="padding-left:20px;margin:0">${perks.map((p) => `<li style="margin-bottom:6px">${p}</li>`).join("")}</ul>`,
       button: { label: "Start shopping", href: shop },
@@ -330,7 +330,7 @@ const STATUS_COPY: Record<OrderEmailStatus, { subject: string; heading: string; 
   delivered: {
     subject: "Your order has been delivered",
     heading: "Your order has been delivered",
-    intro: (store) => `Your order from ${store} has been delivered. We hope you love it — thanks for shopping on Bazaarnagar!`,
+    intro: (store) => `Your order from ${store} has been delivered. We hope you love it — thanks for shopping on Bazarnagar!`,
   },
   cancelled: {
     subject: "Your order was cancelled",

@@ -14,7 +14,6 @@ import { SOCIAL_PLATFORMS } from "../models/SocialClick";
 import { socialClickReport, socialClicksQuerySchema } from "../lib/socialClicks";
 import { getSubscriptionSettings } from "../lib/subscriptionSettings";
 import { PAYMENT_CURRENCIES, quotePlan } from "../lib/paymentPricing";
-import { stripeEnabled, createSubscriptionCheckoutSession } from "../lib/stripe";
 import { env } from "../config/env";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
@@ -227,7 +226,8 @@ const productSchema = z.object({
   stockStatus: z.enum(["in_stock", "out_of_stock"]).default("in_stock"),
   status: z.enum(["active", "inactive"]).default("active"),
   negotiable: z.boolean().default(false),
-  condition: z.enum(["new", "used"]).optional(),
+  // Optional "Brand new" / "Second hand" tag; "" or null clears it.
+  condition: z.preprocess((v) => (v === "" ? null : v), z.enum(["new", "used"]).nullable().optional()),
   deliveryOption: z.enum(["available", "not_available", "negotiable"]).default("available"),
   deliveryFee: z.number().nonnegative().optional(),
   lat: z.number().optional(),
@@ -390,43 +390,6 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
 
 /* --------------------------- Subscription / Payments ---------------------- */
 
-const checkoutSchema = z.object({
-  planId: z.enum(["starter", "basic", "growth", "pro"]),
-  currency: z.enum(PAYMENT_CURRENCIES).default("PKR"),
-});
-
-/**
- * POST /api/seller/subscription/checkout
- * Creates a Stripe Checkout Session for the chosen plan. Activation happens
- * via the /api/webhooks/stripe webhook (server-to-server, does not depend on
- * the browser redirect) — success_url is purely for the return-to-app UX.
- */
-export const subscriptionCheckout = asyncHandler(async (req: Request, res: Response) => {
-  const seller = await currentSeller(req);
-  const { planId, currency } = checkoutSchema.parse(req.body);
-  const quote = await quotePlan(planId, currency, "card");
-
-  if (!stripeEnabled) {
-    throw new ApiError(503, "Payment gateway is not configured. Please contact support.");
-  }
-
-  console.log(`[subscription] checkout start sellerId=${seller.id} planId=${planId} ${quote.currency} ${quote.total}`);
-
-  const { url, sessionId } = await createSubscriptionCheckoutSession({
-    amount: quote.total,
-    currency: quote.currency,
-    tax: quote.tax,
-    cardFee: quote.cardFee,
-    sellerId: seller.id,
-    planId,
-    customerEmail: seller.email,
-    successUrl: `${env.appUrl}/dashboard/plan?payment=success`,
-    cancelUrl: `${env.appUrl}/dashboard/plan?payment=cancelled`,
-  });
-
-  console.log(`[subscription] checkout session created sellerId=${seller.id} session=${sessionId}`);
-  res.json({ url, orderId: sessionId, planId });
-});
 
 export const getMyPayments = asyncHandler(async (req: Request, res: Response) => {
   const seller = await currentSeller(req);
@@ -452,7 +415,6 @@ export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Resp
     subscriptionEndsAt: endsAt ?? null,
     autoRenew: seller.autoRenew,
     daysRemaining,
-    hasCardToken: Boolean(seller.stripePaymentMethodId),
     // When a lapsed paid plan will move to Free (null if it won't / isn't lapsing).
     downgradeAt,
     hiddenProducts: seller.storeId
@@ -460,13 +422,6 @@ export const getSubscriptionStatus = asyncHandler(async (req: Request, res: Resp
       : 0,
     downgradedFromPlanId: seller.downgradedFromPlanId ?? null,
   });
-});
-
-export const toggleAutoRenew = asyncHandler(async (req: Request, res: Response) => {
-  const seller = await currentSeller(req);
-  seller.autoRenew = !seller.autoRenew;
-  await seller.save();
-  res.json({ autoRenew: seller.autoRenew });
 });
 
 export const cancelSubscription = asyncHandler(async (req: Request, res: Response) => {

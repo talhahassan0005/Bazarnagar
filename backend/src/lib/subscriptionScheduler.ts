@@ -1,88 +1,29 @@
 import { Seller } from "../models/Seller";
-import { Payment } from "../models/Payment";
 import { Product } from "../models/Product";
 import { PlanConfig } from "../models/PlanConfig";
 import type { PlanId } from "../models/Seller";
-import { addBillingPeriod, getLivePlanLimit, getPlan } from "./plans";
+import { getLivePlanLimit, getPlan } from "./plans";
 import { syncPlanVisibility } from "./planVisibility";
 import { getSubscriptionSettings, warningDays } from "./subscriptionSettings";
 import { sendMail } from "./mailer";
-import { quotePlan } from "./paymentPricing";
 import { planDowngradedEmail, planExpiryWarningEmail } from "./emails";
-import { chargeSavedCard } from "./stripe";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // hourly
-const MAX_RETRIES = 3;
 
 /**
  * Main subscription lifecycle processor — runs hourly:
- * 1. Auto-renew: charge sellers whose nextChargeDate <= now and autoRenew=true
- * 2. Expire: active/trial past endDate with autoRenew=false
- * 3. Lapsed: warn during the grace period, then move to the Free plan (admin setting)
- * 4. Keep hidden-over-limit products in sync with each shop's plan
+ * 1. Expire: paid plans past their end date
+ * 2. Lapsed: warn during the grace period, then move to the Free plan (admin setting)
+ * 3. Keep hidden-over-limit products in sync with each shop's plan
  */
 export async function processSubscriptions(): Promise<void> {
   const now = new Date();
 
-  // ── 1. Auto-renewal ────────────────────────────────────────────────────────
-  const toRenew = await Seller.find({
-    subscriptionStatus: "active",
-    autoRenew: true,
-    stripeCustomerId: { $exists: true, $ne: "" },
-    stripePaymentMethodId: { $exists: true, $ne: "" },
-    subscriptionEndsAt: { $ne: null, $lte: now },
-  });
-
-  for (const seller of toRenew) {
-    // Renew in the currency they last paid in, at today's admin-set price (+ USD tax).
-    const quote = await quotePlan(seller.planId, seller.billingCurrency ?? "PKR", "card").catch(() => null);
-    const success =
-      quote != null &&
-      (await chargeSavedCard(
-        seller.stripeCustomerId!,
-        seller.stripePaymentMethodId!,
-        quote.total,
-        `Bazaarnagar ${seller.planId} plan renewal`,
-        quote.currency
-      ));
-
-    if (success) {
-      const base = seller.subscriptionEndsAt && seller.subscriptionEndsAt > now
-        ? seller.subscriptionEndsAt : now;
-      seller.subscriptionEndsAt = addBillingPeriod(base);
-      seller.retryCount = 0;
-      await seller.save();
-
-      await Payment.create({
-        sellerId: seller._id,
-        planId: seller.planId,
-        amount: quote!.total,
-        currency: quote!.currency,
-        taxAmount: quote!.tax,
-        cardFeeAmount: quote!.cardFee,
-        method: "card",
-        paidAt: now,
-        notes: "Auto-renewal via saved card",
-      });
-      console.log(`  ↳ Auto-renewed: ${seller.email}`);
-    } else {
-      seller.retryCount = (seller.retryCount ?? 0) + 1;
-      if (seller.retryCount >= MAX_RETRIES) {
-        seller.subscriptionStatus = "expired";
-        seller.autoRenew = false;
-        console.log(`  ↳ Auto-renewal failed after ${MAX_RETRIES} retries: ${seller.email}`);
-      } else {
-        console.log(`  ↳ Auto-renewal retry ${seller.retryCount}/${MAX_RETRIES}: ${seller.email}`);
-      }
-      await seller.save();
-    }
-  }
-
   // The free (starter) plan never expires — only paid plans are aged out below.
   const paidPlan = { planId: { $ne: "starter" } };
 
-  // ── 2. Expire subscriptions past endDate with autoRenew=false ─────────────
+  // ── 1. Expire paid subscriptions past their end date ──────────────────────
   await Seller.updateMany(
     {
       ...paidPlan,
@@ -103,10 +44,10 @@ export async function processSubscriptions(): Promise<void> {
     { $set: { subscriptionStatus: "expired" } }
   );
 
-  // ── 3. Lapsed paid plans: warn, then move to Free (admin setting) ──────────
+  // ── 2. Lapsed paid plans: warn, then move to Free (admin setting) ──────────
   await processLapsedPlans(now);
 
-  // ── 4. Re-check product visibility for shops with hidden products (catches
+  // ── 3. Re-check product visibility for shops with hidden products (catches
   // renewals / upgrades / deleted products from any path).
   const withHidden: unknown[] = await Product.distinct("storeId", { hiddenOverPlanLimit: true });
   if (withHidden.length > 0) {

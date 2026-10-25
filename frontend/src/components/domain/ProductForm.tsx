@@ -34,7 +34,7 @@ const EMPTY: ProductFormValues = {
   stockStatus: "in_stock",
   status: "active",
   negotiable: false,
-  condition: "new",
+  condition: undefined,
   deliveryOption: "available",
   deliveryFee: undefined,
 };
@@ -240,12 +240,15 @@ export function ProductForm({
             ]}
           />
           <Select
-            label="Condition"
-            value={v.condition ?? "new"}
-            onChange={(e) => set("condition", e.target.value as ProductFormValues["condition"])}
+            label="Condition tag (optional)"
+            value={v.condition ?? ""}
+            onChange={(e) =>
+              set("condition", (e.target.value || null) as ProductFormValues["condition"])
+            }
             options={[
-              { value: "new", label: "New" },
-              { value: "used", label: "Used" },
+              { value: "", label: "Don't show a tag" },
+              { value: "new", label: "Brand new" },
+              { value: "used", label: "Second hand" },
             ]}
           />
           <div className="space-y-4 sm:pt-7">

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import { CreditCard, Landmark, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban, EyeOff } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Modal, Skeleton, Toggle } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Modal, Skeleton } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
@@ -20,9 +19,7 @@ import {
   useGetSellerQuery,
   useGetMyProductsQuery,
   useGetSubscriptionStatusQuery,
-  useSubscriptionCheckoutMutation,
   useCancelSubscriptionMutation,
-  useToggleAutoRenewMutation,
   useGetMyPaymentsQuery,
   useGetPublicPlanConfigQuery,
   useGetMyPaymentRequestsQuery,
@@ -109,17 +106,9 @@ function StatusBanner({ status, endsAt, daysRemaining, isFree, downgradeAt }: {
   return null;
 }
 
-// How long to keep polling after a checkout redirect before giving up and
-// falling back to the manual "Check payment status" button. This catches any
-// brief race between the Stripe redirect and the webhook actually landing.
-const PENDING_PAYMENT_POLL_MS = 4000;
-const PENDING_PAYMENT_TIMEOUT_MS = 3 * 60 * 1000;
-const PENDING_PAYMENT_KEY = "sub_pending_payment";
 
 export default function PlanPage() {
   const dispatch = useAppDispatch();
-  const searchParams = useSearchParams();
-  const router = useRouter();
 
   const seller = useGetSellerQuery();
   const products = useGetMyProductsQuery();
@@ -127,107 +116,25 @@ export default function PlanPage() {
   const payments = useGetMyPaymentsQuery();
   const planConfig = useGetPublicPlanConfigQuery();
   const manualRequests = useGetMyPaymentRequestsQuery();
-  const [checkout, { isLoading: checkingOut }] = useSubscriptionCheckoutMutation();
   const [cancelSub, { isLoading: cancelling }] = useCancelSubscriptionMutation();
-  const [toggleAutoRenew, { isLoading: togglingAutoRenew }] = useToggleAutoRenewMutation();
 
-  const [checkingPayment, setCheckingPayment] = useState(false);
   const [manualPaymentOpen, setManualPaymentOpen] = useState(false);
   const [manualPlanId, setManualPlanId] = useState<PlanId | null>(null);
-  // Plan awaiting a "card vs. manual" payment-method choice.
+  // Plan awaiting a "where are you paying from" choice before paying.
   const [choosingPlan, setChoosingPlan] = useState<Plan | null>(null);
-  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   // Pakistan pays in PKR; other countries in USD (+ admin tax). Starts from the signup country.
   const [payCurrencyChoice, setPayCurrency] = useState<PaymentCurrency | null>(null);
   const payCurrency = payCurrencyChoice ?? defaultCurrency(seller.data?.country);
   const paymentConfig = usePlanPaymentConfig();
 
-  function clearPendingPoll() {
-    if (pollTimer.current) clearInterval(pollTimer.current);
-    pollTimer.current = null;
-    sessionStorage.removeItem(PENDING_PAYMENT_KEY);
-    setCheckingPayment(false);
-  }
-
-  function startPendingPoll(startedAt: number) {
-    setCheckingPayment(true);
-    if (pollTimer.current) clearInterval(pollTimer.current);
-    pollTimer.current = setInterval(() => {
-      if (Date.now() - startedAt > PENDING_PAYMENT_TIMEOUT_MS) {
-        clearPendingPoll();
-        return;
-      }
-      seller.refetch();
-      sub.refetch();
-    }, PENDING_PAYMENT_POLL_MS);
-  }
-
   async function handleManualCheck() {
     const [s] = await Promise.all([sub.refetch(), seller.refetch(), payments.refetch()]);
     if (s.data?.subscriptionStatus === "active") {
-      dispatch(addToast("Payment confirmed! Your subscription is now active.", "success"));
-      clearPendingPoll();
+      dispatch(addToast("Your subscription is active.", "success"));
     } else {
       dispatch(addToast("Still not confirmed yet. If you completed payment, please wait a moment and try again, or contact support.", "info"));
     }
   }
-
-  // Handle payment gateway return (full-page redirect fallback)
-  useEffect(() => {
-    if (sessionStorage.getItem("sub_success")) {
-      sessionStorage.removeItem("sub_success");
-      dispatch(addToast("Payment successful! Your subscription is now active.", "success"));
-    }
-    const p = searchParams.get("payment");
-    if (!p) return;
-    if (p === "success") {
-      sessionStorage.setItem("sub_success", "1");
-      clearPendingPoll();
-      seller.refetch();
-      sub.refetch();
-      payments.refetch();
-      window.history.replaceState({}, "", "/dashboard/plan");
-      window.location.reload();
-      return;
-    }
-    if (p === "failed") dispatch(addToast("Payment failed or was not completed. Please try again.", "error"));
-    if (p === "cancelled") dispatch(addToast("Payment was cancelled.", "error"));
-    router.replace("/dashboard/plan");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fallback: if we redirected out for a payment and never got a `?payment=`
-  // query back (e.g. the tab was closed and reopened), poll subscription
-  // status in the background so the UI catches up as soon as the webhook
-  // actually activates the plan.
-  useEffect(() => {
-    const raw = sessionStorage.getItem(PENDING_PAYMENT_KEY);
-    if (!raw) return;
-    try {
-      const { startedAt } = JSON.parse(raw) as { startedAt: number };
-      if (Date.now() - startedAt > PENDING_PAYMENT_TIMEOUT_MS) {
-        sessionStorage.removeItem(PENDING_PAYMENT_KEY);
-        return;
-      }
-      startPendingPoll(startedAt);
-    } catch {
-      sessionStorage.removeItem(PENDING_PAYMENT_KEY);
-    }
-    return () => {
-      if (pollTimer.current) clearInterval(pollTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Stop polling as soon as the subscription actually shows active.
-  useEffect(() => {
-    if (!checkingPayment) return;
-    if (sub.data?.subscriptionStatus === "active" || seller.data?.subscriptionStatus === "active") {
-      dispatch(addToast("Payment confirmed! Your subscription is now active.", "success"));
-      clearPendingPoll();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sub.data, seller.data, checkingPayment]);
 
   // Wait only for seller + products — sub status is optional (has its own fallback)
   if (seller.isLoading || products.isLoading || !seller.data) {
@@ -268,33 +175,6 @@ export default function PlanPage() {
   const isTrial = !isFree && status === "trial";
   const needsRenewal = isExpiredOrCancelled || isTrial;
 
-  async function handleSubscribe(plan: Plan) {
-    try {
-      const { url } = await checkout({ planId: plan.id, currency: payCurrency }).unwrap();
-      // Remember that a payment is pending so that even if the browser
-      // redirect back is delayed or interrupted, we still detect activation
-      // via polling.
-      sessionStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({ planId: plan.id, startedAt: Date.now() }));
-      // Full page redirect — most reliable, no popup/postMessage issues
-      window.location.assign(url);
-    } catch (err) {
-      dispatch(addToast(getErrorMessage(err, "Could not initiate payment. Please try again."), "error"));
-    }
-  }
-
-  async function handleToggleAutoRenew() {
-    try {
-      const result = await toggleAutoRenew().unwrap();
-      dispatch(addToast(
-        result.autoRenew ? "Auto-renewal turned on." : "Auto-renewal turned off.",
-        "success"
-      ));
-      sub.refetch();
-    } catch (err) {
-      dispatch(addToast(getErrorMessage(err, "Could not update auto-renewal"), "error"));
-    }
-  }
-
   async function handleCancel() {
     if (!confirm("Cancel subscription? You'll keep access until the current period ends.")) return;
     try {
@@ -327,21 +207,6 @@ export default function PlanPage() {
           }
         />
         <CardBody className="space-y-4">
-          {checkingPayment && (
-            <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-              <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
-              <div className="flex-1">
-                <span>Confirming your payment… this can take a minute. Please don&apos;t close this page.</span>
-                <button
-                  type="button"
-                  onClick={handleManualCheck}
-                  className="ml-2 font-medium underline underline-offset-2"
-                >
-                  Check now
-                </button>
-              </div>
-            </div>
-          )}
           <StatusBanner
             status={status}
             endsAt={endsAt}
@@ -413,21 +278,6 @@ export default function PlanPage() {
             </div>
           </div>
 
-          {isActive && (
-            <div className="border-t border-slate-100 pt-4">
-              <Toggle
-                label="Auto-renewal"
-                description={
-                  sub.data?.hasCardToken
-                    ? "Automatically charge your saved card when this plan expires, so your shop never goes offline."
-                    : "Pay with a card once to save it — after that you can turn this on so renewals happen automatically."
-                }
-                checked={Boolean(sub.data?.autoRenew)}
-                disabled={!sub.data?.hasCardToken || togglingAutoRenew}
-                onChange={handleToggleAutoRenew}
-              />
-            </div>
-          )}
         </CardBody>
       </Card>
 
@@ -446,39 +296,14 @@ export default function PlanPage() {
       </div>
 
       <p className="mt-4 text-center text-xs text-slate-400">
-        Pay by card (instant) or manually via bank transfer / JazzCash / EasyPaisa. Cancel anytime —
-        access continues until period end.
+        Pakistan: pay by JazzCash / bank transfer / EasyPaisa. Outside Pakistan: pay online with Payoneer. Cancel
+        anytime — access continues until period end.
       </p>
 
       {choosingPlan && (
-        <Modal open onClose={() => setChoosingPlan(null)} title="Choose how to pay">
+        <Modal open onClose={() => setChoosingPlan(null)} title="Pay for your plan">
           <div className="space-y-3">
             <PaymentCurrencySelect plan={choosingPlan} currency={payCurrency} onChange={setPayCurrency} />
-            <button
-              type="button"
-              disabled={checkingOut || !quoteFor(choosingPlan, payCurrency, paymentConfig).available}
-              className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-300 hover:bg-brand-50 disabled:opacity-60"
-              onClick={() => handleSubscribe(choosingPlan)}
-            >
-              <CreditCard className="h-5 w-5 shrink-0 text-brand-600" />
-              <span>
-                <span className="block font-medium text-slate-900">
-                  {checkingOut ? "Redirecting to Stripe…" : "Pay with card"}
-                </span>
-                <span className="block text-xs text-slate-500">
-                  Via Stripe — plan activates instantly.{" "}
-                  {quoteFor(choosingPlan, payCurrency, paymentConfig).available && (
-                    <>
-                      Total{" "}
-                      <strong>
-                        {formatMoney(quoteFor(choosingPlan, payCurrency, paymentConfig, "card").total, payCurrency)}
-                      </strong>
-                      {paymentConfig.cardFeePercent > 0 && ` (incl. ${paymentConfig.cardFeePercent}% card fee)`}
-                    </>
-                  )}
-                </span>
-              </span>
-            </button>
             <button
               type="button"
               className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
@@ -490,11 +315,13 @@ export default function PlanPage() {
             >
               <Landmark className="h-5 w-5 shrink-0 text-brand-600" />
               <span>
-                <span className="block font-medium text-slate-900">Pay manually</span>
+                <span className="block font-medium text-slate-900">
+                  {payCurrency === "PKR" ? "Pay with JazzCash / bank" : "Pay online with Payoneer"}
+                </span>
                 <span className="block text-xs text-slate-500">
                   {payCurrency === "PKR"
                     ? "JazzCash QR / bank transfer / EasyPaisa — reviewed by our team, activates within 24 hours."
-                    : "International bank transfer — reviewed by our team, activates within 24 hours."}
+                    : "Send USD to our Payoneer US account, upload the receipt — activates within 24 hours."}
                 </span>
               </span>
             </button>

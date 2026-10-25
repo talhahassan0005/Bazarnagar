@@ -16,6 +16,16 @@ export interface SettingsDoc extends Document {
   jazzcashNumber?: string;
   easypaisaNumber?: string;
   instructions?: string;
+  /* USD payments from outside Pakistan: Payoneer receiving (US bank) account */
+  usdBankName?: string;
+  usdBankAddress?: string;
+  usdRoutingNumber?: string;
+  usdSwiftCode?: string;
+  usdAccountNumber?: string;
+  usdAccountType?: string;
+  usdBeneficiaryName?: string;
+  /** Optional Payoneer payment request link. */
+  payoneerLink?: string;
 }
 
 const settingsSchema = new Schema<SettingsDoc>(
@@ -27,6 +37,14 @@ const settingsSchema = new Schema<SettingsDoc>(
     jazzcashNumber: String,
     easypaisaNumber: String,
     instructions: String,
+    usdBankName: String,
+    usdBankAddress: String,
+    usdRoutingNumber: String,
+    usdSwiftCode: String,
+    usdAccountNumber: String,
+    usdAccountType: String,
+    usdBeneficiaryName: String,
+    payoneerLink: String,
     downgradeAfterExpiry: Boolean,
     graceDays: Number,
     usdTaxPercent: Number,

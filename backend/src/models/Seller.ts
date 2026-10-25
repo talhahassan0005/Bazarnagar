@@ -27,16 +27,13 @@ export interface SellerDoc extends Document {
   subscriptionEndsAt?: Date;
   autoRenew: boolean;
   retryCount: number;
-  /** Saved Stripe customer + payment method, used for off-session auto-renewal charges. */
-  stripeCustomerId?: string;
-  stripePaymentMethodId?: string;
   storeId: Types.ObjectId | null;
   /** KYC — submitted while status is "pending", reviewed by an admin. */
   kycCnicFront?: string;
   kycCnicBack?: string;
   kycSubmittedAt?: Date;
   kycRejectionReason?: string;
-  /** Currency of the seller's last plan payment — card auto-renewals charge in it. */
+  /** Currency of the seller's last plan payment. */
   billingCurrency?: "PKR" | "USD";
   /** Plan-expiry warning emails sent since the plan expired (reset on renewal). */
   expiryWarningsSent?: number;
@@ -73,8 +70,6 @@ const sellerSchema = new Schema<SellerDoc>(
     subscriptionEndsAt: { type: Date, index: true },
     autoRenew: { type: Boolean, default: false },
     retryCount: { type: Number, default: 0 },
-    stripeCustomerId: { type: String },
-    stripePaymentMethodId: { type: String },
     storeId: { type: Schema.Types.ObjectId, ref: "Store", default: null },
     kycCnicFront: { type: String },
     kycCnicBack: { type: String },

@@ -1,6 +1,6 @@
-# Bazaarnagar — Backend (Prototype 1)
+# Bazarnagar — Backend (Prototype 1)
 
-REST API for the Bazaarnagar mini-store / product-catalog platform.
+REST API for the Bazarnagar mini-store / product-catalog platform.
 **Node.js + Express + TypeScript + MongoDB (Mongoose).**
 
 Implements the SRS: seller auth, store profiles, product CRUD with **plan limit
@@ -19,7 +19,7 @@ npm run dev                 # http://localhost:5000  (watch mode)
 ```
 
 You need MongoDB running — either a local `mongod` (default URI
-`mongodb://127.0.0.1:27017/bazaarnagar`) or a MongoDB Atlas connection string in
+`mongodb://127.0.0.1:27017/bazarnagar`) or a MongoDB Atlas connection string in
 `MONGODB_URI`.
 
 Other scripts: `npm run build` (compile to `dist/`), `npm start` (run compiled),

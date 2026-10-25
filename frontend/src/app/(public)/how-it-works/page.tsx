@@ -68,7 +68,7 @@ const FEATURES = [
   {
     icon: Search,
     title: "Public search",
-    desc: "Your products appear in Bazaarnagar's search by name, category and city — customers find you without needing your link.",
+    desc: "Your products appear in Bazarnagar's search by name, category and city — customers find you without needing your link.",
   },
   {
     icon: ImagePlus,
@@ -131,7 +131,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "Do I need a website or technical skills?",
-        a: "No. Everything is done through a simple dashboard. If you can use WhatsApp, you can run a shop on Bazaarnagar.",
+        a: "No. Everything is done through a simple dashboard. If you can use WhatsApp, you can run a shop on Bazarnagar.",
       },
     ],
   },
@@ -144,7 +144,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "How do customers pay?",
-        a: "Orders placed on Bazaarnagar are Cash on Delivery — the customer pays when the order arrives. For WhatsApp orders, you agree on payment directly with the customer.",
+        a: "Orders placed on Bazarnagar are Cash on Delivery — the customer pays when the order arrives. For WhatsApp orders, you agree on payment directly with the customer.",
       },
       {
         q: "What is product moderation?",

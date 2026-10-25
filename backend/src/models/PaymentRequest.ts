@@ -2,7 +2,7 @@ import { Schema, model, type Document, type Types } from "mongoose";
 import { baseSchemaOptions } from "./_base";
 
 export type PaymentRequestStatus = "pending" | "approved" | "rejected";
-export type PaymentRequestMethod = "bank" | "jazzcash" | "easypaisa";
+export type PaymentRequestMethod = "bank" | "jazzcash" | "easypaisa" | "payoneer";
 
 export type PaymentRequestPurpose = "plan" | "boost";
 
@@ -26,7 +26,7 @@ export interface PaymentRequestDoc extends Document {
   currency?: "PKR" | "USD";
   /** Tax included in `amount` (USD payments only). */
   taxAmount?: number;
-  /** Card fee included in `amount` (online card payments only). */
+  /** Online payment fee included in `amount` (Payoneer / card payments only). */
   cardFeeAmount?: number;
   method: PaymentRequestMethod;
   reference: string;
@@ -47,7 +47,7 @@ const paymentRequestSchema = new Schema<PaymentRequestDoc>(
     currency: { type: String, enum: ["PKR", "USD"], default: "PKR" },
     taxAmount: { type: Number, min: 0 },
     cardFeeAmount: { type: Number, min: 0 },
-    method: { type: String, enum: ["bank", "jazzcash", "easypaisa"], required: true },
+    method: { type: String, enum: ["bank", "jazzcash", "easypaisa", "payoneer"], required: true },
     reference: { type: String, required: true, trim: true },
     proofUrl: String,
     status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending", index: true },

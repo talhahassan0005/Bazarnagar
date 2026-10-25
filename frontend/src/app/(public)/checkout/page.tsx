@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   Banknote,
   Check,
-  CreditCard,
-  Lock,
   MessageCircle,
   ShoppingCart,
 } from "lucide-react";
@@ -17,9 +15,6 @@ import { clearCart, selectCartItems } from "@/store/cartSlice";
 import { addToast } from "@/store/uiSlice";
 import {
   useCreateOrderMutation,
-  useGetPaymentConfigQuery,
-  useStripeCheckoutMutation,
-  useStripeMockConfirmMutation,
 } from "@/store/apiSlice";
 import { CitySelect } from "@/components/domain/CitySelect";
 import { formatPrice, getErrorMessage, toWhatsAppNumber } from "@/lib/utils";
@@ -63,12 +58,6 @@ export default function CheckoutPage() {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectCartItems);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
-  const [createStripe, { isLoading: onlineLoading }] = useStripeCheckoutMutation();
-  const [confirmStripe] = useStripeMockConfirmMutation();
-  // hosted = live Stripe (redirect to their secure page); else local mock mode
-  // where we collect test details inline.
-  const { data: payConfig } = useGetPaymentConfigQuery();
-  const hosted = Boolean(payConfig?.hosted);
 
   const customer = useAppSelector((s) => s.auth.customer);
   const [form, setForm] = useState({
@@ -94,100 +83,11 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.id]);
 
-  // Inline payment-detail fields (test/demo — in production these come from
-  // Stripe's secure hosted checkout, never stored by us).
-  const [pay, setPay] = useState({ cardNumber: "", expiry: "", cvv: "" });
-  const [payErrors, setPayErrors] = useState<Partial<Record<keyof typeof pay, string>>>({});
-  const setPayField = (key: keyof typeof pay, value: string) => {
-    setPay((p) => ({ ...p, [key]: value }));
-    setPayErrors((e) => ({ ...e, [key]: "" })); // clear the error as they type
-  };
-
-  /** Validate the payment fields for card (mock mode only). */
-  function validatePay(): Partial<Record<keyof typeof pay, string>> {
-    const e: Partial<Record<keyof typeof pay, string>> = {};
-    const num = pay.cardNumber.replace(/\s+/g, "");
-    if (!/^\d{16}$/.test(num)) e.cardNumber = "Enter a valid 16-digit card number.";
-
-    const exp = pay.expiry.trim();
-    if (!/^(0[1-9]|1[0-2])\s*\/\s*\d{2}$/.test(exp)) {
-      e.expiry = "Use MM/YY format.";
-    } else {
-      const [mm, yy] = exp.split("/").map((s) => parseInt(s.trim(), 10));
-      // Card is valid through the end of its expiry month.
-      const expDate = new Date(2000 + yy!, mm!, 0, 23, 59, 59);
-      if (expDate < new Date()) e.expiry = "This card has expired.";
-    }
-
-    if (!/^\d{3,4}$/.test(pay.cvv.trim())) e.cvv = "CVV must be 3 or 4 digits.";
-    return e;
-  }
-
   const [placed, setPlaced] = useState<{ groups: StoreGroup[]; orders: Order[] } | null>(null);
-  const [method, setMethod] = useState<"cod" | "card">("cod");
-
   const groups = groupByStore(items);
-  const singleStore = groups.length === 1 ? groups[0]! : null;
-
-  // Online (card via Stripe) works for any single-shop cart. Toggle this
-  // flag off to hide the option site-wide (buyers see Cash on Delivery
-  // only) without ripping out the Stripe integration below.
-  const ONLINE_PAYMENTS_ENABLED = false;
-  const onlineAvailable = ONLINE_PAYMENTS_ENABLED && Boolean(singleStore);
-  const isOnline = method === "card";
-
-  useEffect(() => {
-    if (!onlineAvailable && isOnline) setMethod("cod");
-  }, [onlineAvailable, isOnline]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    // Card payment (Stripe) → create the order and redirect to the secure
-    // gateway (or the local test gateway in mock mode).
-    if (isOnline && singleStore) {
-      // Stripe needs an email to send the payment receipt to.
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail.trim())) {
-        dispatch(addToast("Enter a valid email to receive your payment receipt.", "error"));
-        return;
-      }
-      // In hosted (live) mode the card details are entered on Stripe's page,
-      // so we only validate the inline test fields in mock mode.
-      if (!hosted) {
-        const errs = validatePay();
-        if (Object.keys(errs).length > 0) {
-          setPayErrors(errs);
-          return;
-        }
-      }
-      try {
-        const { url, orderId, mock } = await createStripe({
-          storeId: singleStore.storeId,
-          ...form,
-          items: singleStore.items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-          })),
-        }).unwrap();
-        rememberOrder(orderId);
-        if (mock) {
-          // Mock/test mode: details were entered inline above, so confirm the
-          // payment directly and go to the success page.
-          await confirmStripe(orderId).unwrap();
-          dispatch(clearCart());
-          window.location.href = `/checkout/success?order=${orderId}`;
-        } else {
-          // Live mode: hand off to Stripe's secure hosted checkout. The order
-          // is already created, so clear the cart now — this also avoids the
-          // cart re-hydrating from localStorage when we return to the site.
-          dispatch(clearCart());
-          window.location.href = url;
-        }
-      } catch (err) {
-        dispatch(addToast(getErrorMessage(err, "Could not start online payment"), "error"));
-      }
-      return;
-    }
 
     try {
       const orders: Order[] = [];
@@ -232,7 +132,7 @@ export default function CheckoutPage() {
           {placed.orders.map((order, i) => {
             const g = placed.groups[i]!;
             const message = [
-              `Hi ${g.storeName}, I placed an order on Bazaarnagar.`,
+              `Hi ${g.storeName}, I placed an order on Bazarnagar.`,
               `Order #${order.id.slice(-6).toUpperCase()}`,
               ...g.items.map((it) => `• ${it.name} × ${it.quantity}`),
               `Total: ${formatPrice(order.total)}`,
@@ -334,12 +234,7 @@ export default function CheckoutPage() {
             <Input
               label="Email address"
               type="email"
-              required={isOnline}
-              hint={
-                isOnline
-                  ? "Your payment receipt is sent here."
-                  : "Optional — we'll email your order confirmation and updates here."
-              }
+              hint="Optional — we'll email your order confirmation and updates here."
               placeholder="you@example.com"
               className="sm:col-span-2"
               value={form.customerEmail}
@@ -409,103 +304,11 @@ export default function CheckoutPage() {
           {/* Payment method */}
           <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
             <p className="text-sm font-medium text-slate-700">Payment method</p>
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50">
-              <input
-                type="radio"
-                name="payment"
-                checked={method === "cod"}
-                onChange={() => setMethod("cod")}
-              />
+            <div className="flex items-center gap-2.5 rounded-xl border border-brand-400 bg-brand-50 p-3 text-sm">
               <Banknote className="h-4 w-4 text-slate-500" />
               Cash on Delivery
-            </label>
-            {method === "cod" && <CodNotice />}
-            {/* Live (hosted) mode: card details are entered on Stripe's page. */}
-            {onlineAvailable && hosted && (
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-leaf-400 has-[:checked]:bg-leaf-50">
-                <input
-                  type="radio"
-                  name="payment"
-                  className="mt-0.5"
-                  checked={isOnline}
-                  onChange={() => setMethod("card")}
-                />
-                <CreditCard className="mt-0.5 h-4 w-4 text-leaf-600" />
-                <span>
-                  Pay online — Card
-                  <span className="mt-0.5 block text-xs text-slate-400">
-                    Enter your card details securely on the Stripe page.
-                  </span>
-                </span>
-              </label>
-            )}
-
-            {/* Mock/demo mode: card for local testing. */}
-            {onlineAvailable && !hosted && (
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 p-3 text-sm transition-colors has-[:checked]:border-leaf-400 has-[:checked]:bg-leaf-50">
-                <input
-                  type="radio"
-                  name="payment"
-                  className="mt-0.5"
-                  checked={method === "card"}
-                  onChange={() => setMethod("card")}
-                />
-                <CreditCard className="mt-0.5 h-4 w-4 text-leaf-600" />
-                <span>
-                  Debit / Credit Card
-                  <span className="mt-0.5 block text-xs text-slate-400">Visa · Mastercard</span>
-                </span>
-              </label>
-            )}
-            {/* Live mode: details are entered on Stripe's secure page. */}
-            {isOnline && hosted && (
-              <p className="flex items-center gap-1.5 rounded-xl border border-leaf-200 bg-leaf-50/50 p-3 text-xs text-slate-500">
-                <Lock className="h-3 w-3" /> You'll be securely redirected to Stripe to complete
-                your payment.
-              </p>
-            )}
-
-            {/* Mock mode: inline test card details. */}
-            {isOnline && !hosted && (
-              <div className="space-y-3 rounded-xl border border-leaf-200 bg-leaf-50/50 p-3">
-                <Input
-                  label="Card number"
-                  inputMode="numeric"
-                  maxLength={19}
-                  placeholder="4242 4242 4242 4242"
-                  value={pay.cardNumber}
-                  error={payErrors.cardNumber}
-                  onChange={(e) => setPayField("cardNumber", e.target.value)}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label="Expiry"
-                    placeholder="MM / YY"
-                    maxLength={7}
-                    value={pay.expiry}
-                    error={payErrors.expiry}
-                    onChange={(e) => setPayField("expiry", e.target.value)}
-                  />
-                  <Input
-                    label="CVV"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="123"
-                    value={pay.cvv}
-                    error={payErrors.cvv}
-                    onChange={(e) => setPayField("cvv", e.target.value)}
-                  />
-                </div>
-                <p className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                  <Lock className="h-3 w-3" /> Secured by Stripe · test mode — no real charge.
-                </p>
-              </div>
-            )}
-            {ONLINE_PAYMENTS_ENABLED && !onlineAvailable && groups.length > 1 && (
-              <p className="text-xs text-slate-400">
-                Online payment is available when all items are from one shop.
-              </p>
-            )}
+            </div>
+            <CodNotice />
           </div>
 
           <Button
@@ -514,17 +317,10 @@ export default function CheckoutPage() {
             fullWidth
             size="lg"
             variant="accent"
-            className={isOnline ? "mt-5 bg-leaf-600 hover:bg-leaf-700" : "mt-5"}
-            loading={isOnline ? onlineLoading : isLoading}
-            leftIcon={
-              method === "cod" ? undefined : (
-                <CreditCard className="h-4 w-4" />
-              )
-            }
+            className="mt-5"
+            loading={isLoading}
           >
-            {method === "cod"
-              ? "Place order"
-              : `Pay ${formatPrice(groups.reduce((s, g) => s + groupTotal(g), 0))}`}
+            Place order
           </Button>
           <Link
             href="/cart"

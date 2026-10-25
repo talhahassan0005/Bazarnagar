@@ -134,7 +134,7 @@ export default function AdminOrdersPage() {
   async function downloadCsv() {
     setDownloading(true);
     try {
-      await downloadFile("/admin/orders/export", { ...filters }, "bazaarnagar-orders.csv");
+      await downloadFile("/admin/orders/export", { ...filters }, "bazarnagar-orders.csv");
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Could not download the CSV"), "error"));
     } finally {

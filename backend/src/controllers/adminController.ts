@@ -281,7 +281,7 @@ export const exportActivityLogs = asyncHandler(async (req: Request, res: Respons
   // en-CA formats as YYYY-MM-DD; use Pakistan's date, not UTC's.
   const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-activity-${stamp}.csv"`);
+  res.setHeader("Content-Disposition", `attachment; filename="bazarnagar-activity-${stamp}.csv"`);
   // BOM so Excel opens the file as UTF-8 (Urdu names, ₨ etc. render correctly).
   res.send(`﻿${csv}\r\n`);
 });
@@ -726,7 +726,7 @@ export const exportSearchLogs = asyncHandler(async (req: Request, res: Response)
   const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
   const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-searches-${stamp}.csv"`);
+  res.setHeader("Content-Disposition", `attachment; filename="bazarnagar-searches-${stamp}.csv"`);
   res.send(`\uFEFF${csv}\r\n`);
 });
 
@@ -810,7 +810,7 @@ export const exportBuyers = asyncHandler(async (req: Request, res: Response) => 
   const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
   const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-buyers-${stamp}.csv"`);
+  res.setHeader("Content-Disposition", `attachment; filename="bazarnagar-buyers-${stamp}.csv"`);
   res.send(`\uFEFF${csv}\r\n`);
 });
 
@@ -941,7 +941,7 @@ export const exportAdminOrders = asyncHandler(async (req: Request, res: Response
   const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
   const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="bazaarnagar-orders-${stamp}.csv"`);
+  res.setHeader("Content-Disposition", `attachment; filename="bazarnagar-orders-${stamp}.csv"`);
   res.send(`\uFEFF${csv}\r\n`);
 });
 

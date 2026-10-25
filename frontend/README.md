@@ -1,4 +1,4 @@
-# Bazaarnagar — Frontend (Prototype 1)
+# Bazarnagar — Frontend (Prototype 1)
 
 Mobile-friendly mini-store / product-catalog builder for WhatsApp & Instagram sellers.
 Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS v4**.

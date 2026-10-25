@@ -10,7 +10,7 @@ export interface PaymentDoc extends Document {
   currency?: "PKR" | "USD";
   /** Tax included in `amount` (USD payments only). */
   taxAmount?: number;
-  /** Card fee included in `amount` (online card payments only). */
+  /** Online payment fee included in `amount` (Payoneer / card payments only). */
   cardFeeAmount?: number;
   method: string;
   paidAt: Date;

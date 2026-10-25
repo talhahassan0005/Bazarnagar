@@ -188,17 +188,6 @@ export const apiSlice = createApi({
       query: (ids) => ({ url: "/public/orders/by-ids", params: { ids: ids.join(",") } }),
       providesTags: ["Order"],
     }),
-    stripeCheckout: builder.mutation<{ url: string; orderId: string; mock: boolean }, CreateOrderInput>({
-      query: (body) => ({ url: "/public/stripe/checkout", method: "POST", body }),
-      invalidatesTags: ["Order"],
-    }),
-    stripeMockConfirm: builder.mutation<Order, string>({
-      query: (orderId) => ({ url: "/public/stripe/mock-confirm", method: "POST", body: { orderId } }),
-      invalidatesTags: ["Order"],
-    }),
-    getPaymentConfig: builder.query<{ hosted: boolean }, void>({
-      query: () => "/public/payment-config",
-    }),
     getSellerOrders: builder.query<Order[], void>({
       query: () => "/seller/orders",
       providesTags: ["Order"],
@@ -309,27 +298,18 @@ export const apiSlice = createApi({
       query: (planId) => ({ url: "/seller/plan", method: "PATCH", body: { planId } }),
       invalidatesTags: ["Seller"],
     }),
-    subscriptionCheckout: builder.mutation<{ url: string; orderId: string; planId: string }, { planId: PlanId; currency: PaymentCurrency }>({
-      query: (body) => ({ url: "/seller/subscription/checkout", method: "POST", body }),
-      invalidatesTags: ["Seller"],
-    }),
     getSubscriptionStatus: builder.query<{
       planId: PlanId;
       subscriptionStatus: string;
       subscriptionEndsAt: string | null;
       autoRenew: boolean;
       daysRemaining: number;
-      hasCardToken: boolean;
       downgradeAt: string | null;
       hiddenProducts: number;
       downgradedFromPlanId: PlanId | null;
     }, void>({
       query: () => "/seller/subscription/status",
       providesTags: ["Seller"],
-    }),
-    toggleAutoRenew: builder.mutation<{ autoRenew: boolean }, void>({
-      query: () => ({ url: "/seller/subscription/toggle-auto-renew", method: "POST" }),
-      invalidatesTags: ["Seller"],
     }),
     cancelSubscription: builder.mutation<{ ok: boolean; subscriptionStatus: string; subscriptionEndsAt: string | null }, void>({
       query: () => ({ url: "/seller/subscription/cancel", method: "POST" }),
@@ -609,9 +589,6 @@ export const {
   useCreateReviewMutation,
   useCreateOrderMutation,
   useGetOrdersByIdsQuery,
-  useStripeCheckoutMutation,
-  useStripeMockConfirmMutation,
-  useGetPaymentConfigQuery,
   useGetSellerOrdersQuery,
   useUpdateOrderStatusMutation,
   useGetMyOrdersCustomerQuery,
@@ -637,9 +614,7 @@ export const {
   useBoostProductMutation,
   useGetBoostPricingQuery,
   useChangePlanMutation,
-  useSubscriptionCheckoutMutation,
   useGetSubscriptionStatusQuery,
-  useToggleAutoRenewMutation,
   useCancelSubscriptionMutation,
   useGetMyPaymentsQuery,
   useGetManualPaymentSettingsQuery,

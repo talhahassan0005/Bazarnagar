@@ -25,20 +25,20 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Mirrors the backend's quotePlan: PKR has no tax, USD adds the admin's tax %,
- * and paying online by card adds the card fee on top.
+ * and paying online (Payoneer — every USD payment) adds the online fee.
  */
 export function quoteFor(
   plan: Plan,
   currency: PaymentCurrency,
   config: PlanPaymentConfig,
-  method: "card" | "manual" = "manual"
+  method: "online" | "manual" = currency === "USD" ? "online" : "manual"
 ): PlanQuote {
   const base = currency === "PKR" ? plan.price : plan.priceUsd ?? 0;
   const taxPercent = currency === "USD" ? config.usdTaxPercent : 0;
   // Whole rupees for PKR; cents for USD (same as the backend).
   const round = currency === "PKR" ? Math.round : round2;
   const tax = round((base * taxPercent) / 100);
-  const cardFeePercent = method === "card" ? config.cardFeePercent : 0;
+  const cardFeePercent = method === "online" ? config.cardFeePercent : 0;
   const cardFee = round(((base + tax) * cardFeePercent) / 100);
   return {
     currency,
@@ -110,16 +110,16 @@ export function PaymentCurrencySelect({
                 <span>{formatMoney(q.tax, q.currency)}</span>
               </div>
             )}
+            {q.cardFee > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Online payment fee ({q.cardFeePercent}%)</span>
+                <span>{formatMoney(q.cardFee, q.currency)}</span>
+              </div>
+            )}
             <div className="mt-1 flex justify-between border-t border-slate-200 pt-1 font-semibold text-slate-900">
-              <span>Total{config.cardFeePercent > 0 ? " (manual payment)" : ""}</span>
+              <span>Total</span>
               <span>{formatMoney(q.total, q.currency)}</span>
             </div>
-            {config.cardFeePercent > 0 && (
-              <p className="mt-1 text-xs text-slate-500">
-                Paying online by card adds a {config.cardFeePercent}% card fee:{" "}
-                <strong>{formatMoney(quoteFor(plan, currency, config, "card").total, q.currency)}</strong>
-              </p>
-            )}
           </>
         )}
       </div>

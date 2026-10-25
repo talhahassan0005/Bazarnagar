@@ -382,8 +382,8 @@ function PaymentCurrencySection() {
   return (
     <div className="mt-10">
       <PageHeader
-        title="Payment Currency, Tax & Card Fee"
-        description="Sellers choose where they pay from. Pakistan pays the PKR price with no tax; other countries pay the plan's USD price plus tax. Paying online by card adds the card fee."
+        title="Payment Currency, Tax & Online Fee"
+        description="Sellers choose where they pay from. Pakistan pays the PKR price (JazzCash / bank) with no tax. Other countries pay the plan's USD price plus tax and the online fee, through Payoneer."
       />
       {isLoading ? (
         <LoadingPanel label="Loading…" />
@@ -397,17 +397,16 @@ function PaymentCurrencySection() {
               hint="Outside Pakistan only. 0 = no tax"
             />
             <Field
-              label="Card fee (%)"
+              label="Online payment fee (%)"
               value={values.cardFeePercent}
               onChange={(v) => setForm({ ...values, cardFeePercent: v })}
-              hint="Online card payments (PKR & USD). 0 = none"
+              hint="Payoneer (online) payments. 0 = none"
             />
           </div>
           <p className="text-sm text-slate-500">
             Example — a $10 plan from outside Pakistan:{" "}
-            <span className="font-semibold text-slate-900">{usd(10 + exampleTax)}</span> by bank transfer,{" "}
-            <span className="font-semibold text-slate-900">{usd(10 + exampleTax + exampleCard)}</span> by card. Set each
-            plan&apos;s USD price above.
+            <span className="font-semibold text-slate-900">{usd(10 + exampleTax + exampleCard)}</span> through Payoneer
+            ($10 + tax + online fee). Pakistan pays the PKR price with no tax or fee. Set each plan&apos;s USD price above.
           </p>
           <div className="flex gap-2">
             <Button size="sm" loading={saving} disabled={!form} onClick={save} leftIcon={<Check className="h-3.5 w-3.5" />}>

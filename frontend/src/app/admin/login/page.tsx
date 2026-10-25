@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
       <div className="relative mb-6 flex items-center gap-2.5 text-white">
         <BrandMark className="h-9 w-9" />
         <span className="text-lg font-bold">
-          Bazaarnagar <span className="font-normal text-brand-200">Admin</span>
+          Bazarnagar <span className="font-normal text-brand-200">Admin</span>
         </span>
       </div>
       <Card className="relative w-full max-w-sm animate-fade-in-up p-6 shadow-2xl sm:p-8">

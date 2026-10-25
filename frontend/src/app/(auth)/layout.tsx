@@ -29,7 +29,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       >
         <BrandMark className="h-14 w-14" />
         <span className="text-2xl font-bold tracking-tight">
-          Bazaar<span className="text-accent-500">nagar</span>
+          Bazarnagar
         </span>
       </Link>
       <div className="relative w-full max-w-lg animate-fade-in-up">{children}</div>

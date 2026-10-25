@@ -47,7 +47,7 @@ export function Logo({
           invert ? "text-white" : "text-brand-700"
         )}
       >
-        Bazaar<span className="text-accent-500">nagar</span>
+        Bazarnagar
       </span>
     </Link>
   );

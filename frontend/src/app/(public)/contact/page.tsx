@@ -38,7 +38,7 @@ const HELP_LINKS = [
   {
     icon: PackageSearch,
     title: "Track an order",
-    text: "See the status of orders you've placed on Bazaarnagar.",
+    text: "See the status of orders you've placed on Bazarnagar.",
     href: "/orders",
     tone: "bg-leaf-500/10 text-leaf-600",
   },

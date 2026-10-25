@@ -65,7 +65,7 @@ export const STORE_THEMES: Record<StoreTheme, ThemeTokens> = {
 
 /** Human-friendly labels for the theme picker in the dashboard. */
 export const THEME_OPTIONS: { value: StoreTheme; label: string }[] = [
-  { value: "brand", label: "Bazaarnagar Blue" },
+  { value: "brand", label: "Bazarnagar Blue" },
   { value: "emerald", label: "Emerald" },
   { value: "rose", label: "Rose" },
   { value: "amber", label: "Amber" },

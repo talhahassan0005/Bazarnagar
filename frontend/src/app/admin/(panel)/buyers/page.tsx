@@ -29,7 +29,7 @@ export default function AdminBuyersPage() {
   async function downloadCsv() {
     setDownloading(true);
     try {
-      await downloadFile("/admin/buyers/export", { q: q || undefined }, "bazaarnagar-buyers.csv");
+      await downloadFile("/admin/buyers/export", { q: q || undefined }, "bazarnagar-buyers.csv");
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Could not download the CSV"), "error"));
     } finally {

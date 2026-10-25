@@ -5,7 +5,6 @@ import { env } from "./config/env";
 import routes from "./routes";
 import { UPLOAD_DIR } from "./middleware/upload";
 import { notFound, errorHandler } from "./middleware/error";
-import { stripeWebhook } from "./controllers/stripeController";
 import { isAllowedOrigin } from "./lib/corsOrigins";
 
 export function createApp() {
@@ -24,14 +23,6 @@ export function createApp() {
       exposedHeaders: ["Content-Disposition"],
     })
   );
-  // The Stripe webhook needs the RAW body for signature verification — mount
-  // it before the JSON body parser.
-  app.post(
-    "/api/webhooks/stripe",
-    express.raw({ type: "application/json" }),
-    stripeWebhook
-  );
-
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
   // Always log requests (including production) — useful for confirming the

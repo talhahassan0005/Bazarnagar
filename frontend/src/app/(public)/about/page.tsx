@@ -16,7 +16,7 @@ import { SITE_NAME } from "@/lib/constants";
 export const metadata: Metadata = {
   title: `About · ${SITE_NAME}`,
   description:
-    "Bazaar Nagar is a free online marketplace built for Pakistan's shopkeepers. Create your store in minutes, list up to 50 products free.",
+    "Bazarnagar is a free online marketplace built for Pakistan's shopkeepers. Create your store in minutes, list up to 50 products free.",
 };
 
 const WHAT_WE_DO = [
@@ -34,7 +34,7 @@ const WHY = [
   },
   {
     title: "It's simple.",
-    desc: "If you can use WhatsApp, you can run a Bazaar Nagar store. No technical skills needed.",
+    desc: "If you can use WhatsApp, you can run a Bazarnagar store. No technical skills needed.",
   },
   {
     title: "It's local.",
@@ -54,7 +54,7 @@ const WHO = [
 ];
 
 const FAQS = [
-  { q: "Is Bazaar Nagar really free?", a: "Yes. Creating a store and listing up to 50 products is completely free." },
+  { q: "Is Bazarnagar really free?", a: "Yes. Creating a store and listing up to 50 products is completely free." },
   { q: "How many products can I list for free?", a: "Up to 50 products or services per store, free." },
   { q: "Do I need a computer?", a: "No — everything works from your phone." },
   { q: "How do customers contact me?", a: "Directly through WhatsApp, using the button on your store page." },
@@ -80,7 +80,7 @@ export default function AboutPage() {
             Your store. Online. Free.
           </p>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-brand-100">
-            Bazaar Nagar is a free online marketplace built for Pakistan's shopkeepers and service
+            Bazarnagar is a free online marketplace built for Pakistan's shopkeepers and service
             providers. Create your own online store in minutes and list up to 50 products at no
             cost — no setup fees, no monthly charges, no hidden costs.
           </p>
@@ -106,7 +106,7 @@ export default function AboutPage() {
             </h2>
             <p className="mt-4 text-slate-500 leading-relaxed">
               Whether you sell clothes, electronics, groceries, or offer services like tailoring or
-              repairs — Bazaar Nagar gives you a real online presence in minutes.
+              repairs — Bazarnagar gives you a real online presence in minutes.
             </p>
           </div>
           <div className="space-y-3">
@@ -125,10 +125,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Why Bazaar Nagar */}
+      {/* Why Bazarnagar */}
       <section className="border-t border-slate-100 py-16">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">Why Bazaar Nagar?</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">Why Bazarnagar?</p>
           <h2 className="mt-2 text-3xl font-bold text-slate-900">Built different. For you.</h2>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
@@ -156,7 +156,7 @@ export default function AboutPage() {
               If you have something to sell,<br />this is for you.
             </h2>
             <p className="mt-4 text-slate-500 leading-relaxed">
-              From a small corner shop to a home-based business — Bazaar Nagar is built for
+              From a small corner shop to a home-based business — Bazarnagar is built for
               everyone who deserves to be found online.
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function AboutPage() {
           <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-500/30 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           <p className="relative text-sm font-medium text-brand-200 italic">
-            Bazaar Nagar — every shop deserves to be found.
+            Bazarnagar — every shop deserves to be found.
           </p>
           <h2 className="relative mt-2 text-2xl font-bold">Ready to open your store?</h2>
           <p className="relative mx-auto mt-2 max-w-md text-brand-100">

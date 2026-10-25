@@ -54,7 +54,7 @@ function SettingsForm() {
 
   return (
     <Card className="mb-6">
-      <CardHeader title="Manual payment details" subtitle="Shown to sellers who choose to pay by bank transfer, JazzCash or EasyPaisa." />
+      <CardHeader title="Manual payment details" subtitle="Pakistan: bank transfer, JazzCash or EasyPaisa. Outside Pakistan: the Payoneer US account." />
       <CardBody className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <Input label="Bank name" value={values.bankName ?? ""} onChange={(e) => set("bankName", e.target.value)} />
@@ -68,6 +68,22 @@ function SettingsForm() {
           value={values.instructions ?? ""}
           onChange={(e) => set("instructions", e.target.value)}
         />
+        <p className="pt-2 text-sm font-semibold text-slate-800">USD payments from outside Pakistan (Payoneer)</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input label="Beneficiary name" value={values.usdBeneficiaryName ?? ""} onChange={(e) => set("usdBeneficiaryName", e.target.value)} />
+          <Input label="Bank name" value={values.usdBankName ?? ""} onChange={(e) => set("usdBankName", e.target.value)} />
+          <Input label="Bank address" value={values.usdBankAddress ?? ""} onChange={(e) => set("usdBankAddress", e.target.value)} />
+          <Input label="Routing (ABA)" value={values.usdRoutingNumber ?? ""} onChange={(e) => set("usdRoutingNumber", e.target.value)} />
+          <Input label="SWIFT code" value={values.usdSwiftCode ?? ""} onChange={(e) => set("usdSwiftCode", e.target.value)} />
+          <Input label="Account number" value={values.usdAccountNumber ?? ""} onChange={(e) => set("usdAccountNumber", e.target.value)} />
+          <Input label="Account type" value={values.usdAccountType ?? ""} onChange={(e) => set("usdAccountType", e.target.value)} />
+          <Input
+            label="Payoneer payment link (optional)"
+            placeholder="https://…"
+            value={values.payoneerLink ?? ""}
+            onChange={(e) => set("payoneerLink", e.target.value)}
+          />
+        </div>
         <Button size="sm" loading={saving} onClick={save}>Save details</Button>
       </CardBody>
     </Card>

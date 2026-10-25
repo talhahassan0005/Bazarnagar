@@ -1,7 +1,7 @@
 import type { SocialPlatform } from "./socials";
 
 /**
- * Shared domain types for Bazaarnagar (Prototype 1).
+ * Shared domain types for Bazarnagar (Prototype 1).
  * These mirror the entities described in the SRS and are used by both the
  * mock data layer and the (future) Express + MongoDB backend responses.
  */
@@ -205,7 +205,8 @@ export interface Product {
   stockStatus: StockStatus;
   status: ProductStatus;
   negotiable: boolean;
-  condition?: ProductCondition;
+  /** Optional "Brand new" / "Second hand" tag (null = no tag). */
+  condition?: ProductCondition | null;
   deliveryOption: DeliveryOption;
   /** Flat delivery fee (PKR). Ignored when deliveryOption is "negotiable" or "not_available". */
   deliveryFee?: number;
@@ -269,7 +270,7 @@ export type PaymentCurrency = "PKR" | "USD";
 export interface PlanPaymentConfig {
   /** Tax added to USD plan payments, in percent. */
   usdTaxPercent: number;
-  /** Fee added to online card payments, in percent of price + tax. */
+  /** Fee added to online payments (Payoneer), in percent of price + tax. */
   cardFeePercent: number;
 }
 
@@ -290,7 +291,7 @@ export interface Payment {
 /* ---------------------------- Manual Payments ------------------------------ */
 
 export type PaymentRequestStatus = "pending" | "approved" | "rejected";
-export type PaymentRequestMethod = "bank" | "jazzcash" | "easypaisa";
+export type PaymentRequestMethod = "bank" | "jazzcash" | "easypaisa" | "payoneer";
 
 /** Seller-submitted manual subscription payment awaiting admin verification. */
 export interface PaymentRequest {
@@ -327,6 +328,15 @@ export interface ManualPaymentSettings {
   jazzcashNumber?: string;
   easypaisaNumber?: string;
   instructions?: string;
+  /** USD payments (outside Pakistan): Payoneer receiving US bank account. */
+  usdBankName?: string;
+  usdBankAddress?: string;
+  usdRoutingNumber?: string;
+  usdSwiftCode?: string;
+  usdAccountNumber?: string;
+  usdAccountType?: string;
+  usdBeneficiaryName?: string;
+  payoneerLink?: string;
 }
 
 /* --------------------------------- Customer -------------------------------- */

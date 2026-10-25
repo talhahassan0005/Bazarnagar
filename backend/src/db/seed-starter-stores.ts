@@ -231,7 +231,7 @@ async function run() {
   let created = 0;
   let updated = 0;
   for (const s of STORES) {
-    const email = `${s.slug.replace(/-/g, ".")}@bazaarnagar.test`;
+    const email = `${s.slug.replace(/-/g, ".")}@bazarnagar.test`;
     let seller = await Seller.findOne({ email });
     const isNewSeller = !seller;
     if (!seller) {

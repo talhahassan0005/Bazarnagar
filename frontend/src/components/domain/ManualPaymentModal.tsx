@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Landmark } from "lucide-react";
+import { Copy, Download, Landmark } from "lucide-react";
 import { Button, Input, Modal, Select } from "@/components/ui";
 import { ImageUpload } from "@/components/domain/ImageUpload";
 import { PaymentHelpLink } from "@/components/domain/PaymentHelpLink";
@@ -14,6 +14,11 @@ import {
 import { formatMoney, formatPrice, getErrorMessage } from "@/lib/utils";
 import type { Plan, PlanId, PaymentCurrency, PaymentRequestMethod } from "@/lib/types";
 import { PaymentCurrencySelect, quoteFor, usePlanPaymentConfig } from "@/components/domain/PaymentCurrencySelect";
+
+/** USD payments from outside Pakistan go online through Payoneer. */
+const USD_PAYMENT_METHODS: { value: PaymentRequestMethod; label: string }[] = [
+  { value: "payoneer", label: "Payoneer / US bank transfer" },
+];
 
 export const PAYMENT_METHODS: { value: PaymentRequestMethod; label: string }[] = [
   { value: "bank", label: "Bank transfer" },
@@ -32,7 +37,7 @@ function JazzCashQr({ amount }: { amount: number | null }) {
       <a href={JAZZCASH_QR} target="_blank" rel="noopener noreferrer" className="shrink-0">
         <img
           src={JAZZCASH_QR}
-          alt="JazzCash QR code to pay Bazaar Nagar"
+          alt="JazzCash QR code to pay Bazarnagar"
           className="w-44 rounded-lg border border-amber-200 bg-white shadow-sm"
         />
       </a>
@@ -50,7 +55,7 @@ function JazzCashQr({ amount }: { amount: number | null }) {
         </p>
         <a
           href={JAZZCASH_QR}
-          download="BazaarNagar-JazzCash-QR.jpeg"
+          download="Bazarnagar-JazzCash-QR.jpeg"
           className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"
         >
           <Download className="h-3.5 w-3.5" /> Download QR (to scan from your gallery)
@@ -60,29 +65,86 @@ function JazzCashQr({ amount }: { amount: number | null }) {
   );
 }
 
+/** Payoneer receiving (US bank) account for USD payments, with a copy button per field. */
+function PayoneerDetails({ amount }: { amount: number | null }) {
+  const dispatch = useAppDispatch();
+  const { data: s, isLoading } = useGetManualPaymentSettingsQuery();
+  const rows: [string, string | undefined][] = [
+    ["Beneficiary name", s?.usdBeneficiaryName],
+    ["Bank name", s?.usdBankName],
+    ["Bank address", s?.usdBankAddress],
+    ["Routing (ABA)", s?.usdRoutingNumber],
+    ["SWIFT code", s?.usdSwiftCode],
+    ["Account number", s?.usdAccountNumber],
+    ["Account type", s?.usdAccountType],
+  ];
+
+  function copy(label: string, value: string) {
+    navigator.clipboard
+      ?.writeText(value)
+      .then(() => dispatch(addToast(`${label} copied`, "success")))
+      .catch(() => {});
+  }
+
+  return (
+    <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-sm">
+      <p className="font-semibold text-slate-900">
+        Pay {amount != null ? formatMoney(amount, "USD") : ""} online with Payoneer
+      </p>
+      <p className="mt-1 text-slate-600">
+        Send the exact amount from your Payoneer, Wise or bank account (ACH / wire) to this US account, then upload the
+        receipt below.
+      </p>
+      {isLoading ? (
+        <p className="mt-3 text-slate-400">Loading payment details…</p>
+      ) : (
+        <dl className="mt-3 divide-y divide-blue-100 rounded-lg border border-blue-100 bg-white">
+          {rows
+            .filter(([, v]) => v)
+            .map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between gap-3 px-3 py-2">
+                <dt className="text-xs text-slate-500">{label}</dt>
+                <dd className="flex items-center gap-2 text-right font-medium text-slate-800">
+                  <span className="break-all">{value}</span>
+                  <button
+                    type="button"
+                    onClick={() => copy(label, value!)}
+                    className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-700"
+                    aria-label={`Copy ${label}`}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </dd>
+              </div>
+            ))}
+        </dl>
+      )}
+      {s?.payoneerLink && (
+        <Button href={s.payoneerLink} target="_blank" size="sm" className="mt-3">
+          Pay with a Payoneer link
+        </Button>
+      )}
+    </div>
+  );
+}
+
 /**
  * QR code plus a "Send Rs X to:" box listing the admin's bank / JazzCash /
- * EasyPaisa details. USD payments (from abroad) get bank transfer only — the
- * JazzCash QR takes PKR.
+ * EasyPaisa details. USD payments (from abroad) get the Payoneer US account
+ * instead — the JazzCash QR takes PKR.
  */
 export function PayToDetails({ amount, currency = "PKR" }: { amount: number | null; currency?: PaymentCurrency }) {
   const { data: settings, isLoading } = useGetManualPaymentSettingsQuery();
   const usd = currency === "USD";
-  const hasDetails = usd
-    ? Boolean(settings?.bankAccountNumber)
-    : Boolean(settings?.bankAccountNumber || settings?.jazzcashNumber || settings?.easypaisaNumber);
+  const hasDetails = Boolean(settings?.bankAccountNumber || settings?.jazzcashNumber || settings?.easypaisaNumber);
   return (
     <div className="space-y-3">
       {usd ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-800">
-          Paying from outside Pakistan: send <strong>{amount != null ? formatMoney(amount, "USD") : "—"}</strong> by
-          international bank transfer to the account below.
-          {!isLoading && !hasDetails && " Our bank details aren't set up yet — please contact us using the link below."}
-        </p>
+        <PayoneerDetails amount={amount} />
       ) : (
         <JazzCashQr amount={amount} />
       )}
-      {(isLoading || hasDetails) && (
+      {!usd && (isLoading || hasDetails) && (
         <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
           <p className="mb-2 flex items-center gap-1.5 font-medium text-slate-700">
             <Landmark className="h-4 w-4" /> {usd ? "Send" : "Or send"} {amount != null ? formatMoney(amount, currency) : "—"} to:
@@ -129,7 +191,7 @@ export function ManualPaymentModal({
 
   const [planId, setPlanId] = useState<PlanId>(defaultPlanId);
   const [currency, setCurrency] = useState<PaymentCurrency>(defaultCurrency);
-  const [method, setMethod] = useState<PaymentRequestMethod>(defaultCurrency === "USD" ? "bank" : "jazzcash");
+  const [method, setMethod] = useState<PaymentRequestMethod>(defaultCurrency === "USD" ? "payoneer" : "jazzcash");
   const paymentConfig = usePlanPaymentConfig();
   const [reference, setReference] = useState("");
   const [proofUrl, setProofUrl] = useState("");
@@ -140,8 +202,8 @@ export function ManualPaymentModal({
 
   function changeCurrency(c: PaymentCurrency) {
     setCurrency(c);
-    // JazzCash / EasyPaisa only work in Pakistan.
-    if (c === "USD") setMethod("bank");
+    // Outside Pakistan pays online through Payoneer; JazzCash / EasyPaisa are Pakistan-only.
+    setMethod(c === "USD" ? "payoneer" : "jazzcash");
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -210,7 +272,7 @@ export function ManualPaymentModal({
           label="Paid via"
           value={method}
           onChange={(e) => setMethod(e.target.value as PaymentRequestMethod)}
-          options={currency === "USD" ? PAYMENT_METHODS.filter((m) => m.value === "bank") : PAYMENT_METHODS}
+          options={currency === "USD" ? USD_PAYMENT_METHODS : PAYMENT_METHODS}
         />
         <Input
           label="Transaction ID / reference number"

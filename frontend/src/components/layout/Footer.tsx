@@ -15,7 +15,7 @@ export function Footer() {
             <div className="flex items-center gap-2.5">
               <BrandMark className="h-8 w-8" />
               <span className="text-lg font-bold tracking-tight text-brand-700">
-                Bazaar<span className="text-accent-500">nagar</span>
+                Bazarnagar
               </span>
             </div>
             <p className="mt-3 text-sm text-slate-500">{SITE_TAGLINE}</p>

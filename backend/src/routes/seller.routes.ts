@@ -7,9 +7,7 @@ import {
   updateStorePayout,
   changePlan,
   renewSubscription,
-  subscriptionCheckout,
   getSubscriptionStatus,
-  toggleAutoRenew,
   cancelSubscription,
   getMyPayments,
   getMyProducts,
@@ -43,9 +41,7 @@ router.patch("/store/landing", updateStoreLanding);
 router.patch("/store/payout", updateStorePayout);
 router.patch("/plan", changePlan);
 router.post("/subscription/renew", renewSubscription);
-router.post("/subscription/checkout", subscriptionCheckout);
 router.get("/subscription/status", getSubscriptionStatus);
-router.post("/subscription/toggle-auto-renew", toggleAutoRenew);
 router.post("/subscription/cancel", cancelSubscription);
 router.get("/manual-payment-settings", getManualPaymentSettings);
 router.post("/subscription/manual-request", createPaymentRequest);

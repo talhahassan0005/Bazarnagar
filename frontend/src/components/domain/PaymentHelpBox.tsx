@@ -17,7 +17,7 @@ export function PaymentHelpBox() {
   if (params.get("topic") !== "payment") return null;
 
   const message = [
-    "Hi Bazaarnagar team, I'm facing a problem with a payment.",
+    "Hi Bazarnagar team, I'm facing a problem with a payment.",
     email.trim() ? `My account email: ${email.trim()}` : "",
     "Problem: ",
   ]

@@ -75,7 +75,7 @@ function SignupForm() {
       title={role === "seller" ? "Create your store" : "Create your account"}
       subtitle={
         role === "seller"
-          ? "Sign up to start selling on Bazaarnagar."
+          ? "Sign up to start selling on Bazarnagar."
           : "Track your orders and save products you like."
       }
       icon={<UserPlus className="h-5 w-5" />}

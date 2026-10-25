@@ -13,11 +13,6 @@ import {
   trackSocialClick,
 } from "../controllers/publicController";
 import { createOrder, getOrdersByIds } from "../controllers/orderController";
-import {
-  createStripeCheckout,
-  mockConfirmOrder,
-  getPaymentConfig,
-} from "../controllers/stripeController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
 import { getPlanConfig, getPaymentConfigHandler } from "../controllers/adminController";
 import { getActiveBanners } from "../controllers/bannerController";
@@ -45,8 +40,5 @@ router.get("/products/:id/reviews", getProductReviews);
 router.post("/products/:id/reviews", createReview);
 router.post("/orders", optionalAuthenticate, createOrder);
 router.get("/orders/by-ids", getOrdersByIds);
-router.get("/payment-config", getPaymentConfig);
-router.post("/stripe/checkout", optionalAuthenticate, createStripeCheckout);
-router.post("/stripe/mock-confirm", mockConfirmOrder);
 
 export default router;
