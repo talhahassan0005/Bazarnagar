@@ -15,6 +15,7 @@ import { socialClickReport, socialClicksQuerySchema } from "../lib/socialClicks"
 import { getSubscriptionSettings } from "../lib/subscriptionSettings";
 import { PAYMENT_CURRENCIES, quotePlan } from "../lib/paymentPricing";
 import { env } from "../config/env";
+import { deleteR2Urls } from "../lib/storage";
 import { ApiError, asyncHandler, slugify } from "../lib/helpers";
 
 async function currentSeller(req: Request) {
@@ -308,6 +309,10 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   const product = await Product.findOne({ _id: req.params.id, storeId: store._id });
   if (!product) throw new ApiError(404, "Product not found");
 
+  // Delete images that were removed from the product
+  const removedImages = product.images.filter((url) => !data.images.includes(url));
+  if (removedImages.length > 0) void deleteR2Urls(removedImages);
+
   const moderation = moderateProduct(data);
   Object.assign(product, data, {
     moderationStatus: moderation.status,
@@ -322,6 +327,8 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   const { store } = await requireOwnedStore(req);
   const product = await Product.findOneAndDelete({ _id: req.params.id, storeId: store._id });
   if (!product) throw new ApiError(404, "Product not found");
+  // Clean up all product images from R2
+  if (product.images.length > 0) void deleteR2Urls(product.images);
   res.json({ ok: true });
 });
 

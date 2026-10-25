@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs/promises";
 import crypto from "crypto";
-import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { env } from "../config/env";
 
 export const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
@@ -52,6 +52,43 @@ export async function headR2Object(
   } catch (err) {
     if ((err as { name?: string }).name === "NotFound") return null;
     throw err;
+  }
+}
+
+/**
+ * Extract the R2 key from a public URL, or return null if it's not an R2 URL.
+ * e.g. "https://pub-xxx.r2.dev/abc-123.jpg" → "abc-123.jpg"
+ */
+export function r2KeyFromUrl(url: string): string | null {
+  if (!env.r2.publicUrl || !url.startsWith(env.r2.publicUrl)) return null;
+  return url.slice(env.r2.publicUrl.length).replace(/^\//, "");
+}
+
+/** Delete a single R2 object by its public URL. Silently ignores non-R2 URLs. */
+export async function deleteR2Url(url: string): Promise<void> {
+  const key = r2KeyFromUrl(url);
+  if (!key || !env.r2Enabled) return;
+  try {
+    await r2().send(new DeleteObjectCommand({ Bucket: env.r2.bucket, Key: key }));
+  } catch (err) {
+    console.error("R2 delete failed:", key, err);
+  }
+}
+
+/** Delete multiple R2 objects by their public URLs (batched, up to 1000). */
+export async function deleteR2Urls(urls: string[]): Promise<void> {
+  if (!env.r2Enabled) return;
+  const keys = urls.map(r2KeyFromUrl).filter(Boolean) as string[];
+  if (keys.length === 0) return;
+  try {
+    await r2().send(
+      new DeleteObjectsCommand({
+        Bucket: env.r2.bucket,
+        Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+      })
+    );
+  } catch (err) {
+    console.error("R2 batch delete failed:", err);
   }
 }
 

@@ -22,6 +22,7 @@ import { getSubscriptionSettings } from "../lib/subscriptionSettings";
 import { getPaymentConfig } from "../lib/paymentPricing";
 import { Settings } from "../models/Settings";
 import { addBillingPeriod } from "../lib/plans";
+import { deleteR2Urls } from "../lib/storage";
 import { ApiError, asyncHandler } from "../lib/helpers";
 import { env } from "../config/env";
 
@@ -477,6 +478,7 @@ export const moderateProductStatus = asyncHandler(async (req: Request, res: Resp
 export const removeProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) throw new ApiError(404, "Product not found");
+  if (product.images.length > 0) void deleteR2Urls(product.images);
   res.json({ ok: true });
 });
 
