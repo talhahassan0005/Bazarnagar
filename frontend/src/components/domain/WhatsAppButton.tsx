@@ -3,7 +3,7 @@
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useTrackWhatsappClickMutation } from "@/store/apiSlice";
-import { buildWhatsAppLink } from "@/lib/utils";
+import { buildWhatsAppLink, effectivePrice } from "@/lib/utils";
 import type { Product, Store } from "@/lib/types";
 
 /**
@@ -32,7 +32,7 @@ export function WhatsAppButton({
   const href = buildWhatsAppLink({
     phone: store.whatsapp,
     productName: product.name,
-    price: product.price,
+    price: effectivePrice(product),
     negotiable: product.negotiable,
     productLink,
   });
