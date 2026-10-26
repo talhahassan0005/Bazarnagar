@@ -29,6 +29,8 @@ import type { Store } from "@/lib/types";
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
   const { data: product, isLoading } = useGetProductQuery(productId);
+  // Must be declared before any early returns (Rules of Hooks)
+  const [variantPrice, setVariantPrice] = useState<number | null>(null);
 
   if (isLoading) return <LoadingPanel label="Loading product…" />;
 
@@ -46,7 +48,6 @@ export default function ProductDetailPage() {
 
   const { store } = product;
   const discount = discountPercent(product);
-  const [variantPrice, setVariantPrice] = useState<number | null>(null);
   const displayPrice = variantPrice ?? effectivePrice(product);
 
   return (
