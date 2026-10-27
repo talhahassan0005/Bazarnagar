@@ -65,6 +65,7 @@ export function Footer() {
               <li><Link href="/about" className="transition-colors hover:text-brand-700">About us</Link></li>
               <li><Link href="/how-it-works" className="transition-colors hover:text-brand-700">How it works</Link></li>
               <li><Link href="/contact" className="transition-colors hover:text-brand-700">Contact us</Link></li>
+              <li><Link href="/address" className="transition-colors hover:text-brand-700">Our Address</Link></li>
               {/* Admin link hidden from public footer — panel is still reachable directly at /admin. */}
             </ul>
           </div>
