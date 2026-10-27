@@ -1,13 +1,10 @@
 import type { IconType } from "react-icons";
 import {
-  FaDiscord,
   FaFacebook,
   FaGlobe,
   FaInstagram,
   FaLinkedin,
-  FaReddit,
   FaTiktok,
-  FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6";
 
@@ -17,10 +14,7 @@ export type SocialPlatform =
   | "facebook"
   | "youtube"
   | "tiktok"
-  | "linkedin"
-  | "twitter"
-  | "reddit"
-  | "discord";
+  | "linkedin";
 
 export interface SocialConfig {
   key: SocialPlatform;
@@ -82,30 +76,6 @@ export const SOCIALS: SocialConfig[] = [
     placeholder: "profile or company link",
     className: "text-[#0A66C2]",
     profileUrl: (h) => `https://linkedin.com/${/^(in|company)\//.test(h) ? h : `in/${h}`}`,
-  },
-  {
-    key: "twitter",
-    label: "X (Twitter)",
-    icon: FaXTwitter,
-    placeholder: "username or link",
-    className: "text-black",
-    profileUrl: (h) => `https://x.com/${h}`,
-  },
-  {
-    key: "reddit",
-    label: "Reddit",
-    icon: FaReddit,
-    placeholder: "r/community, u/username or link",
-    className: "text-[#FF4500]",
-    profileUrl: (h) => `https://reddit.com/${/^(r|u|user)\//.test(h) ? h : `u/${h}`}`,
-  },
-  {
-    key: "discord",
-    label: "Discord",
-    icon: FaDiscord,
-    placeholder: "invite link or code",
-    className: "text-[#5865F2]",
-    profileUrl: (h) => `https://discord.gg/${h}`,
   },
 ];
 

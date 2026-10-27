@@ -131,7 +131,6 @@ export const SITE_SOCIALS: Partial<Record<import("./socials").SocialPlatform, st
   youtube: "",
   tiktok: "",
   linkedin: "",
-  twitter: "",
 };
 /** Support phone / WhatsApp, in international digits (no +) and display form. */
 export const SITE_PHONE = "923241201757";

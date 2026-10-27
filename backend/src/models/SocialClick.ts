@@ -9,9 +9,6 @@ export const SOCIAL_PLATFORMS = [
   "youtube",
   "tiktok",
   "linkedin",
-  "twitter",
-  "reddit",
-  "discord",
 ] as const;
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
