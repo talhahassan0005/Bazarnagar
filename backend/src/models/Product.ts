@@ -8,7 +8,8 @@ export type ProductCondition = "new" | "used";
 export interface ProductVariantOption {
   label: string;
   price: number;
-  discountPrice?: number;
+  /** Discount as a percentage (0–99). Effective price = price - (price * discountPercent / 100). */
+  discountPercent?: number;
 }
 
 export interface ProductVariant {
@@ -89,7 +90,7 @@ const productSchema = new Schema<ProductDoc>(
               {
                 label: { type: String, required: true, trim: true },
                 price: { type: Number, required: true, min: 0 },
-                discountPrice: { type: Number, min: 0 },
+                discountPercent: { type: Number, min: 0, max: 99 },
               },
             ],
             default: [],

@@ -22,7 +22,7 @@ export type ProductFormValues = Omit<
   "id" | "storeId" | "moderationStatus" | "views" | "whatsappClicks" | "addToCartClicks" | "buyNowClicks" | "createdAt"
 >;
 
-type VariantOption = { label: string; price: number; discountPrice?: number };
+type VariantOption = { label: string; price: number; discountPercent?: number };
 type Variant = { name: string; options: VariantOption[] };
 
 const EMPTY: ProductFormValues = {
@@ -154,13 +154,14 @@ function VariantsEditor({
                   className="w-28"
                 />
                 <Input
-                  label={oi === 0 ? "Discount (Rs.)" : undefined}
+                  label={oi === 0 ? "Discount %" : undefined}
                   type="number"
                   min={0}
-                  placeholder="Optional"
-                  value={opt.discountPrice ?? ""}
-                  onChange={(e) => setOption(gi, oi, "discountPrice", e.target.value)}
-                  className="w-28"
+                  max={99}
+                  placeholder="e.g. 20"
+                  value={opt.discountPercent ?? ""}
+                  onChange={(e) => setOption(gi, oi, "discountPercent", e.target.value)}
+                  className="w-24"
                 />
                 {group.options.length > 1 && (
                   <button

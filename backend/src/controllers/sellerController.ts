@@ -234,7 +234,7 @@ const productSchema = z.object({
     .array(
       z.object({
         name: z.string().min(1),
-        options: z.array(z.object({ label: z.string().min(1), price: z.number().nonnegative(), discountPrice: z.number().nonnegative().optional() })).min(1),
+        options: z.array(z.object({ label: z.string().min(1), price: z.number().nonnegative(), discountPercent: z.number().min(0).max(99).optional() })).min(1),
       })
     )
     .default([]),

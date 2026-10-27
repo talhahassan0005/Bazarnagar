@@ -153,7 +153,9 @@ export function lowestVariantPrice(product: Pick<Product, "price" | "discountPri
   let min = Infinity;
   for (const group of product.variants) {
     for (const opt of group.options) {
-      const ep = opt.discountPrice && opt.discountPrice < opt.price ? opt.discountPrice : opt.price;
+      const ep = opt.discountPercent && opt.discountPercent > 0
+        ? Math.round(opt.price * (1 - opt.discountPercent / 100))
+        : opt.price;
       if (ep < min) min = ep;
     }
   }
