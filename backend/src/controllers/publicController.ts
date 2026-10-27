@@ -296,24 +296,83 @@ const contactSchema = z.object({
 export const submitContactForm = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, subject, message } = contactSchema.parse(req.body);
 
-  const adminEmail = env.smtp.from || env.smtp.user;
+  const adminEmail = env.smtp.user || env.smtp.from;
 
   await sendMail({
     to: adminEmail,
+    replyTo: `${name} <${email}>`,
     subject: `[Contact Form] ${subject}`,
-    text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`,
+    text: `You have a new message from the Bazarnagar contact form.\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}\n\n---\nReply directly to this email to respond to ${name}.`,
     html: `
-      <div style="font-family:sans-serif;max-width:600px">
-        <h2 style="color:#1e40af">New Contact Form Submission</h2>
-        <table style="width:100%;border-collapse:collapse">
-          <tr><td style="padding:6px 0;color:#64748b;width:80px">Name</td><td style="padding:6px 0;font-weight:600">${name}</td></tr>
-          <tr><td style="padding:6px 0;color:#64748b">Email</td><td style="padding:6px 0"><a href="mailto:${email}">${email}</a></td></tr>
-          <tr><td style="padding:6px 0;color:#64748b">Subject</td><td style="padding:6px 0">${subject}</td></tr>
-        </table>
-        <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0"/>
-        <p style="white-space:pre-wrap;color:#1e293b">${message}</p>
-      </div>
-    `,
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);max-width:100%">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#1e3a8a;padding:28px 32px">
+            <p style="margin:0;font-size:11px;color:#93c5fd;letter-spacing:1px;text-transform:uppercase">Bazarnagar</p>
+            <h1 style="margin:8px 0 0;font-size:22px;color:#ffffff">New Contact Form Message</h1>
+          </td>
+        </tr>
+
+        <!-- Sender info -->
+        <tr>
+          <td style="padding:28px 32px 0">
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+              <tr style="background:#f8fafc">
+                <td style="padding:10px 16px;width:90px;color:#64748b;font-size:13px;font-weight:600">Name</td>
+                <td style="padding:10px 16px;font-size:14px;color:#0f172a;font-weight:700">${name}</td>
+              </tr>
+              <tr style="border-top:1px solid #e2e8f0">
+                <td style="padding:10px 16px;color:#64748b;font-size:13px;font-weight:600">Email</td>
+                <td style="padding:10px 16px;font-size:14px">
+                  <a href="mailto:${email}" style="color:#1d4ed8;text-decoration:none">${email}</a>
+                </td>
+              </tr>
+              <tr style="border-top:1px solid #e2e8f0;background:#f8fafc">
+                <td style="padding:10px 16px;color:#64748b;font-size:13px;font-weight:600">Subject</td>
+                <td style="padding:10px 16px;font-size:14px;color:#0f172a">${subject}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Message body -->
+        <tr>
+          <td style="padding:24px 32px">
+            <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:1px">Message</p>
+            <div style="background:#f8fafc;border-left:4px solid #1d4ed8;border-radius:0 8px 8px 0;padding:16px 20px">
+              <p style="margin:0;font-size:14px;color:#1e293b;line-height:1.7;white-space:pre-wrap">${message}</p>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Reply CTA -->
+        <tr>
+          <td style="padding:0 32px 28px">
+            <a href="mailto:${email}?subject=Re: ${encodeURIComponent(subject)}" style="display:inline-block;background:#1e3a8a;color:#ffffff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none">
+              Reply to ${name}
+            </a>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px">
+            <p style="margin:0;font-size:12px;color:#94a3b8">This message was submitted via the contact form on bazarnagar.com</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 
   res.json({ ok: true });
