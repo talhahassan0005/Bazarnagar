@@ -210,7 +210,7 @@ export interface Product {
   /** Optional "Brand new" / "Second hand" tag (null = no tag). */
   condition?: ProductCondition | null;
   /** Flexible variants — each group has a name and price-tagged options. */
-  variants?: { name: string; options: { label: string; price: number }[] }[];
+  variants?: { name: string; options: { label: string; price: number; discountPrice?: number }[] }[];
   deliveryOption: DeliveryOption;
   /** Flat delivery fee (PKR). Ignored when deliveryOption is "negotiable" or "not_available". */
   deliveryFee?: number;

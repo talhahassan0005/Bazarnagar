@@ -8,6 +8,7 @@ export type ProductCondition = "new" | "used";
 export interface ProductVariantOption {
   label: string;
   price: number;
+  discountPrice?: number;
 }
 
 export interface ProductVariant {
@@ -88,6 +89,7 @@ const productSchema = new Schema<ProductDoc>(
               {
                 label: { type: String, required: true, trim: true },
                 price: { type: Number, required: true, min: 0 },
+                discountPrice: { type: Number, min: 0 },
               },
             ],
             default: [],

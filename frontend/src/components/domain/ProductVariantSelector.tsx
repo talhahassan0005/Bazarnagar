@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/utils";
 interface VariantOption {
   label: string;
   price: number;
+  discountPrice?: number;
 }
 interface Variant {
   name: string;
@@ -27,12 +28,16 @@ export function ProductVariantSelector({
   onPriceChange: (price: number) => void;
   onVariantChange?: (label: string) => void;
 }) {
-  // Initialize with the cheapest option index per group
+  // Initialize with the cheapest effective-price option per group
   const initialSelected: Record<number, number> = {};
   variants.forEach((group, gi) => {
     let minIdx = 0;
     group.options.forEach((opt, oi) => {
-      if (opt.price < group.options[minIdx].price) minIdx = oi;
+      const ep = opt.discountPrice && opt.discountPrice < opt.price ? opt.discountPrice : opt.price;
+      const minEp = group.options[minIdx].discountPrice && group.options[minIdx].discountPrice! < group.options[minIdx].price
+        ? group.options[minIdx].discountPrice!
+        : group.options[minIdx].price;
+      if (ep < minEp) minIdx = oi;
     });
     initialSelected[gi] = minIdx;
   });
@@ -48,12 +53,16 @@ export function ProductVariantSelector({
 
   if (!variants || variants.length === 0) return null;
 
+  function effectiveOptPrice(opt: VariantOption): number {
+    return opt.discountPrice && opt.discountPrice < opt.price ? opt.discountPrice : opt.price;
+  }
+
   function notifyParent(sel: Record<number, number>) {
-    // Price: use the last group's selected option price (or first group if only one)
+    // Use the last group's selected option effective price
     const lastGroupIdx = variants.length - 1;
     const lastOptIdx = sel[lastGroupIdx] ?? 0;
-    const price = variants[lastGroupIdx]?.options[lastOptIdx]?.price ?? variants[0]?.options[sel[0] ?? 0]?.price;
-    if (price !== undefined) onPriceChange(price);
+    const opt = variants[lastGroupIdx]?.options[lastOptIdx] ?? variants[0]?.options[sel[0] ?? 0];
+    if (opt !== undefined) onPriceChange(effectiveOptPrice(opt));
 
     // Variant label summary for WhatsApp
     const parts = variants.map((group, gi) => {
@@ -89,9 +98,20 @@ export function ProductVariantSelector({
                   }`}
                 >
                   {opt.label}
-                  <span className={`ml-1.5 text-xs ${active ? "text-brand-600" : "text-slate-500"}`}>
-                    {formatPrice(opt.price)}
-                  </span>
+                  {opt.discountPrice && opt.discountPrice < opt.price ? (
+                    <span className="ml-1.5 inline-flex items-baseline gap-1">
+                      <span className={`text-xs font-semibold ${active ? "text-brand-600" : "text-green-600"}`}>
+                        {formatPrice(opt.discountPrice)}
+                      </span>
+                      <span className="text-xs line-through text-slate-400">
+                        {formatPrice(opt.price)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className={`ml-1.5 text-xs ${active ? "text-brand-600" : "text-slate-500"}`}>
+                      {formatPrice(opt.price)}
+                    </span>
+                  )}
                 </button>
               );
             })}
