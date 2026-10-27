@@ -168,6 +168,9 @@ export const apiSlice = createApi({
     trackWhatsappClick: builder.mutation<{ ok: boolean }, string>({
       query: (productId) => ({ url: `/public/products/${productId}/whatsapp-click`, method: "POST" }),
     }),
+    sendContactForm: builder.mutation<{ ok: true }, { name: string; email: string; subject: string; message: string }>({
+      query: (body) => ({ url: "/public/contact", method: "POST", body }),
+    }),
 
     // ── Reviews ───────────────────────────────────────────────────────────
     getProductReviews: builder.query<ProductReviews, string>({
@@ -581,6 +584,7 @@ export const {
   useTrackWhatsappClickMutation,
   useTrackStoreWhatsappClickMutation,
   useTrackButtonClickMutation,
+  useSendContactFormMutation,
   useGetPublicStoresQuery,
   useGetStoreBySlugQuery,
   useGetStoreProductsQuery,

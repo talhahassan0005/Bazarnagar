@@ -8,6 +8,8 @@ import { ratingSummary } from "./reviewController";
 import { withoutStats } from "../lib/publicJson";
 import { SearchLog, SEARCH_LOG_MAX_PRODUCTS } from "../models/SearchLog";
 import { SocialClick, SOCIAL_PLATFORMS } from "../models/SocialClick";
+import { sendMail } from "../lib/mailer";
+import { env } from "../config/env";
 
 /** Only products customers may see publicly (SRS §7). */
 const PUBLIC_PRODUCT_FILTER = { status: "active", moderationStatus: "approved", hiddenOverPlanLimit: { $ne: true } } as const;
@@ -282,6 +284,40 @@ function isOwnerOrAdmin(req: Request, storeSellerId: unknown): boolean {
   if (req.user?.role === "admin") return true;
   return req.user?.role === "seller" && String(storeSellerId) === req.user.id;
 }
+
+const contactSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(200),
+  subject: z.string().min(1).max(200),
+  message: z.string().min(10).max(3000),
+});
+
+/** POST /api/public/contact — visitor contact form submission. */
+export const submitContactForm = asyncHandler(async (req: Request, res: Response) => {
+  const { name, email, subject, message } = contactSchema.parse(req.body);
+
+  const adminEmail = env.smtp.from || env.smtp.user;
+
+  await sendMail({
+    to: adminEmail,
+    subject: `[Contact Form] ${subject}`,
+    text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px">
+        <h2 style="color:#1e40af">New Contact Form Submission</h2>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#64748b;width:80px">Name</td><td style="padding:6px 0;font-weight:600">${name}</td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Email</td><td style="padding:6px 0"><a href="mailto:${email}">${email}</a></td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Subject</td><td style="padding:6px 0">${subject}</td></tr>
+        </table>
+        <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0"/>
+        <p style="white-space:pre-wrap;color:#1e293b">${message}</p>
+      </div>
+    `,
+  });
+
+  res.json({ ok: true });
+});
 
 /** POST /api/public/products/:id/whatsapp-click — "Inquire on WhatsApp" on a product. */
 export const trackWhatsappClick = asyncHandler(async (req: Request, res: Response) => {
