@@ -13,6 +13,7 @@ import {
   formatDistance,
   formatPrice,
   isBoosted,
+  lowestVariantPrice,
 } from "@/lib/utils";
 
 /** Customer-facing product card (SRS §7.2). */
@@ -67,13 +68,22 @@ export function ProductCard({
         </Link>
 
         <div className="mt-1.5 flex items-baseline gap-2">
-          <span className="text-base font-semibold text-slate-900">
-            {formatPrice(effectivePrice(product))}
-          </span>
-          {discount && (
-            <span className="text-xs text-slate-400 line-through">
-              {formatPrice(product.price)}
+          {product.variants && product.variants.length > 0 ? (
+            <span className="text-base font-semibold text-slate-900">
+              <span className="mr-0.5 text-xs font-normal text-slate-400">from</span>
+              {formatPrice(lowestVariantPrice(product))}
             </span>
+          ) : (
+            <>
+              <span className="text-base font-semibold text-slate-900">
+                {formatPrice(effectivePrice(product))}
+              </span>
+              {discount && (
+                <span className="text-xs text-slate-400 line-through">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+            </>
           )}
         </div>
 

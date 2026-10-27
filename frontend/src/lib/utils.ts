@@ -144,6 +144,22 @@ export function effectivePrice(product: Pick<Product, "price" | "discountPrice">
   return product.price;
 }
 
+/**
+ * Returns the lowest effective price across all variant options.
+ * Falls back to the product's own effectivePrice when no variants exist.
+ */
+export function lowestVariantPrice(product: Pick<Product, "price" | "discountPrice" | "variants">): number {
+  if (!product.variants || product.variants.length === 0) return effectivePrice(product);
+  let min = Infinity;
+  for (const group of product.variants) {
+    for (const opt of group.options) {
+      const ep = opt.discountPrice && opt.discountPrice < opt.price ? opt.discountPrice : opt.price;
+      if (ep < min) min = ep;
+    }
+  }
+  return min === Infinity ? effectivePrice(product) : min;
+}
+
 /** Discount percentage, or null when there is no valid discount. */
 export function discountPercent(
   product: Pick<Product, "price" | "discountPrice">
