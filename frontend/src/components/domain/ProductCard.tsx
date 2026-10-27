@@ -13,7 +13,7 @@ import {
   formatDistance,
   formatPrice,
   isBoosted,
-  lowestVariantPrice,
+  lowestVariantInfo,
 } from "@/lib/utils";
 
 /** Customer-facing product card (SRS §7.2). */
@@ -30,6 +30,8 @@ export function ProductCard({
 }) {
   const href = `/store/${store.slug}/product/${product.id}`;
   const discount = discountPercent(product);
+  const variantInfo = lowestVariantInfo(product);
+  const hasVariants = !!variantInfo;
 
   return (
     <div
@@ -47,7 +49,9 @@ export function ProductCard({
         />
         <div className="absolute left-2 top-2 flex flex-col gap-1">
           {isBoosted(product) && <Badge tone="amber">★ Featured</Badge>}
-          {discount && <Badge tone="red">{discount}% OFF</Badge>}
+          {hasVariants && variantInfo!.discountPercent > 0
+            ? <Badge tone="red">Up to {variantInfo!.discountPercent}% OFF</Badge>
+            : discount && <Badge tone="red">{discount}% OFF</Badge>}
           {product.negotiable && <Badge tone="brand">Negotiable</Badge>}
         </div>
         {product.stockStatus === "out_of_stock" && (
@@ -68,11 +72,18 @@ export function ProductCard({
         </Link>
 
         <div className="mt-1.5 flex items-baseline gap-2">
-          {product.variants && product.variants.length > 0 ? (
-            <span className="text-base font-semibold text-slate-900">
-              <span className="mr-0.5 text-xs font-normal text-slate-400">from</span>
-              {formatPrice(lowestVariantPrice(product))}
-            </span>
+          {hasVariants ? (
+            <>
+              <span className="text-base font-semibold text-slate-900">
+                <span className="mr-0.5 text-xs font-normal text-slate-400">from</span>
+                {formatPrice(variantInfo!.effective)}
+              </span>
+              {variantInfo!.discountPercent > 0 && (
+                <span className="text-xs text-slate-400 line-through">
+                  {formatPrice(variantInfo!.original)}
+                </span>
+              )}
+            </>
           ) : (
             <>
               <span className="text-base font-semibold text-slate-900">

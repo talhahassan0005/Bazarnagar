@@ -162,6 +162,28 @@ export function lowestVariantPrice(product: Pick<Product, "price" | "discountPri
   return min === Infinity ? effectivePrice(product) : min;
 }
 
+/**
+ * Returns the variant option that has the lowest effective price, along with
+ * its original price — so the card can show a crossed-out original next to
+ * the discounted price. Returns null when no variants exist.
+ */
+export function lowestVariantInfo(
+  product: Pick<Product, "variants">
+): { effective: number; original: number; discountPercent: number } | null {
+  if (!product.variants || product.variants.length === 0) return null;
+  let best: { effective: number; original: number; discountPercent: number } | null = null;
+  for (const group of product.variants) {
+    for (const opt of group.options) {
+      const dp = opt.discountPercent && opt.discountPercent > 0 ? opt.discountPercent : 0;
+      const ep = dp > 0 ? Math.round(opt.price * (1 - dp / 100)) : opt.price;
+      if (!best || ep < best.effective) {
+        best = { effective: ep, original: opt.price, discountPercent: dp };
+      }
+    }
+  }
+  return best;
+}
+
 /** Discount percentage, or null when there is no valid discount. */
 export function discountPercent(
   product: Pick<Product, "price" | "discountPrice">
