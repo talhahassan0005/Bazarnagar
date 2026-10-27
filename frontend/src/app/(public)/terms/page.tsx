@@ -11,108 +11,99 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms & Conditions"
-      intro={`Welcome to ${SITE_NAME}. These terms govern your use of our website and services. By using ${SITE_NAME}, you agree to them.`}
+      intro={`Welcome to ${SITE_NAME}. By accessing or using ${SITE_NAME}, you agree to these Terms & Conditions and our Privacy Policy.`}
       icon="file"
     >
-      <h2>1. About {SITE_NAME}</h2>
+      <h2>1. Introduction</h2>
       <p>
-        {SITE_NAME} is an online marketplace that lets sellers create a mobile-friendly catalog,
-        share a public shop link, and take orders — including directly over WhatsApp. We connect
-        buyers and independent sellers; we are a platform and are not the seller of the products
-        listed by our sellers.
+        {SITE_NAME} is an online platform that enables individuals, small businesses, and independent sellers to create online storefronts, display products, share store links, and connect with potential customers.
       </p>
 
-      <h2>2. Eligibility</h2>
+      <h2>2. Nature of Our Services</h2>
       <p>
-        You must be at least 18 years old, or use {SITE_NAME} under the supervision of a parent or
-        guardian, and be able to form a legally binding contract to use our services.
+        {SITE_NAME} provides digital storefront creation, product listing, business discovery, and related technology services.
+      </p>
+      <p>
+        <strong>{SITE_NAME} is not the seller, manufacturer, supplier, shipping provider, or merchant of record for products offered by independent store owners.</strong>
+      </p>
+      <p>
+        Unless explicitly stated otherwise, all transactions involving products listed by store owners are conducted directly between the buyer and the respective store owner. {SITE_NAME} does not guarantee the identity, legitimacy, reliability, product quality, availability, or performance of any independent seller.
       </p>
 
-      <h2>3. Seller accounts &amp; subscriptions</h2>
+      <h2>3. Store Owner Responsibilities</h2>
+      <p>Every store owner is independently responsible for:</p>
       <ul>
-        <li>Sellers must provide accurate business and contact information and keep it up to date.</li>
-        <li>
-          Paid plans are billed on a subscription basis. Plan limits (such as the number of products
-          or images) apply as shown at the time of purchase.
-        </li>
-        <li>You are responsible for keeping your login credentials secure and for all activity on your account.</li>
-        <li>We may suspend or remove accounts that violate these terms or applicable law.</li>
+        <li>Providing accurate product descriptions, photographs, prices, and availability.</li>
+        <li>Managing customer inquiries and purchase requests.</li>
+        <li>Processing and fulfilling customer orders.</li>
+        <li>Arranging packaging, shipping, and delivery.</li>
+        <li>Establishing and disclosing cancellation, return, and refund terms.</li>
+        <li>Handling customer complaints and disputes.</li>
+        <li>Complying with applicable consumer protection, taxation, intellectual property, and business laws.</li>
+        <li>Maintaining accurate business identity and contact information.</li>
       </ul>
+      <p>Store owners must not publish fraudulent, misleading, illegal, counterfeit, prohibited, or otherwise unauthorized products or content.</p>
 
-      <h2>4. Seller responsibilities</h2>
+      <h2>4. Orders and Transactions</h2>
+      <p>
+        Any order, purchase agreement, or other transaction between a buyer and an independent store owner is the responsibility of those parties. Unless {SITE_NAME} expressly offers a separate transaction or payment service, {SITE_NAME} does not receive, hold, process, guarantee, or refund payments made to independent sellers.
+      </p>
+
+      <h2>5. Payment Safety</h2>
+      <p><strong>IMPORTANT CUSTOMER SAFETY NOTICE</strong></p>
+      <p>{SITE_NAME} strongly advises customers to:</p>
       <ul>
-        <li>List only products you are legally allowed to sell, with accurate descriptions, prices and images.</li>
-        <li>Fulfil confirmed orders, honor your stated delivery and return terms, and respond to buyers fairly.</li>
-        <li>Comply with all applicable laws, taxes and regulations in Pakistan.</li>
+        <li>Always choose Cash on Delivery (COD) where available.</li>
+        <li>Avoid making advance payments to store owners.</li>
+        <li>Verify the seller&apos;s identity, product details, and delivery arrangements before placing an order.</li>
+        <li>Avoid transferring money to personal bank accounts, mobile wallets, or other payment methods before receiving goods.</li>
       </ul>
+      <p>Advance payments made directly to independent store owners are at the buyer&apos;s own risk. To the maximum extent permitted by applicable law, {SITE_NAME} is not responsible for advance payment losses, seller fraud, non-delivery, or the failure of a seller to fulfill an order.</p>
 
-      <h2>5. Buyers &amp; orders</h2>
+      <h2>6. Shipping and Deliveries</h2>
       <p>
-        When you place an order, you enter into a transaction directly with the seller. {SITE_NAME}
-        helps facilitate discovery, ordering and payment, but the seller is responsible for the
-        product, delivery, and any after-sales support. Please review a seller&apos;s delivery and
-        return information before ordering.
+        All shipping and delivery arrangements are managed independently by the relevant store owner or their chosen delivery provider. {SITE_NAME} does not operate a courier service or guarantee shipping dates, delivery charges, successful delivery, or the condition of goods upon arrival.
       </p>
 
-      <h2>6. Payments</h2>
-      <ul>
-        <li>
-          Payments may be made online through our third-party payment gateway or by Cash on Delivery,
-          where offered by the seller.
-        </li>
-        <li>
-          Online payments are processed by the payment provider under their own terms. We do not store
-          your full card details.
-        </li>
-        <li>
-          Refunds, cancellations and disputes for a purchase are handled according to the seller&apos;s
-          policy and applicable consumer law.
-        </li>
-      </ul>
-
-      <h2>7. Prohibited items &amp; conduct</h2>
-      <p>You agree not to list, sell, buy, or use {SITE_NAME} for:</p>
-      <ul>
-        <li>illegal, counterfeit, stolen, or restricted goods;</li>
-        <li>fraudulent, misleading, or harmful activity;</li>
-        <li>content that infringes others&apos; intellectual property or privacy;</li>
-        <li>attempts to disrupt, reverse-engineer, or gain unauthorized access to our systems.</li>
-      </ul>
-
-      <h2>8. Content &amp; intellectual property</h2>
+      <h2>7. Returns, Refunds, and Cancellations</h2>
       <p>
-        Sellers retain ownership of the content they upload but grant {SITE_NAME} a license to host
-        and display it for the purpose of operating the service. The {SITE_NAME} name, logo and
-        platform are our property and may not be used without permission.
+        {SITE_NAME} does not establish, administer, process, or guarantee a universal return, refund, or cancellation policy for products sold by independent store owners. Each store owner determines and communicates their own policies, subject to applicable law.
       </p>
 
-      <h2>9. Disclaimers &amp; limitation of liability</h2>
+      <h2>8. Accounts and Store Content</h2>
       <p>
-        The service is provided &quot;as is&quot; without warranties of any kind. To the maximum
-        extent permitted by law, {SITE_NAME} is not liable for the quality, safety or legality of
-        products, the conduct of buyers or sellers, or any indirect or consequential loss arising
-        from your use of the platform.
+        Users must provide accurate registration information and maintain the confidentiality of their login credentials. By uploading content, store owners grant {SITE_NAME} a non-exclusive, worldwide, royalty-free license to host, reproduce, display, distribute, and promote that content as necessary to operate, advertise, and improve the platform.
       </p>
 
-      <h2>10. Termination</h2>
+      <h2>9. Advertising and Data Usage</h2>
       <p>
-        You may stop using {SITE_NAME} at any time. We may suspend or terminate access if you breach
-        these terms or where required to protect the platform or other users.
+        {SITE_NAME} may display advertisements, sponsored listings, featured products, and promotional content across its platform. {SITE_NAME} may collect, analyze, and share information with third parties for analytics, platform improvement, advertising, personalization, and other purposes described in our Privacy Policy.
       </p>
 
-      <h2>11. Changes to these terms</h2>
+      <h2>10. Platform Availability and Changes</h2>
       <p>
-        We may update these terms from time to time. Continued use of {SITE_NAME} after changes take
-        effect means you accept the updated terms.
+        {SITE_NAME} may introduce, modify, restrict, or discontinue features, plans, product limits, or services. We do not guarantee uninterrupted access, error-free operation, specific search rankings, customer traffic, sales, or commercial results.
       </p>
 
-      <h2>12. Governing law</h2>
+      <h2>11. Suspension or Termination</h2>
       <p>
-        These terms are governed by the laws of Pakistan, and any disputes are subject to the
-        jurisdiction of the courts of Pakistan.
+        {SITE_NAME} reserves the right to remove product listings, restrict accounts, suspend stores, or terminate access where reasonably necessary due to suspected fraud, illegal activity, policy violations, security concerns, or legal requirements.
       </p>
 
-      <h2>13. Contact</h2>
+      <h2>12. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by applicable law, {SITE_NAME} shall not be liable for losses arising from independent sellers&apos; acts or omissions, including failed or fraudulent transactions, lost advance payments, undelivered or defective products, or disputes between store owners and customers.</p>
+
+      <h2>13. Governing Law</h2>
+      <p>
+        These Terms shall be governed by the applicable laws of Pakistan. Disputes involving {SITE_NAME} shall be subject to the jurisdiction of competent courts in Pakistan.
+      </p>
+
+      <h2>14. Changes to These Terms</h2>
+      <p>
+        {SITE_NAME} may update these Terms from time to time. Continued use after changes take effect constitutes acceptance to the extent permitted by law.
+      </p>
+
+      <h2>15. Contact</h2>
       <p>
         Questions about these terms? Email us at <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>.
       </p>
