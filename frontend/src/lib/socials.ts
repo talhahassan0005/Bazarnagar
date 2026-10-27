@@ -3,7 +3,6 @@ import {
   FaFacebook,
   FaGlobe,
   FaInstagram,
-  FaLinkedin,
   FaTiktok,
   FaYoutube,
 } from "react-icons/fa6";
@@ -13,8 +12,7 @@ export type SocialPlatform =
   | "instagram"
   | "facebook"
   | "youtube"
-  | "tiktok"
-  | "linkedin";
+  | "tiktok";
 
 export interface SocialConfig {
   key: SocialPlatform;
@@ -68,14 +66,6 @@ export const SOCIALS: SocialConfig[] = [
     placeholder: "username or link",
     className: "text-black",
     profileUrl: (h) => `https://tiktok.com/@${h}`,
-  },
-  {
-    key: "linkedin",
-    label: "LinkedIn",
-    icon: FaLinkedin,
-    placeholder: "profile or company link",
-    className: "text-[#0A66C2]",
-    profileUrl: (h) => `https://linkedin.com/${/^(in|company)\//.test(h) ? h : `in/${h}`}`,
   },
 ];
 
