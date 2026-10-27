@@ -16,12 +16,16 @@ export function WhatsAppButton({
   size = "md",
   fullWidth,
   label = "Inquire on WhatsApp",
+  variantLabel,
+  variantPrice,
 }: {
-  product: Pick<Product, "name" | "price" | "negotiable" | "id">;
+  product: Pick<Product, "name" | "price" | "negotiable" | "id" | "discountPrice">;
   store: Pick<Store, "whatsapp" | "slug">;
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   label?: string;
+  variantLabel?: string;
+  variantPrice?: number | null;
 }) {
   const [trackClick] = useTrackWhatsappClickMutation();
   const productLink =
@@ -32,9 +36,10 @@ export function WhatsAppButton({
   const href = buildWhatsAppLink({
     phone: store.whatsapp,
     productName: product.name,
-    price: effectivePrice(product),
+    price: variantPrice ?? effectivePrice(product),
     negotiable: product.negotiable,
     productLink,
+    variantLabel,
   });
 
   return (

@@ -116,17 +116,18 @@ export function buildWhatsAppLink(opts: {
   price: number;
   negotiable: boolean;
   productLink: string;
+  variantLabel?: string;
 }): string {
-  const { phone, productName, price, negotiable, productLink } = opts;
+  const { phone, productName, price, negotiable, productLink, variantLabel } = opts;
   const availability = negotiable
     ? "Is it available and negotiable?"
     : "Is it available?";
-  const message = [
+  const lines = [
     `Hi, I am interested in this product: ${productName}`,
-    `Price: ${formatPrice(price)}`,
-    availability,
-    `Product link: ${productLink}`,
-  ].join("\n");
+  ];
+  if (variantLabel) lines.push(`Variant: ${variantLabel}`);
+  lines.push(`Price: ${formatPrice(price)}`, availability, `Product link: ${productLink}`);
+  const message = lines.join("\n");
   return `https://wa.me/${toWhatsAppNumber(phone)}?text=${encodeURIComponent(message)}`;
 }
 

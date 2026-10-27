@@ -60,9 +60,9 @@ export function Input({
 
   return (
     <Field label={label} hint={hint} error={error} required={required}>
-      <div className="relative flex items-center">
+      <div className="flex items-stretch">
         {leftAddon && (
-          <span className="pointer-events-none absolute left-3 text-sm text-slate-400">
+          <span className="inline-flex items-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 px-3 text-sm text-slate-500 select-none whitespace-nowrap">
             {leftAddon}
           </span>
         )}
@@ -71,7 +71,7 @@ export function Input({
           className={cn(
             fieldBase,
             "h-11",
-            leftAddon && "pl-9",
+            leftAddon && "rounded-l-none",
             isPassword && "pr-11",
             error && "border-red-400 focus:border-red-400 focus:ring-red-100",
             className

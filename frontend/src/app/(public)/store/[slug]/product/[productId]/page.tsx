@@ -31,6 +31,7 @@ export default function ProductDetailPage() {
   const { data: product, isLoading } = useGetProductQuery(productId);
   // Must be declared before any early returns (Rules of Hooks)
   const [variantPrice, setVariantPrice] = useState<number | null>(null);
+  const [variantLabel, setVariantLabel] = useState<string>("");
 
   if (isLoading) return <LoadingPanel label="Loading product…" />;
 
@@ -121,7 +122,8 @@ export default function ProductDetailPage() {
             <span className="text-3xl font-bold text-slate-900">
               {formatPrice(displayPrice)}
             </span>
-            {discount && !variantPrice && (
+            {/* Show crossed-out original price only when no variants and there's a discount */}
+            {discount && !(product.variants && product.variants.length > 0) && (
               <>
                 <span className="text-lg text-slate-400 line-through">
                   {formatPrice(product.price)}
@@ -134,8 +136,8 @@ export default function ProductDetailPage() {
           {product.variants && product.variants.length > 0 && (
             <ProductVariantSelector
               variants={product.variants}
-              basePrice={effectivePrice(product)}
               onPriceChange={setVariantPrice}
+              onVariantChange={setVariantLabel}
             />
           )}
 
@@ -194,6 +196,8 @@ export default function ProductDetailPage() {
                   size="lg"
                   fullWidth
                   label={product.negotiable ? "Negotiate on WhatsApp" : "Inquire on WhatsApp"}
+                  variantLabel={variantLabel || undefined}
+                  variantPrice={variantPrice}
                 />
               </div>
               <CodNotice compact />
@@ -210,6 +214,8 @@ export default function ProductDetailPage() {
                 size="lg"
                 fullWidth
                 label={product.negotiable ? "Negotiate on WhatsApp" : "Contact seller on WhatsApp"}
+                variantLabel={variantLabel || undefined}
+                variantPrice={variantPrice}
               />
             </div>
           )}
