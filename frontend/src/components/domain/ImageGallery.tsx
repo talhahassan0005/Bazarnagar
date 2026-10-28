@@ -1,21 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import { ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Product image gallery with a main image and selectable thumbnails. */
 export function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
   const [active, setActive] = useState(0);
-  const safe = images.length ? images : ["https://picsum.photos/seed/empty/800/800"];
+  const [failed, setFailed] = useState(false);
+
+  if (!images.length || failed) {
+    return (
+      <div className="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-brand-50 to-slate-200 flex items-center justify-center">
+        <ShoppingBag className="h-1/4 w-1/4 text-brand-300" strokeWidth={1.5} />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-        <img src={safe[active]} alt={alt} className="h-full w-full object-cover" />
+        <img
+          src={images[active]}
+          alt={alt}
+          className="h-full w-full object-cover"
+          onError={() => setFailed(true)}
+        />
       </div>
-      {safe.length > 1 && (
+      {images.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto">
-          {safe.map((img, i) => (
+          {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
