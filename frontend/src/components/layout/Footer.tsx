@@ -35,7 +35,7 @@ export function Footer() {
               {SITE_EMAIL}
             </Link>
             <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Follow us</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-900">Follow us</p>
               <div className="flex flex-wrap gap-2">
                 {storeSocials(SITE_SOCIALS).map(({ key, label, icon: Icon, href, className }) => (
                   <a
