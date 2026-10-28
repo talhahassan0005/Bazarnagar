@@ -9,10 +9,22 @@ import {
   ShieldCheck,
   PlayCircle,
 } from "lucide-react";
-import { Button, Card } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { HomeCatalog } from "@/components/marketing/HomeCatalog";
+import { PricingPlans } from "@/components/marketing/PricingPlans";
 import { PLAN_LIST, PLANS } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
+import { API_BASE } from "@/lib/api";
+import type { Plan } from "@/lib/types";
+
+async function fetchPlans(): Promise<Plan[]> {
+  try {
+    const res = await fetch(`${API_BASE}/public/plans`, { next: { revalidate: 300 } });
+    if (!res.ok) return PLAN_LIST;
+    return res.json();
+  } catch {
+    return PLAN_LIST;
+  }
+}
 
 const TRUST = ["No setup fees", "No coding needed"];
 
@@ -31,7 +43,8 @@ const FEATURES = [
   { icon: MessageCircle, title: "No app needed", text: "Customers browse without signup and order straight from WhatsApp." },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const plans = await fetchPlans();
   return (
     <>
       {/* Hero */}
@@ -125,49 +138,8 @@ export default function LandingPage() {
           <h2 className="text-2xl font-bold text-brand-900">Simple, affordable plans</h2>
           <p className="mt-2 text-slate-500">Upgrade as your shop grows.</p>
         </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {PLAN_LIST.map((plan) => {
-            const popular = plan.id === "growth";
-            return (
-              <Card
-                key={plan.id}
-                className={
-                  popular
-                    ? "relative border-accent-300 p-6 ring-1 ring-accent-200 transition-transform duration-300 hover:-translate-y-1"
-                    : "p-6 transition-transform duration-300 hover:-translate-y-1"
-                }
-              >
-                {popular && (
-                  <span className="absolute -top-3 left-6 rounded-full bg-accent-500 px-3 py-0.5 text-xs font-medium text-white shadow-sm">
-                    Popular
-                  </span>
-                )}
-                <h3 className="text-lg font-semibold text-slate-900">{plan.name}</h3>
-                <p className="mt-2">
-                  <span className="text-3xl font-bold text-brand-900">
-                    {formatPrice(plan.price)}
-                  </span>
-                  <span className="text-sm text-slate-400">/mo</span>
-                </p>
-                <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                  {(plan.highlights ?? []).map((h) => (
-                    <li key={h} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-leaf-500" />
-                      {h}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  href="/signup?role=seller"
-                  variant={popular ? "accent" : "outline"}
-                  fullWidth
-                  className="mt-6"
-                >
-                  Choose {plan.name}
-                </Button>
-              </Card>
-            );
-          })}
+        <div className="mt-10">
+          <PricingPlans serverPlans={plans} />
         </div>
       </section>
 

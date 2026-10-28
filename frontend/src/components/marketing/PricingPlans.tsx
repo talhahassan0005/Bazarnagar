@@ -111,14 +111,14 @@ function PlanCard({ plan, currency, ctaHref, usdTaxPercent }: { plan: Plan; curr
 }
 
 /** Pricing cards from the live, admin-editable plan settings. */
-export function PricingPlans() {
-  const { data, isLoading } = useGetPublicPlanConfigQuery();
+export function PricingPlans({ serverPlans }: { serverPlans?: Plan[] }) {
+  const { data, isLoading } = useGetPublicPlanConfigQuery(undefined, { skip: !!serverPlans });
   const role = useAppSelector((s) => s.auth.role);
   const [currency, setCurrency] = useState<Currency>("PKR");
   const { usdTaxPercent } = usePlanPaymentConfig();
 
-  // Live settings; the built-in plans only while they load / if the API is down.
-  const plans = (data ?? (isLoading ? [] : PLAN_LIST)).filter((p) => p.enabled ?? true);
+  // Server-fetched plans take priority; otherwise use RTK Query (dashboard etc.)
+  const plans = (serverPlans ?? data ?? (isLoading ? [] : PLAN_LIST)).filter((p) => p.enabled ?? true);
   const hasUsd = plans.some((p) => p.price > 0 && (p.priceUsd ?? 0) > 0);
   const ctaHref = role === "seller" ? "/dashboard/plan" : "/signup?role=seller";
 

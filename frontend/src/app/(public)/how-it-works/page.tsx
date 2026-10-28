@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BadgeCheck,
   ChevronDown,
-  CreditCard,
   ImagePlus,
   Link2,
   MessageCircle,
@@ -17,9 +16,21 @@ import {
   UserPlus,
   Zap,
 } from "lucide-react";
-import { Button, Card } from "@/components/ui";
-import { ADS_ENABLED, PLANS, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
+import { Button } from "@/components/ui";
+import { PricingPlans } from "@/components/marketing/PricingPlans";
+import { PLAN_LIST, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
+import { API_BASE } from "@/lib/api";
+import type { Plan } from "@/lib/types";
+
+async function fetchPlans(): Promise<Plan[]> {
+  try {
+    const res = await fetch(`${API_BASE}/public/plans`, { next: { revalidate: 300 } });
+    if (!res.ok) return PLAN_LIST;
+    return res.json();
+  } catch {
+    return PLAN_LIST;
+  }
+}
 
 export const metadata: Metadata = {
   title: `How It Works · ${SITE_NAME}`,
@@ -213,7 +224,8 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const plans = await fetchPlans();
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
 
@@ -297,58 +309,8 @@ export default function HowItWorksPage() {
           <h2 className="mt-2 text-2xl font-bold text-slate-900">Simple, affordable plans</h2>
           <p className="mt-2 text-slate-500">Start free. Upgrade as your shop grows.</p>
         </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {(["starter", "basic", "growth", "pro"] as const).map((id) => {
-            const plan = PLANS[id];
-            const popular = id === "growth";
-            return (
-              <Card
-                key={id}
-                className={
-                  popular
-                    ? "relative border-accent-300 p-6 ring-1 ring-accent-200 transition-transform duration-300 hover:-translate-y-1"
-                    : "p-6 transition-transform duration-300 hover:-translate-y-1"
-                }
-              >
-                {popular && (
-                  <span className="absolute -top-3 left-6 rounded-full bg-accent-500 px-3 py-0.5 text-xs font-medium text-white shadow-sm">
-                    Popular
-                  </span>
-                )}
-                <h3 className="text-lg font-semibold text-slate-900">{plan.name}</h3>
-                <p className="mt-2">
-                  <span className="text-3xl font-bold text-brand-900">{formatPrice(plan.price)}</span>
-                  <span className="text-sm text-slate-400">/mo</span>
-                </p>
-                <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                  {(plan.highlights ?? []).map((h) => (
-                    <li key={h} className="flex items-start gap-2">
-                      <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                      {h}
-                    </li>
-                  ))}
-                  {ADS_ENABLED && id === "starter" && (
-                    <li className="flex items-start gap-2 text-amber-600">
-                      <CreditCard className="mt-0.5 h-4 w-4 shrink-0" />
-                      Banner ads shown on shop
-                    </li>
-                  )}
-                  <li className="flex items-start gap-2 text-brand-700">
-                    <Star className="mt-0.5 h-4 w-4 shrink-0" />
-                    Boost / feature products (pay per day)
-                  </li>
-                </ul>
-                <Button
-                  href="/signup?role=seller"
-                  variant={popular ? "accent" : "outline"}
-                  fullWidth
-                  className="mt-6"
-                >
-                  {id === "starter" ? "Start free" : `Choose ${plan.name}`}
-                </Button>
-              </Card>
-            );
-          })}
+        <div className="mt-10">
+          <PricingPlans serverPlans={plans} />
         </div>
       </section>
 

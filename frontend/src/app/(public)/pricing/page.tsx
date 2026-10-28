@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
 import { PricingPlans } from "@/components/marketing/PricingPlans";
-import { SITE_NAME } from "@/lib/constants";
+import { PLAN_LIST, SITE_NAME } from "@/lib/constants";
+import { API_BASE } from "@/lib/api";
+import type { Plan } from "@/lib/types";
+
+async function fetchPlans(): Promise<Plan[]> {
+  try {
+    const res = await fetch(`${API_BASE}/public/plans`, { next: { revalidate: 300 } });
+    if (!res.ok) return PLAN_LIST;
+    return res.json();
+  } catch {
+    return PLAN_LIST;
+  }
+}
 
 export const metadata: Metadata = {
   title: `Pricing · ${SITE_NAME}`,
@@ -14,7 +26,8 @@ const FAQS = [
   { q: "Do you take a cut of my sales?", a: "No. Customers pay you directly — you keep every rupee." },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const plans = await fetchPlans();
   return (
     <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full bg-brand-100/60 blur-3xl" />
@@ -33,7 +46,7 @@ export default function PricingPage() {
         </div>
 
         <div className="mt-12">
-          <PricingPlans />
+          <PricingPlans serverPlans={plans} />
         </div>
 
         <div className="mx-auto mt-20 max-w-3xl">
