@@ -224,9 +224,7 @@ export default function ProductDetailPage() {
 
       <ProductReviews productId={product.id} />
 
-      <RelatedProducts productId={product.id} category={product.category} />
-
-      <MoreFromStore currentProductId={product.id} store={store} />
+      <RelatedAndMore productId={product.id} category={product.category} store={store} />
 
       <ChatWidget storeId={store.id} storeName={store.name} productId={product.id} productName={product.name} />
     </div>
@@ -254,64 +252,46 @@ function SectionHeader({ title, href }: { title: ReactNode; href?: string }) {
 }
 
 /** Same-category products from every store on the marketplace. */
-function RelatedProducts({ productId, category }: { productId: string; category: string }) {
-  const { data: related, isLoading } = useGetRelatedProductsQuery(productId);
-
-  if (isLoading) {
-    return (
-      <div className="mt-12">
-        <Skeleton className="mb-4 h-6 w-48" />
-        <div className={PRODUCT_GRID}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <ProductCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-  if (!related || related.length === 0) return null;
-
-  return (
-    <section className="mt-12">
-      <SectionHeader
-        title={
-          <>
-            Related products in <span className="text-brand-700">{category}</span>
-          </>
-        }
-        href={`/search?category=${encodeURIComponent(category)}`}
-      />
-      <div className={PRODUCT_GRID}>
-        {related.map((p, i) => (
-          <ProductCard key={p.id} product={p} store={p.store} index={i} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/** Other products from the shop the customer is browsing. */
-function MoreFromStore({ currentProductId, store }: { currentProductId: string; store: Store }) {
+/** Shows related products (by category) then more from the same store, with no duplicates. */
+function RelatedAndMore({ productId, category, store }: { productId: string; category: string; store: Store }) {
+  const { data: related, isLoading: relatedLoading } = useGetRelatedProductsQuery(productId);
   const { data: allProducts } = useGetStoreProductsQuery({ storeId: store.id, publicOnly: true });
 
-  const others = (allProducts ?? []).filter((p) => p.id !== currentProductId);
-  if (others.length === 0) return null;
+  const relatedIds = new Set([productId, ...(related ?? []).map((p) => p.id)]);
+  const others = (allProducts ?? []).filter((p) => !relatedIds.has(p.id));
 
   return (
-    <section className="mt-12">
-      <SectionHeader
-        title={
-          <>
-            More from <span className="text-brand-700">{store.name}</span>
-          </>
-        }
-        href={others.length > 6 ? `/store/${store.slug}/products` : undefined}
-      />
-      <div className={PRODUCT_GRID}>
-        {others.slice(0, 6).map((p, i) => (
-          <ProductCard key={p.id} product={p} store={store} index={i} />
-        ))}
-      </div>
-    </section>
+    <>
+      {relatedLoading ? (
+        <div className="mt-12">
+          <Skeleton className="mb-4 h-6 w-48" />
+          <div className={PRODUCT_GRID}>
+            {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+          </div>
+        </div>
+      ) : related && related.length > 0 ? (
+        <section className="mt-12">
+          <SectionHeader
+            title={<>Related products in <span className="text-brand-700">{category}</span></>}
+            href={`/search?category=${encodeURIComponent(category)}`}
+          />
+          <div className={PRODUCT_GRID}>
+            {related.map((p, i) => <ProductCard key={p.id} product={p} store={p.store} index={i} />)}
+          </div>
+        </section>
+      ) : null}
+
+      {others.length > 0 && (
+        <section className="mt-12">
+          <SectionHeader
+            title={<>More from <span className="text-brand-700">{store.name}</span></>}
+            href={others.length > 6 ? `/store/${store.slug}/products` : undefined}
+          />
+          <div className={PRODUCT_GRID}>
+            {others.slice(0, 6).map((p, i) => <ProductCard key={p.id} product={p} store={store} index={i} />)}
+          </div>
+        </section>
+      )}
+    </>
   );
 }
