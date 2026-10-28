@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { PricingPlans } from "@/components/marketing/PricingPlans";
-import { PLAN_LIST, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
+import { PLAN_LIST, PLANS, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
 import { API_BASE } from "@/lib/api";
 import type { Plan } from "@/lib/types";
 
