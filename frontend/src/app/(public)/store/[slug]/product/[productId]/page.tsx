@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight, Eye, MessageCircle, PlayCircle, ShieldCheck, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
+import { ChevronRight, Eye, MessageCircle, PlayCircle, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge, Button, EmptyState, LoadingPanel, ProductCardSkeleton, Skeleton } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
@@ -136,6 +136,22 @@ export default function ProductDetailPage() {
             />
           )}
 
+          {product.description && (
+            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-slate-600">
+              {product.description}
+            </p>
+          )}
+
+          {product.tags.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {product.tags.map((t) => (
+                <span key={t} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
+
           {product.videoUrl && (
             <a
               href={product.videoUrl}
@@ -201,18 +217,13 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Below: description LEFT + store info RIGHT */}
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_320px]">
-        {/* Left: full description */}
-        <div>
-          {product.description && (
-            <>
-              <h2 className="text-lg font-semibold text-slate-900">Product Description</h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
-                {product.description}
-              </p>
-            </>
-          )}
+      {/* Full description below */}
+      {product.description && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-slate-900">Product Description</h2>
+          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
+            {product.description}
+          </p>
           {product.tags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
               {product.tags.map((t) => (
@@ -223,40 +234,7 @@ export default function ProductDetailPage() {
             </div>
           )}
         </div>
-
-        {/* Right: store card */}
-        <div className="rounded-2xl border border-brand-100 bg-brand-50 p-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">Sold by</p>
-          <Link href={`/store/${store.slug}`} className="mt-3 flex items-center gap-3 group">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
-              <StoreIcon className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-slate-900 group-hover:text-brand-700">{store.name}</p>
-              <p className="text-xs text-slate-500">{[store.area, store.city].filter(Boolean).join(", ")}</p>
-            </div>
-          </Link>
-          <div className="mt-4 space-y-2 text-sm text-slate-600">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-leaf-500" />
-              Verified seller
-            </div>
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 shrink-0 text-leaf-500" />
-              Responds on WhatsApp
-            </div>
-          </div>
-          <WhatsAppButton
-            product={product}
-            store={store}
-            size="sm"
-            fullWidth
-            label="Contact Seller"
-            variantLabel={variantLabel || undefined}
-            variantPrice={variantPrice}
-          />
-        </div>
-      </div>
+      )}
 
       <ProductReviews productId={product.id} />
 
