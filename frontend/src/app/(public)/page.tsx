@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   PlayCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, Card } from "@/components/ui";
 import { HomeCatalog } from "@/components/marketing/HomeCatalog";
 import { PricingPlans } from "@/components/marketing/PricingPlans";
 import { PLAN_LIST, PLANS } from "@/lib/constants";
