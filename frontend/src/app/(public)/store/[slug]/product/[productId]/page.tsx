@@ -142,19 +142,9 @@ export default function ProductDetailPage() {
           )}
 
           {product.description && (
-            <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-slate-600">
               {product.description}
             </p>
-          )}
-
-          {product.tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {product.tags.map((t) => (
-                <span key={t} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">
-                  #{t}
-                </span>
-              ))}
-            </div>
           )}
 
           {product.videoUrl && (
@@ -221,6 +211,25 @@ export default function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Full description below the main grid */}
+      {product.description && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-slate-900">Product Description</h2>
+          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
+            {product.description}
+          </p>
+          {product.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {product.tags.map((t) => (
+                <span key={t} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <ProductReviews productId={product.id} />
 
