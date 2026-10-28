@@ -278,7 +278,7 @@ export default async function HowItWorksPage() {
         </div>
 
         {/* Tutorial video */}
-        <div className="mx-auto mt-12 w-full max-w-3xl overflow-hidden rounded-2xl shadow-xl shadow-brand-900/10">
+        <div className="mx-auto mt-12 w-full max-w-5xl overflow-hidden rounded-2xl shadow-xl shadow-brand-900/10">
           <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
             <iframe
               src="https://www.youtube.com/embed/4iA8eouRtjI"
