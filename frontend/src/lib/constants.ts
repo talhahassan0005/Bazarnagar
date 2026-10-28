@@ -126,11 +126,18 @@ export const SITE_EMAIL = "contact@bazarnagar.com";
  * empty to hide that icon. Handles or full links both work (see lib/socials).
  */
 export const SITE_SOCIALS: Partial<Record<import("./socials").SocialPlatform, string>> = {
-  facebook: "",
-  instagram: "",
-  youtube: "",
-  tiktok: "",
+  facebook: "https://www.facebook.com/profile.php?id=61595906336857",
+  instagram: "https://www.instagram.com/bazarnagar_official/",
+  youtube: "https://www.youtube.com/@BazarNagar_official",
+  tiktok: "https://www.tiktok.com/@bazarnagar",
 };
+
+/** Site-level social links that go beyond seller platform support (Twitter, LinkedIn, Reddit). */
+export const SITE_EXTRA_SOCIALS = [
+  { key: "twitter", label: "Twitter / X", href: "https://x.com/bazarnagar_pk" },
+  { key: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/company/bazarnagar" },
+  { key: "reddit", label: "Reddit", href: "https://www.reddit.com/user/bazarnagar/" },
+] as const;
 /** Support phone / WhatsApp, in international digits (no +) and display form. */
 export const SITE_PHONE = "923241201757";
 export const SITE_PHONE_DISPLAY = "+92 324 1201757";
