@@ -241,7 +241,7 @@ export function ProductForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const validImages = v.images.filter(Boolean);
+    const validImages = v.images.filter((url) => url.startsWith("http://") || url.startsWith("https://"));
     if (validImages.length === 0) {
       setImageError("Please upload at least one product image.");
       document.getElementById("product-images-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
