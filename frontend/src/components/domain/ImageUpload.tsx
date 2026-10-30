@@ -16,12 +16,16 @@ import { getErrorMessage } from "@/lib/utils";
 export function ImageUpload({
   value,
   onChange,
+  onUploadStart,
+  onUploadEnd,
   label,
   required,
   className,
 }: {
   value: string;
   onChange: (url: string) => void;
+  onUploadStart?: () => void;
+  onUploadEnd?: () => void;
   label?: string;
   required?: boolean;
   className?: string;
@@ -34,6 +38,7 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    onUploadStart?.();
     try {
       const { url } = await uploadImage(file);
       onChange(url);
@@ -41,6 +46,7 @@ export function ImageUpload({
       dispatch(addToast(getErrorMessage(err, "Upload failed"), "error"));
     } finally {
       setUploading(false);
+      onUploadEnd?.();
       if (inputRef.current) inputRef.current.value = "";
     }
   }

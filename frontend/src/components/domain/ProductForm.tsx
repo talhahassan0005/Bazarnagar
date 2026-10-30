@@ -214,6 +214,9 @@ export function ProductForm({
     setV((prev) => ({ ...prev, [key]: value }));
 
   const [locating, setLocating] = useState(false);
+  const [uploadsInProgress, setUploadsInProgress] = useState(0);
+  const onUploadStart = () => setUploadsInProgress((n) => n + 1);
+  const onUploadEnd = () => setUploadsInProgress((n) => Math.max(0, n - 1));
   function captureLocation() {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
     setLocating(true);
@@ -234,11 +237,20 @@ export function ProductForm({
   const removeImage = (i: number) =>
     setV((prev) => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }));
 
+  const [imageError, setImageError] = useState("");
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const validImages = v.images.filter(Boolean);
+    if (validImages.length === 0) {
+      setImageError("Please upload at least one product image.");
+      document.getElementById("product-images-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setImageError("");
     onSubmit?.({
       ...v,
-      images: v.images.filter(Boolean),
+      images: validImages,
       tags: tagInput.split(",").map((t) => t.trim()).filter(Boolean),
     });
   }
@@ -310,7 +322,7 @@ export function ProductForm({
             plan.imageLimit > 1 ? "s" : ""
           }${plan.videoLimit > 0 ? ` and ${plan.videoLimit} video` : " · no video"} per product.`}
         />
-        <CardBody className="space-y-3">
+        <CardBody className="space-y-3" id="product-images-section">
           {v.images.map((url, i) => (
             <div key={i} className="flex items-start gap-2">
               <ImageUpload
@@ -318,7 +330,9 @@ export function ProductForm({
                 label={i === 0 ? "Product images" : undefined}
                 required={i === 0}
                 value={url}
-                onChange={(u) => setImage(i, u)}
+                onChange={(u) => { setImage(i, u); if (u) setImageError(""); }}
+                onUploadStart={onUploadStart}
+                onUploadEnd={onUploadEnd}
               />
               {v.images.length > 1 && (
                 <button
@@ -332,6 +346,9 @@ export function ProductForm({
               )}
             </div>
           ))}
+          {imageError && (
+            <p className="text-sm font-medium text-red-500">{imageError}</p>
+          )}
           {canAddImage ? (
             <Button
               type="button"
@@ -466,8 +483,8 @@ export function ProductForm({
         <Button href="/dashboard/products" variant="outline">
           Cancel
         </Button>
-        <Button type="submit" size="lg" loading={loading}>
-          {submitLabel}
+        <Button type="submit" size="lg" loading={loading || uploadsInProgress > 0} disabled={uploadsInProgress > 0}>
+          {uploadsInProgress > 0 ? "Uploading images…" : submitLabel}
         </Button>
       </div>
     </form>
