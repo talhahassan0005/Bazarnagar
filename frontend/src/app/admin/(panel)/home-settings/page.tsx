@@ -70,7 +70,7 @@ export default function HomeSettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Home page catalog"
-        subtitle="Set how many rows of products are shown per category on the landing page. 1 row = 6 products on desktop."
+        description="Set how many rows of products are shown per category on the landing page. 1 row = 6 products on desktop."
       />
 
       {/* Default */}
