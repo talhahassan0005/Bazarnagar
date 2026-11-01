@@ -10,8 +10,10 @@ import {
   PlayCircle,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
+// ArrowRight kept for how-it-works button; Link kept for other links
 import { HomeCatalog } from "@/components/marketing/HomeCatalog";
 import { PricingPlans } from "@/components/marketing/PricingPlans";
+import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
 import { PLAN_LIST, PLANS } from "@/lib/constants";
 import { API_BASE } from "@/lib/api";
 import type { Plan } from "@/lib/types";
@@ -65,15 +67,7 @@ export default async function LandingPage() {
             اپنا آن لائن اسٹور مفت بنائیں - {FREE_PRODUCT_LIMIT} تک مصنوعات شامل کریں۔
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button
-              href="/signup?role=seller"
-              variant="accent"
-              size="lg"
-              rightIcon={<ArrowRight className="h-4 w-4" />}
-              className="shadow-lg shadow-accent-500/25"
-            >
-              Create free store
-            </Button>
+            <CreateStoreButton className="shadow-lg shadow-accent-500/25" />
             <Button href="/how-it-works" size="lg" variant="outline" leftIcon={<PlayCircle className="h-5 w-5" />}>
               How to create store?
             </Button>
@@ -167,12 +161,7 @@ export default async function LandingPage() {
             Join sellers across Pakistan turning followers into customers.
           </p>
           <div className="relative mt-6 flex justify-center">
-            <Link
-              href="/signup?role=seller"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-medium text-brand-800 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
-            >
-              Create your free store <ArrowRight className="h-4 w-4" />
-            </Link>
+            <CreateStoreButton />
           </div>
         </div>
       </section>
