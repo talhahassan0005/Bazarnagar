@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui";
+import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
 import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -85,9 +86,7 @@ export default function AboutPage() {
             cost — no setup fees, no monthly charges, no hidden costs.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button href="/signup?role=seller" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              Create your free store
-            </Button>
+            <CreateStoreButton />
             <Button href="/search" size="lg" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
               Browse shops
             </Button>
@@ -204,12 +203,7 @@ export default function AboutPage() {
             Free to start. No credit card. Live in minutes.
           </p>
           <div className="relative mt-6 flex justify-center">
-            <Link
-              href="/signup?role=seller"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-medium text-brand-800 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
-            >
-              Create your free store <ArrowRight className="h-4 w-4" />
-            </Link>
+            <CreateStoreButton />
           </div>
         </div>
       </section>

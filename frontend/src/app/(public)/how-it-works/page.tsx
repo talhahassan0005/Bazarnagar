@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { PricingPlans } from "@/components/marketing/PricingPlans";
+import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
 import { PLAN_LIST, PLANS, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
 import { API_BASE } from "@/lib/api";
 import type { Plan } from "@/lib/types";
@@ -242,9 +243,7 @@ export default async function HowItWorksPage() {
           product catalog and orders — in under 10 minutes.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button href="/signup?role=seller" variant="accent" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-            Create your free store
-          </Button>
+          <CreateStoreButton />
           <Button href="/search" size="lg" variant="outline">
             Browse shops
           </Button>
@@ -369,12 +368,7 @@ export default async function HowItWorksPage() {
             Free to start. No credit card. Live in minutes.
           </p>
           <div className="relative mt-6 flex justify-center">
-            <Link
-              href="/signup?role=seller"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-medium text-brand-800 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
-            >
-              Create your free store <ArrowRight className="h-4 w-4" />
-            </Link>
+            <CreateStoreButton />
           </div>
         </div>
       </section>
