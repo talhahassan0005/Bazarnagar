@@ -1,6 +1,5 @@
 import { Schema, model, type Document } from "mongoose";
 import { baseSchemaOptions } from "./_base";
-import { CATEGORIES } from "../lib/constants";
 
 export interface HomeSettingsDoc extends Document {
   key: "home";
