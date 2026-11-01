@@ -6,6 +6,7 @@ import { ArrowRight, Heart, LogOut, MessageCircle, PackageSearch, Search, Store 
 import { Logo } from "./Logo";
 import { CartLink } from "./CartLink";
 import { Button } from "@/components/ui";
+import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/authSlice";
 import { clearToken } from "@/lib/api";
@@ -160,15 +161,10 @@ export function PublicNavbar() {
             </Button>
           ) : (
             role !== "admin" && (
-              <Button
-                href="/signup?role=seller"
-                variant="accent"
+              <CreateStoreButton
                 size="sm"
-                rightIcon={<ArrowRight className="h-4 w-4" />}
                 className="hidden rounded-full px-4 shadow-md shadow-accent-500/25 lg:inline-flex"
-              >
-                Create free store
-              </Button>
+              />
             )
           )}
         </div>
