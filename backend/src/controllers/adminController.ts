@@ -21,6 +21,7 @@ import { syncPlanVisibility } from "../lib/planVisibility";
 import { getSubscriptionSettings } from "../lib/subscriptionSettings";
 import { getPaymentConfig } from "../lib/paymentPricing";
 import { Settings } from "../models/Settings";
+import { HomeSettings, getHomeSettingsData } from "../models/HomeSettings";
 import { addBillingPeriod } from "../lib/plans";
 import { deleteR2Urls } from "../lib/storage";
 import { ApiError, asyncHandler } from "../lib/helpers";
@@ -1077,4 +1078,23 @@ export const updatePaymentConfig = asyncHandler(async (req: Request, res: Respon
   const data = paymentConfigSchema.parse(req.body);
   await Settings.findOneAndUpdate({ key: "payment" }, { $set: data }, { upsert: true });
   res.json(await getPaymentConfig());
+});
+
+/* --------------------------- Home catalog settings ------------------------- */
+
+/** GET /api/admin/home-settings */
+export const getHomeSettingsHandler = asyncHandler(async (_req: Request, res: Response) => {
+  res.json(await getHomeSettingsData());
+});
+
+const homeSettingsSchema = z.object({
+  defaultRows: z.number().int().min(1).max(5),
+  categoryRows: z.record(z.string(), z.number().int().min(1).max(5)),
+});
+
+/** PATCH /api/admin/home-settings */
+export const updateHomeSettingsHandler = asyncHandler(async (req: Request, res: Response) => {
+  const data = homeSettingsSchema.parse(req.body);
+  await HomeSettings.findOneAndUpdate({ key: "home" }, { $set: data }, { upsert: true });
+  res.json(await getHomeSettingsData());
 });

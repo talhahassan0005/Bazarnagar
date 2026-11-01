@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Navigation } from "lucide-react";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { Button, ProductGridSkeleton } from "@/components/ui";
-import { useSearchProductsQuery } from "@/store/apiSlice";
+import { useSearchProductsQuery, useGetHomeSettingsQuery } from "@/store/apiSlice";
 import { CATEGORIES } from "@/lib/constants";
 import { cn, distanceKm } from "@/lib/utils";
 
@@ -33,6 +33,14 @@ export function HomeCatalog() {
 
   // Fetch all products (no category filter — we group client-side)
   const { data, isLoading } = useSearchProductsQuery({});
+  const { data: homeSettings } = useGetHomeSettingsQuery();
+  const defaultRows = homeSettings?.defaultRows ?? 1;
+  const categoryRows = homeSettings?.categoryRows ?? {};
+  const COLS = 6; // desktop grid columns (2xl)
+  function productsLimit(cat?: string) {
+    const rows = cat ? (categoryRows[cat] ?? defaultRows) : defaultRows;
+    return rows * COLS;
+  }
 
   const items = (data ?? []).map((p) => {
     const plat = p.lat ?? p.store.lat;
@@ -173,13 +181,13 @@ export function HomeCatalog() {
               </div>
               {featured.length === 0 && !coords ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                  {items.slice(0, 6).map(({ product, distance }, i) => (
+                  {items.slice(0, productsLimit()).map(({ product, distance }, i) => (
                     <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
                   ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                  {(coords ? items : featured).slice(0, 6).map(({ product, distance }, i) => (
+                  {(coords ? items : featured).slice(0, productsLimit()).map(({ product, distance }, i) => (
                     <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
                   ))}
                 </div>
@@ -207,7 +215,7 @@ export function HomeCatalog() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                  {catItems.slice(0, 6).map(({ product, distance }, i) => (
+                  {catItems.slice(0, productsLimit(cat)).map(({ product, distance }, i) => (
                     <ProductCard key={product.id} product={product} store={product.store} distanceKm={distance} index={i} />
                   ))}
                 </div>

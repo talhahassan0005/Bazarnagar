@@ -464,6 +464,13 @@ export interface AdPlacementConfig {
 }
 
 /** Admin-chosen ad source (manual banner vs Google AdSense) per storefront slot. */
+export interface HomeSettings {
+  /** Default rows shown per category (1–5). */
+  defaultRows: number;
+  /** Per-category override: category name → rows (1–5). */
+  categoryRows: Record<string, number>;
+}
+
 export interface AdSettings {
   adsenseEnabled: boolean;
   adsensePublisherId?: string;

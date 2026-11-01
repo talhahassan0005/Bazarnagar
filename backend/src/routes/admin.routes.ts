@@ -34,6 +34,8 @@ import {
   updatePaymentConfig,
   getBoostConfig,
   updateBoostConfig,
+  getHomeSettingsHandler,
+  updateHomeSettingsHandler,
 } from "../controllers/adminController";
 import { getAllReviews, moderateReview } from "../controllers/reviewController";
 import {
@@ -112,5 +114,8 @@ router.patch("/manual-payment-settings", updateManualPaymentSettings);
 
 router.get("/ad-settings", getAdSettings);
 router.patch("/ad-settings", updateAdSettings);
+
+router.get("/home-settings", getHomeSettingsHandler);
+router.patch("/home-settings", updateHomeSettingsHandler);
 
 export default router;

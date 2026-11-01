@@ -10,6 +10,7 @@ import type {
   AdminOrdersPage,
   AdminReview,
   AdSettings,
+  HomeSettings,
   Banner,
   BannerPlacement,
   BoostPricing,
@@ -83,7 +84,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation", "AdSettings", "BoostConfig"],
+  tagTypes: ["Product", "Store", "Seller", "Order", "Review", "Payment", "Banner", "PaymentRequest", "Wishlist", "Conversation", "AdSettings", "BoostConfig", "HomeSettings"],
   endpoints: (builder) => ({
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -509,6 +510,20 @@ export const apiSlice = createApi({
       query: (body) => ({ url: "/admin/ad-settings", method: "PATCH", body }),
       invalidatesTags: ["AdSettings"],
     }),
+
+    // ── Home catalog settings (category rows) ───────────────────────────────
+    getHomeSettings: builder.query<HomeSettings, void>({
+      query: () => "/public/home-settings",
+      providesTags: ["HomeSettings"],
+    }),
+    getAdminHomeSettings: builder.query<HomeSettings, void>({
+      query: () => "/admin/home-settings",
+      providesTags: ["HomeSettings"],
+    }),
+    updateHomeSettings: builder.mutation<HomeSettings, HomeSettings>({
+      query: (body) => ({ url: "/admin/home-settings", method: "PATCH", body }),
+      invalidatesTags: ["HomeSettings"],
+    }),
   }),
 });
 
@@ -671,4 +686,7 @@ export const {
   useGetAdSettingsQuery,
   useGetAdminAdSettingsQuery,
   useUpdateAdSettingsMutation,
+  useGetHomeSettingsQuery,
+  useGetAdminHomeSettingsQuery,
+  useUpdateHomeSettingsMutation,
 } = apiSlice;

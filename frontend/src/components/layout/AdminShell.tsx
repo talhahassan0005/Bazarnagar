@@ -51,6 +51,8 @@ const NAV: NavItem[] = [
   { group: "Billing", label: "Plan Settings", href: "/admin/plan-settings", icon: Settings },
 
   { group: "Advertising", label: "Banner Ads", href: "/admin/banners", icon: Megaphone },
+
+  { group: "Site", label: "Home Catalog", href: "/admin/home-settings", icon: LayoutDashboard },
 ];
 
 /** Admin panel chrome (sidebar + header) with an auth guard. */

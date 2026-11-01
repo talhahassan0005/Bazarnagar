@@ -15,7 +15,7 @@ import {
 } from "../controllers/publicController";
 import { createOrder, getOrdersByIds } from "../controllers/orderController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
-import { getPlanConfig, getPaymentConfigHandler } from "../controllers/adminController";
+import { getPlanConfig, getPaymentConfigHandler, getHomeSettingsHandler } from "../controllers/adminController";
 import { getActiveBanners } from "../controllers/bannerController";
 import { getAdSettings } from "../controllers/adSettingsController";
 import { optionalAuthenticate } from "../middleware/auth";
@@ -26,6 +26,7 @@ router.get("/plans", getPlanConfig);
 router.get("/plan-payment-config", getPaymentConfigHandler);
 router.get("/banners", getActiveBanners);
 router.get("/ad-settings", getAdSettings);
+router.get("/home-settings", getHomeSettingsHandler);
 router.get("/search", searchProducts);
 router.get("/stores", getStores);
 router.get("/cities", getCities);
