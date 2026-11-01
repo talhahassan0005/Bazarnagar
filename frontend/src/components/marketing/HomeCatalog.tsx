@@ -6,6 +6,7 @@ import { ArrowRight, Navigation } from "lucide-react";
 import { ProductCard } from "@/components/domain/ProductCard";
 import { Button, ProductGridSkeleton } from "@/components/ui";
 import { useSearchProductsQuery, useGetHomeSettingsQuery } from "@/store/apiSlice";
+import { useCountry } from "@/lib/useCountry";
 import { CATEGORIES } from "@/lib/constants";
 import { cn, distanceKm } from "@/lib/utils";
 
@@ -31,8 +32,9 @@ export function HomeCatalog() {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const userSelectedRef = useRef(false);
 
-  // Fetch all products (no category filter — we group client-side)
-  const { data, isLoading } = useSearchProductsQuery({});
+  const { country } = useCountry();
+  // Fetch all products filtered by country — we group client-side by category
+  const { data, isLoading } = useSearchProductsQuery({ country });
   const { data: homeSettings } = useGetHomeSettingsQuery();
   const defaultRows = homeSettings?.defaultRows ?? 1;
   const categoryRows = homeSettings?.categoryRows ?? {};

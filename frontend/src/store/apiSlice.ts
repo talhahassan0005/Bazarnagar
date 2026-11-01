@@ -148,7 +148,7 @@ export const apiSlice = createApi({
       query: (id) => `/public/products/${id}/related`,
       providesTags: ["Product"],
     }),
-    searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string }>({
+    searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string; country?: string }>({
       query: (params) => ({ url: "/public/search", params }),
       providesTags: ["Product"],
     }),
