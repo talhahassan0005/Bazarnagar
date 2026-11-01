@@ -42,7 +42,7 @@ const ACCOUNT_STEPS = [
     icon: UserPlus,
     step: "1",
     title: "Sign up for free",
-    desc: "Go to bazaarnagar.com/signup. Enter your name, email, phone number and a password. No credit card needed.",
+    desc: "Go to bazarnagar.com/signup. Enter your name, email, phone number and a password. No credit card needed.",
     tone: "bg-brand-50 text-brand-700",
   },
   {
@@ -63,7 +63,7 @@ const ACCOUNT_STEPS = [
     icon: Link2,
     step: "4",
     title: "Share your shop link",
-    desc: "Copy your link (bazaarnagar.com/store/your-shop) and share it on WhatsApp, Instagram bio, Facebook or anywhere.",
+    desc: "Copy your link (bazarnagar.com/store/your-shop) and share it on WhatsApp, Instagram bio, Facebook or anywhere.",
     tone: "bg-amber-50 text-amber-700",
   },
   {

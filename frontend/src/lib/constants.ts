@@ -116,8 +116,7 @@ export const SITE_NAME = "Bazarnagar";
 export const SITE_TAGLINE = "Your shop, in one link.";
 /** Urdu tagline from the logo. */
 export const SITE_TAGLINE_UR = "آپ کی دکان، ایک لنک میں";
-// Live domain. Switch to the new domain only once it points at the server (DNS + SSL).
-export const SITE_DOMAIN = "bazaarnagar.com";
+export const SITE_DOMAIN = "bazarnagar.com";
 /** Contact email shown on legal / support pages. */
 export const SITE_EMAIL = "contact@bazarnagar.com";
 

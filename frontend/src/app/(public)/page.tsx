@@ -35,7 +35,7 @@ const FREE_PRODUCT_LIMIT = PLANS.starter.productLimit;
 
 const STEPS = [
   { icon: Package, title: "Add your products", text: "Upload photos, prices and details in minutes.", tone: "bg-brand-50 text-brand-700" },
-  { icon: Link2, title: "Get a public link", text: "Share bazaarnagar.com/store/your-shop anywhere.", tone: "bg-accent-50 text-accent-600" },
+  { icon: Link2, title: "Get a public link", text: "Share bazarnagar.com/store/your-shop anywhere.", tone: "bg-accent-50 text-accent-600" },
   { icon: MessageCircle, title: "Sell on WhatsApp", text: "Customers tap to inquire and order directly.", tone: "bg-leaf-500/10 text-leaf-600" },
 ];
 
