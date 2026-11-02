@@ -14,7 +14,7 @@ import type { ModerationStatus } from "../models/Product";
 const BANNED_PATTERNS: { reason: string; words: string[] }[] = [
   {
     reason: "weapons",
-    words: ["gun", "pistol", "rifle", "ammo", "ammunition", "grenade", "explosive", "firearm"],
+    words: ["buy gun", "sell gun", "gun for sale", "pistol for sale", "rifle for sale", "ammo for sale", "ammunition for sale", "grenade", "explosive device", "firearm for sale", "illegal weapon"],
   },
   {
     reason: "drugs",
