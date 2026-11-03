@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Footer } from "@/components/layout/Footer";
+import { CountrySelectPopup } from "@/components/layout/CountrySelectPopup";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <PublicNavbar />
       <div className="flex-1">{children}</div>
       <Footer />
+      <CountrySelectPopup />
     </div>
   );
 }
