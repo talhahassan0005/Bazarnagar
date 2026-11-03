@@ -17,7 +17,7 @@ import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
 import { TutorialVideo } from "@/components/marketing/TutorialVideo";
 import { PLAN_LIST, PLANS } from "@/lib/constants";
 import { API_BASE } from "@/lib/api";
-import type { Plan, HomeSettings } from "@/lib/types";
+import type { Plan } from "@/lib/types";
 
 async function fetchPlans(): Promise<Plan[]> {
   try {
@@ -29,15 +29,6 @@ async function fetchPlans(): Promise<Plan[]> {
   }
 }
 
-async function fetchHomeSettings(): Promise<HomeSettings | null> {
-  try {
-    const res = await fetch(`${API_BASE}/public/home-settings`, { next: { revalidate: 300 } });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
 
 const TRUST = ["No setup fees", "No coding needed"];
 
@@ -57,7 +48,7 @@ const FEATURES = [
 ];
 
 export default async function LandingPage() {
-  const [plans, homeSettings] = await Promise.all([fetchPlans(), fetchHomeSettings()]);
+  const plans = await fetchPlans();
   return (
     <>
       {/* Hero */}
@@ -119,7 +110,7 @@ export default async function LandingPage() {
         </div>
 
         {/* Tutorial video */}
-        <TutorialVideo videos={homeSettings?.tutorialVideos} />
+        <TutorialVideo />
       </section>
 
       {/* Features */}

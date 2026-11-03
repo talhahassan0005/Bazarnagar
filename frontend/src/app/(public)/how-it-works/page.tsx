@@ -22,7 +22,7 @@ import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
 import { TutorialVideo } from "@/components/marketing/TutorialVideo";
 import { PLAN_LIST, PLANS, SITE_DOMAIN, SITE_EMAIL, SITE_NAME } from "@/lib/constants";
 import { API_BASE } from "@/lib/api";
-import type { Plan, HomeSettings } from "@/lib/types";
+import type { Plan } from "@/lib/types";
 
 async function fetchPlans(): Promise<Plan[]> {
   try {
@@ -34,15 +34,6 @@ async function fetchPlans(): Promise<Plan[]> {
   }
 }
 
-async function fetchHomeSettings(): Promise<HomeSettings | null> {
-  try {
-    const res = await fetch(`${API_BASE}/public/home-settings`, { next: { revalidate: 300 } });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
 
 export const metadata: Metadata = {
   title: `How It Works · ${SITE_NAME}`,
@@ -237,7 +228,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default async function HowItWorksPage() {
-  const [plans, homeSettings] = await Promise.all([fetchPlans(), fetchHomeSettings()]);
+  const plans = await fetchPlans();
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
 
@@ -288,7 +279,7 @@ export default async function HowItWorksPage() {
         </div>
 
         {/* Tutorial video */}
-        <TutorialVideo videos={homeSettings?.tutorialVideos} />
+        <TutorialVideo />
       </section>
 
       {/* Features */}

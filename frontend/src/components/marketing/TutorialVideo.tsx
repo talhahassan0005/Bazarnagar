@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCountry } from "@/lib/useCountry";
-import type { TutorialVideos } from "@/lib/types";
+import { useGetHomeSettingsQuery } from "@/store/apiSlice";
 
 function toEmbedUrl(url: string): string {
   if (!url?.trim()) return "";
@@ -14,7 +14,9 @@ function toEmbedUrl(url: string): string {
   return url;
 }
 
-export function TutorialVideo({ videos }: { videos?: TutorialVideos | null }) {
+/** Fetches video settings live from the API so any admin change reflects immediately. */
+export function TutorialVideo() {
+  const { data: settings } = useGetHomeSettingsQuery();
   const { country } = useCountry();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -25,6 +27,7 @@ export function TutorialVideo({ videos }: { videos?: TutorialVideos | null }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  const videos = settings?.tutorialVideos;
   const isUrdu = country === "Pakistan";
   const key = isUrdu
     ? (isMobile ? "urduMobile" : "urduDesktop")
@@ -32,7 +35,6 @@ export function TutorialVideo({ videos }: { videos?: TutorialVideos | null }) {
 
   const src = toEmbedUrl(videos?.[key] ?? "");
 
-  // No URL configured — render nothing
   if (!src) return null;
 
   return (
