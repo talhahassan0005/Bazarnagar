@@ -102,25 +102,11 @@ export default function AdminOverviewPage() {
   const stores = useGetAllStoresQuery();
   const products = useGetAllProductsQuery();
 
-  if (sellers.isLoading || stores.isLoading || products.isLoading) {
-    return (
-      <>
-        <Skeleton className="mb-6 h-8 w-40" />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-        <Card className="mt-6 p-4">
-          <ListRowsSkeleton rows={5} />
-        </Card>
-      </>
-    );
-  }
-
   const allProducts = products.data ?? [];
   const allStores = stores.data ?? [];
   const allSellers = sellers.data ?? [];
+  const loading = sellers.isLoading || stores.isLoading || products.isLoading;
+
   const needsReview = allProducts.filter(
     (p) => p.moderationStatus === "pending" || p.moderationStatus === "flagged"
   );
@@ -156,27 +142,30 @@ export default function AdminOverviewPage() {
     <>
       <PageHeader title="Overview" description="Platform-wide activity and moderation queue." />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Sellers" value={allSellers.length} icon={<Users className="h-5 w-5" />} />
-        <StatCard label="Stores" value={allStores.length} icon={<StoreIcon className="h-5 w-5" />} tone="accent" />
-        <StatCard label="Products" value={allProducts.length} icon={<Package className="h-5 w-5" />} tone="leaf" />
-        <StatCard
-          label="Needs review"
-          value={needsReview.length}
-          icon={<ShieldAlert className="h-5 w-5" />}
-          tone="gold"
-        />
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="Sellers" value={allSellers.length} icon={<Users className="h-5 w-5" />} />
+          <StatCard label="Stores" value={allStores.length} icon={<StoreIcon className="h-5 w-5" />} tone="accent" />
+          <StatCard label="Products" value={allProducts.length} icon={<Package className="h-5 w-5" />} tone="leaf" />
+          <StatCard label="Needs review" value={needsReview.length} icon={<ShieldAlert className="h-5 w-5" />} tone="gold" />
+        </div>
+      )}
 
-      <div className="mt-4 grid grid-cols-2 gap-4">
-        <StatCard label="Total shop views" value={formatCount(totalViews)} icon={<Eye className="h-5 w-5" />} />
-        <StatCard
-          label="Total WhatsApp clicks"
-          value={formatCount(totalClicks)}
-          icon={<MessageCircle className="h-5 w-5" />}
-          tone="brand"
-        />
-      </div>
+      {loading ? (
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <StatCard label="Total shop views" value={formatCount(totalViews)} icon={<Eye className="h-5 w-5" />} />
+          <StatCard label="Total WhatsApp clicks" value={formatCount(totalClicks)} icon={<MessageCircle className="h-5 w-5" />} tone="brand" />
+        </div>
+      )}
 
       {/* ── Charts row ─────────────────────────────────────────────────────── */}
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -184,15 +173,26 @@ export default function AdminOverviewPage() {
         <Card>
           <CardHeader title="Product moderation" subtitle="Status breakdown" />
           <CardBody className="flex flex-col items-center gap-4">
-            <DonutChart slices={modSlices} />
-            <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1.5">
-              {modSlices.map((s) => (
-                <div key={s.label} className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
-                  {s.label} <span className="font-semibold text-slate-800">{s.value}</span>
+            {loading ? (
+              <div className="flex flex-col items-center gap-4 w-full">
+                <Skeleton className="h-[120px] w-[120px] rounded-full" />
+                <div className="flex gap-3">
+                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-4 w-16 rounded" />)}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                <DonutChart slices={modSlices} />
+                <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1.5">
+                  {modSlices.map((s) => (
+                    <div key={s.label} className="flex items-center gap-1.5 text-xs text-slate-600">
+                      <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+                      {s.label} <span className="font-semibold text-slate-800">{s.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </CardBody>
         </Card>
 
@@ -200,15 +200,26 @@ export default function AdminOverviewPage() {
         <Card>
           <CardHeader title="Seller accounts" subtitle="Status breakdown" />
           <CardBody className="flex flex-col items-center gap-4">
-            <DonutChart slices={sellerSlices} />
-            <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1.5">
-              {sellerSlices.map((s) => (
-                <div key={s.label} className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
-                  {s.label} <span className="font-semibold text-slate-800">{s.value}</span>
+            {loading ? (
+              <div className="flex flex-col items-center gap-4 w-full">
+                <Skeleton className="h-[120px] w-[120px] rounded-full" />
+                <div className="flex gap-3">
+                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-4 w-16 rounded" />)}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                <DonutChart slices={sellerSlices} />
+                <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1.5">
+                  {sellerSlices.map((s) => (
+                    <div key={s.label} className="flex items-center gap-1.5 text-xs text-slate-600">
+                      <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+                      {s.label} <span className="font-semibold text-slate-800">{s.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </CardBody>
         </Card>
 
@@ -216,10 +227,15 @@ export default function AdminOverviewPage() {
         <Card>
           <CardHeader title="Top stores" subtitle="By shop views" />
           <CardBody>
-            {topStoresByViews.length === 0
-              ? <p className="py-6 text-center text-xs text-slate-400">No data yet</p>
-              : <HBarChart rows={topStoresByViews} color="#6366f1" />
-            }
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-7 w-full rounded" />)}
+              </div>
+            ) : topStoresByViews.length === 0 ? (
+              <p className="py-6 text-center text-xs text-slate-400">No data yet</p>
+            ) : (
+              <HBarChart rows={topStoresByViews} color="#6366f1" />
+            )}
           </CardBody>
         </Card>
       </div>
@@ -228,10 +244,15 @@ export default function AdminOverviewPage() {
       <Card className="mt-4">
         <CardHeader title="Top stores by WhatsApp clicks" subtitle="Most buyer inquiries" />
         <CardBody>
-          {topStoresByClicks.length === 0
-            ? <p className="py-6 text-center text-xs text-slate-400">No data yet</p>
-            : <HBarChart rows={topStoresByClicks} color="#10b981" />
-          }
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-7 w-full rounded" />)}
+            </div>
+          ) : topStoresByClicks.length === 0 ? (
+            <p className="py-6 text-center text-xs text-slate-400">No data yet</p>
+          ) : (
+            <HBarChart rows={topStoresByClicks} color="#10b981" />
+          )}
         </CardBody>
       </Card>
 
@@ -247,23 +268,26 @@ export default function AdminOverviewPage() {
           }
         />
         <CardBody className="space-y-2">
-          {needsReview.length === 0 && (
+          {loading ? (
+            <ListRowsSkeleton rows={3} />
+          ) : needsReview.length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-400">
               Nothing to review — all caught up! 🎉
             </p>
-          )}
-          {needsReview.slice(0, 5).map((p) => (
-            <div key={p.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-2.5">
-              <img src={p.images[0]} alt={p.name} className="h-11 w-11 rounded-lg object-cover" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
-                <p className="text-xs text-slate-400">
-                  {p.store.name} · {formatPrice(p.price)}
-                </p>
+          ) : (
+            needsReview.slice(0, 5).map((p) => (
+              <div key={p.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-2.5">
+                <img src={p.images[0]} alt={p.name} className="h-11 w-11 rounded-lg object-cover" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
+                  <p className="text-xs text-slate-400">
+                    {p.store.name} · {formatPrice(p.price)}
+                  </p>
+                </div>
+                <ModerationBadge status={p.moderationStatus} />
               </div>
-              <ModerationBadge status={p.moderationStatus} />
-            </div>
-          ))}
+            ))
+          )}
         </CardBody>
       </Card>
     </>
