@@ -5,7 +5,7 @@ export { Badge, type BadgeTone } from "./Badge";
 export { Toggle } from "./Toggle";
 export { Modal } from "./Modal";
 export { ConfirmDialog } from "./ConfirmDialog";
-export { Spinner, LoadingPanel, EmptyState, Avatar } from "./Misc";
+export { Spinner, LoadingPanel, BrandLoader, EmptyState, Avatar } from "./Misc";
 export {
   Skeleton,
   ProductCardSkeleton,

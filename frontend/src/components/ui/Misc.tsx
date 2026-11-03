@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/layout/Logo";
 
 export function Spinner({ className }: { className?: string }) {
   return <Loader2 className={cn("h-5 w-5 animate-spin text-brand-600", className)} />;
@@ -12,6 +13,35 @@ export function LoadingPanel({ label = "Loading…" }: { label?: string }) {
     <div className="flex flex-col items-center justify-center gap-3 py-20 text-slate-400">
       <Spinner className="h-7 w-7" />
       <span className="text-sm">{label}</span>
+    </div>
+  );
+}
+
+/**
+ * Branded full-page loader — Bazarnagar logo + spinning ring.
+ * Use as a page-level loading state instead of skeleton grids.
+ */
+export function BrandLoader({ label = "Loading…" }: { label?: string }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5">
+      <div className="relative">
+        {/* spinning arc ring */}
+        <svg className="absolute inset-0 animate-spin" width="72" height="72" viewBox="0 0 72 72" style={{ animationDuration: "1.4s" }}>
+          <circle cx="36" cy="36" r="32" fill="none" stroke="#e2e8f0" strokeWidth="4" />
+          <circle
+            cx="36" cy="36" r="32"
+            fill="none"
+            stroke="#1b3a5b"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray="50 150"
+            strokeDashoffset="0"
+            transform="rotate(-90 36 36)"
+          />
+        </svg>
+        <BrandMark className="h-[72px] w-[72px] p-3" />
+      </div>
+      <p className="text-sm font-medium text-slate-400">{label}</p>
     </div>
   );
 }
