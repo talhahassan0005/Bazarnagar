@@ -1090,6 +1090,12 @@ export const getHomeSettingsHandler = asyncHandler(async (_req: Request, res: Re
 const homeSettingsSchema = z.object({
   defaultRows: z.number().int().min(1).max(5),
   categoryRows: z.record(z.string(), z.number().int().min(1).max(5)),
+  tutorialVideos: z.object({
+    urduDesktop:    z.string().default(""),
+    urduMobile:     z.string().default(""),
+    englishDesktop: z.string().default(""),
+    englishMobile:  z.string().default(""),
+  }).optional(),
 });
 
 /** PATCH /api/admin/home-settings */

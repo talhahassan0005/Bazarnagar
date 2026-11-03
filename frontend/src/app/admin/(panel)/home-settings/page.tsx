@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BrandLoader, Button, Card } from "@/components/ui";
+import { BrandLoader, Button, Card, Input } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -11,6 +11,9 @@ import {
 } from "@/store/apiSlice";
 import { getErrorMessage } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
+import type { TutorialVideos } from "@/lib/types";
+
+const DEFAULT_VIDEOS: TutorialVideos = { urduDesktop: "", urduMobile: "", englishDesktop: "", englishMobile: "" };
 
 const ROW_OPTIONS = [1, 2, 3, 4, 5];
 
@@ -35,11 +38,13 @@ export default function HomeSettingsPage() {
 
   const [defaultRows, setDefaultRows] = useState(1);
   const [categoryRows, setCategoryRows] = useState<Record<string, number>>({});
+  const [videos, setVideos] = useState<TutorialVideos>(DEFAULT_VIDEOS);
 
   useEffect(() => {
     if (data) {
       setDefaultRows(data.defaultRows);
       setCategoryRows(data.categoryRows ?? {});
+      setVideos(data.tutorialVideos ?? DEFAULT_VIDEOS);
     }
   }, [data]);
 
@@ -57,7 +62,7 @@ export default function HomeSettingsPage() {
 
   async function save() {
     try {
-      await updateHomeSettings({ defaultRows, categoryRows }).unwrap();
+      await updateHomeSettings({ defaultRows, categoryRows, tutorialVideos: videos }).unwrap();
       dispatch(addToast("Home page settings saved", "success"));
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Failed to save"), "error"));
@@ -120,6 +125,35 @@ export default function HomeSettingsPage() {
               </div>
             );
           })}
+        </div>
+      </Card>
+
+      {/* Tutorial videos */}
+      <Card className="p-5">
+        <h3 className="text-sm font-semibold text-slate-900">Tutorial videos</h3>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Paste a YouTube link (youtube.com/watch?v=… or youtu.be/…). Pakistan visitors see Urdu, others see English. Desktop/mobile variants are selected automatically by screen width.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {(
+            [
+              { key: "urduDesktop",    label: "Urdu — Desktop",  flag: "🇵🇰", device: "🖥️" },
+              { key: "urduMobile",     label: "Urdu — Mobile",   flag: "🇵🇰", device: "📱" },
+              { key: "englishDesktop", label: "English — Desktop",flag: "🌐", device: "🖥️" },
+              { key: "englishMobile",  label: "English — Mobile", flag: "🌐", device: "📱" },
+            ] as const
+          ).map(({ key, label, flag, device }) => (
+            <div key={key}>
+              <label className="mb-1.5 block text-xs font-medium text-slate-700">
+                {flag} {device} {label}
+              </label>
+              <Input
+                placeholder="https://youtube.com/watch?v=..."
+                value={videos[key]}
+                onChange={(e) => setVideos((prev) => ({ ...prev, [key]: e.target.value }))}
+              />
+            </div>
+          ))}
         </div>
       </Card>
 

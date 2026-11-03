@@ -14,9 +14,10 @@ import { Button, Card } from "@/components/ui";
 import { HomeCatalog } from "@/components/marketing/HomeCatalog";
 import { PricingPlans } from "@/components/marketing/PricingPlans";
 import { CreateStoreButton } from "@/components/marketing/CreateStoreButton";
+import { TutorialVideo } from "@/components/marketing/TutorialVideo";
 import { PLAN_LIST, PLANS } from "@/lib/constants";
 import { API_BASE } from "@/lib/api";
-import type { Plan } from "@/lib/types";
+import type { Plan, HomeSettings } from "@/lib/types";
 
 async function fetchPlans(): Promise<Plan[]> {
   try {
@@ -25,6 +26,16 @@ async function fetchPlans(): Promise<Plan[]> {
     return res.json();
   } catch {
     return PLAN_LIST;
+  }
+}
+
+async function fetchHomeSettings(): Promise<HomeSettings | null> {
+  try {
+    const res = await fetch(`${API_BASE}/public/home-settings`, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
   }
 }
 
@@ -46,7 +57,7 @@ const FEATURES = [
 ];
 
 export default async function LandingPage() {
-  const plans = await fetchPlans();
+  const [plans, homeSettings] = await Promise.all([fetchPlans(), fetchHomeSettings()]);
   return (
     <>
       {/* Hero */}
@@ -108,17 +119,7 @@ export default async function LandingPage() {
         </div>
 
         {/* Tutorial video */}
-        <div className="mx-auto mt-12 w-full max-w-5xl overflow-hidden rounded-2xl shadow-xl shadow-brand-900/10">
-          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-            <iframe
-              src="https://www.youtube.com/embed/4iA8eouRtjI"
-              title="How to create your free store on Bazarnagar"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="absolute inset-0 h-full w-full"
-            />
-          </div>
-        </div>
+        <TutorialVideo videos={homeSettings?.tutorialVideos} />
       </section>
 
       {/* Features */}
