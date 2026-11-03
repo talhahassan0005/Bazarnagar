@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
-import { Badge, Button, TableSkeleton } from "@/components/ui";
+import { Badge, Button, TableSkeleton, ConfirmDialog } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { CopyId } from "@/components/domain/CopyId";
@@ -19,18 +19,17 @@ export default function AdminStoresPage() {
   const { data, isLoading } = useGetAllStoresQuery();
   const [updateStoreStatus] = useUpdateStoreStatusMutation();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ store: Store; status: StoreStatus } | null>(null);
 
-  async function setStoreStatus(s: Store, status: StoreStatus) {
+  async function applyStoreStatus() {
+    if (!confirm) return;
+    const { store: s, status } = confirm;
     const key = `${s.id}:${status}`;
     setPendingKey(key);
+    setConfirm(null);
     try {
       await updateStoreStatus({ id: s.id, status }).unwrap();
-      dispatch(
-        addToast(
-          `${s.name} ${status === "active" ? "activated" : "deactivated"}`,
-          status === "active" ? "success" : "error"
-        )
-      );
+      dispatch(addToast(`${s.name} ${status === "active" ? "activated" : "deactivated"}`, status === "active" ? "success" : "error"));
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
     } finally {
@@ -94,7 +93,7 @@ export default function AdminStoresPage() {
               variant="ghost"
               size="sm"
               className="text-red-600 hover:bg-red-50"
-              onClick={() => setStoreStatus(s, "inactive")}
+              onClick={() => setConfirm({ store: s, status: "inactive" })}
               loading={pendingKey === `${s.id}:inactive`}
             >
               Deactivate
@@ -103,7 +102,7 @@ export default function AdminStoresPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setStoreStatus(s, "active")}
+              onClick={() => setConfirm({ store: s, status: "active" })}
               loading={pendingKey === `${s.id}:active`}
             >
               Activate
@@ -121,6 +120,19 @@ export default function AdminStoresPage() {
         columns={columns}
         rows={data ?? []}
         empty={<p className="py-10 text-center text-sm text-slate-400">No stores yet.</p>}
+      />
+
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm?.status === "inactive" ? "Deactivate store?" : "Activate store?"}
+        message={
+          confirm?.status === "inactive"
+            ? `"${confirm?.store.name}" will be hidden from public search and won't be visible to buyers.`
+            : `"${confirm?.store.name}" will become visible to buyers in public search.`
+        }
+        confirmLabel={confirm?.status === "inactive" ? "Deactivate" : "Activate"}
+        onConfirm={applyStoreStatus}
+        onCancel={() => setConfirm(null)}
       />
     </>
   );
