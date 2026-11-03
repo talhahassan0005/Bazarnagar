@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { Skeleton } from "@/components/ui";
+import { BrandLoader } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StoreLandingForm } from "@/components/domain/StoreLandingForm";
 import { NeedsStore } from "@/components/domain/NeedsStore";
@@ -21,17 +21,7 @@ export default function LandingCustomizerPage() {
   const { data: products } = useGetMyProductsQuery();
   const [updateLanding, { isLoading: saving }] = useUpdateStoreLandingMutation();
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Landing page" />
-        <div className="space-y-6">
-          <Skeleton className="h-40 rounded-2xl" />
-          <Skeleton className="h-56 rounded-2xl" />
-        </div>
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   if (!store) {
     return (

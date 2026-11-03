@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, ExternalLink, Store as StoreIcon } from "lucide-react";
-import { Avatar, Badge, Button, Card, EmptyState, ListRowsSkeleton } from "@/components/ui";
+import { Avatar, Badge, BrandLoader, Button, Card, EmptyState } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { LoadError } from "@/components/domain/LoadError";
 import {
@@ -165,9 +165,7 @@ export default function AdminStoreReviewPage() {
       {isError ? (
         <LoadError what="stores to review" error={error} onRetry={refetch} />
       ) : isLoading ? (
-        <Card className="p-4">
-          <ListRowsSkeleton rows={4} />
-        </Card>
+        <BrandLoader />
       ) : !data || data.length === 0 ? (
         <EmptyState
           icon={<StoreIcon className="h-6 w-6" />}

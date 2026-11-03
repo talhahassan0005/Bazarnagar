@@ -1,7 +1,7 @@
 "use client";
 
 import { ShoppingBag } from "lucide-react";
-import { Card, EmptyState, Select, TableSkeleton } from "@/components/ui";
+import { BrandLoader, Card, EmptyState, Select } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -47,14 +47,7 @@ export default function OrdersPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Orders" />
-        <TableSkeleton rows={5} />
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   const list = orders ?? [];
 

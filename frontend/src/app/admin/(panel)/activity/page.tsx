@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Download, ExternalLink, Search, X } from "lucide-react";
-import { Badge, Button, Input, TableSkeleton } from "@/components/ui";
+import { Badge, BrandLoader, Button, Input } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { useGetActivityLogsQuery } from "@/store/apiSlice";
@@ -242,7 +242,7 @@ export default function AdminActivityPage() {
       </div>
 
       {isLoading ? (
-        <TableSkeleton />
+        <BrandLoader />
       ) : (
         <div className={cn(isFetching && "opacity-60 transition-opacity")}>
           <DataTable

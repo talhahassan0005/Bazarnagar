@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, ExternalLink, X } from "lucide-react";
-import { Button, TableSkeleton } from "@/components/ui";
+import { BrandLoader, Button } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { LoadError } from "@/components/domain/LoadError";
@@ -128,7 +128,7 @@ export default function AdminSocialClicksPage() {
       {isError ? (
         <LoadError what="social clicks" error={error} onRetry={refetch} />
       ) : isLoading ? (
-        <TableSkeleton />
+        <BrandLoader />
       ) : (
         <div className={cn(isFetching && "opacity-60 transition-opacity")}>
           <DataTable

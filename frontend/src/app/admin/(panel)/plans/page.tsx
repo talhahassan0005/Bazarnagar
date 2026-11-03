@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, LoadingPanel } from "@/components/ui";
+import { Badge, BrandLoader, Button } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { SubscriptionBadge } from "@/components/domain/StatusBadges";
@@ -15,7 +15,7 @@ export default function AdminPlansPage() {
   const { data, isLoading } = useGetAllSellersQuery();
   const [editing, setEditing] = useState<Seller | null>(null);
 
-  if (isLoading) return <LoadingPanel label="Loading subscriptions…" />;
+  if (isLoading) return <BrandLoader />;
 
   const columns: Column<Seller>[] = [
     {

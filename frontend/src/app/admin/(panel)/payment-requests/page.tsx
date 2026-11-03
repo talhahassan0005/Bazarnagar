@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Landmark, X } from "lucide-react";
-import { Badge, Button, Card, CardBody, CardHeader, Input, TableSkeleton } from "@/components/ui";
+import { Badge, BrandLoader, Button, Card, CardBody, CardHeader, Input } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -124,7 +124,7 @@ export default function AdminPaymentRequestsPage() {
       <SettingsForm />
 
       {isLoading ? (
-        <TableSkeleton />
+        <BrandLoader />
       ) : (
         <div className="space-y-6">
           <div>

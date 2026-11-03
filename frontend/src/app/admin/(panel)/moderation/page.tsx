@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, FilePen, Flag, ShieldCheck, X } from "lucide-react";
-import { Card, CardBody, Button, LoadingPanel, EmptyState } from "@/components/ui";
+import { BrandLoader, Card, CardBody, Button, EmptyState } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { ModerationBadge } from "@/components/domain/StatusBadges";
 import { useGetAllProductsQuery, useModerateProductMutation } from "@/store/apiSlice";
@@ -30,7 +30,7 @@ export default function AdminModerationPage() {
   const [moderateProduct] = useModerateProductMutation();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
 
-  if (isLoading) return <LoadingPanel label="Loading moderation queue…" />;
+  if (isLoading) return <BrandLoader />;
 
   const items = data ?? [];
   const queue = items.filter(

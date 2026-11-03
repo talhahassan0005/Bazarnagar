@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Badge, Button, Modal, TableSkeleton } from "@/components/ui";
+import { Badge, BrandLoader, Button, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { BannerFormModal } from "@/components/domain/BannerFormModal";
@@ -32,14 +32,7 @@ export default function AdminBannersPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Banner Ads" description="Manage banner ads shown on free-plan shop pages." />
-        <TableSkeleton />
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   const rows = data ?? [];
 

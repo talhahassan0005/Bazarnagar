@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
-import { Card, EmptyState, Skeleton } from "@/components/ui";
+import { BrandLoader, Card, EmptyState } from "@/components/ui";
 import { ChatThread } from "@/components/domain/ChatThread";
 import { useGetSellerConversationsQuery } from "@/store/apiSlice";
 import type { Conversation } from "@/lib/types";
@@ -64,13 +64,7 @@ export default function SellerMessagesPage() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[20rem_1fr]">
         <Card className="h-[calc(100vh-14rem)] overflow-y-auto p-2">
-          {isLoading && (
-            <div className="space-y-2 p-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-xl" />
-              ))}
-            </div>
-          )}
+          {isLoading && <BrandLoader />}
           {!isLoading && (!conversations || conversations.length === 0) && (
             <div className="p-4">
               <EmptyState

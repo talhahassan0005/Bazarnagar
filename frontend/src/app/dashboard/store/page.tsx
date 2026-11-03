@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton } from "@/components/ui";
+import { BrandLoader } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StoreProfileForm } from "@/components/domain/StoreProfileForm";
 import { useAppDispatch } from "@/store/hooks";
@@ -13,17 +13,7 @@ export default function StoreProfilePage() {
   const { data: store, isLoading } = useGetMyStoreQuery();
   const [upsertStore, { isLoading: saving }] = useUpsertStoreMutation();
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Store profile" />
-        <div className="space-y-6">
-          <Skeleton className="h-56 rounded-2xl" />
-          <Skeleton className="h-40 rounded-2xl" />
-        </div>
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   return (
     <>

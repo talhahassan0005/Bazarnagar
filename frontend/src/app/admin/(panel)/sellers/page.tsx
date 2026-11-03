@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, ShieldCheck } from "lucide-react";
-import { Badge, Button, ConfirmDialog, Modal, TableSkeleton, Textarea } from "@/components/ui";
+import { Badge, BrandLoader, Button, ConfirmDialog, Modal, Textarea } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { SubscriptionBadge } from "@/components/domain/StatusBadges";
@@ -136,14 +136,7 @@ export default function AdminSellersPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Sellers" description="Manage seller accounts, plans and status." />
-        <TableSkeleton />
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   // Each seller owns at most one store.
   const storeBySeller = new Map((stores ?? []).map((st) => [st.sellerId, st]));

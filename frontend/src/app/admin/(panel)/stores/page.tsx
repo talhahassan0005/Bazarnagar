@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
-import { Badge, Button, TableSkeleton, ConfirmDialog } from "@/components/ui";
+import { Badge, BrandLoader, Button, ConfirmDialog } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { CopyId } from "@/components/domain/CopyId";
@@ -37,14 +37,7 @@ export default function AdminStoresPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Stores" description="View and moderate seller storefronts." />
-        <TableSkeleton />
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   const columns: Column<Store>[] = [
     {

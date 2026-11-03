@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Star, X } from "lucide-react";
-import { Button, Card, EmptyState, LoadingPanel } from "@/components/ui";
+import { BrandLoader, Button, Card, EmptyState } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StarRating } from "@/components/storefront/StarRating";
 import { useAppDispatch } from "@/store/hooks";
@@ -23,7 +23,7 @@ export default function AdminReviewsPage() {
   const [moderateReview] = useModerateReviewMutation();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
 
-  if (isLoading) return <LoadingPanel label="Loading reviews…" />;
+  if (isLoading) return <BrandLoader />;
 
   // Pending first, then most recent.
   const reviews = [...(data ?? [])].sort((a, b) => {

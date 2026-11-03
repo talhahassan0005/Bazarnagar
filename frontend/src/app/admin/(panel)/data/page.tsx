@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarPlus, DoorOpen, Package, PackageX, Rocket, Store as StoreIcon } from "lucide-react";
-import { Card, CardBody, CardHeader, StatCardSkeleton } from "@/components/ui";
+import { BrandLoader, Card, CardBody, CardHeader } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard } from "@/components/domain/StatCard";
 import { useGetDataSummaryQuery } from "@/store/apiSlice";
@@ -53,18 +53,7 @@ function Breakdown({ title, rows, limit = 10 }: { title: string; rows: CountRow[
 export default function AdminDataPage() {
   const { data, isLoading } = useGetDataSummaryQuery(undefined, { refetchOnMountOrArgChange: true });
 
-  if (isLoading || !data) {
-    return (
-      <>
-        <PageHeader title="Data Summary" description="Current stores and products on the platform." />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-      </>
-    );
-  }
+  if (isLoading || !data) return <BrandLoader />;
 
   const { stores, products } = data;
 

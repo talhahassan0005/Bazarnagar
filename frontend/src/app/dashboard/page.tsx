@@ -2,13 +2,11 @@
 
 import { Eye, MessageCircle, PackageX, Pencil, Plus, ShoppingCart, TrendingUp, Zap } from "lucide-react";
 import {
+  BrandLoader,
   Button,
   Card,
   CardBody,
   CardHeader,
-  StatCardSkeleton,
-  ListRowsSkeleton,
-  Skeleton,
 } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard, PlanUsageBar } from "@/components/domain/StatCard";
@@ -28,27 +26,7 @@ export default function DashboardPage() {
   const store = useGetMyStoreQuery();
   const products = useGetMyProductsQuery();
 
-  if (metrics.isLoading || store.isLoading || products.isLoading || !store.data) {
-    return (
-      <>
-        <Skeleton className="mb-6 h-8 w-56" />
-        <Skeleton className="mb-6 h-20 w-full rounded-2xl" />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <Skeleton className="h-64 rounded-2xl" />
-          <div className="lg:col-span-2">
-            <Card className="p-4">
-              <ListRowsSkeleton />
-            </Card>
-          </div>
-        </div>
-      </>
-    );
-  }
+  if (metrics.isLoading || store.isLoading || products.isLoading || !store.data) return <BrandLoader />;
 
   const m = metrics.data!;
   const s = store.data!;

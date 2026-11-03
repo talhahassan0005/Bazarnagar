@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Check, X, EyeOff, Eye } from "lucide-react";
-import { Button, Card, LoadingPanel, Toggle } from "@/components/ui";
+import { BrandLoader, Button, Card, Toggle } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -89,7 +89,7 @@ export default function AdminPlanSettingsPage() {
   const [form, setForm] = useState<PlanForm | null>(null);
   const [saving, setSaving] = useState(false);
 
-  if (isLoading) return <LoadingPanel label="Loading plan config…" />;
+  if (isLoading) return <BrandLoader />;
 
   function startEdit(plan: Plan) {
     setEditing(plan.id);
@@ -261,7 +261,7 @@ function BoostPricingSection() {
         description="Every seller — free plan included — can feature a product for a daily fee. Changes apply immediately."
       />
       {isLoading || !values ? (
-        <LoadingPanel label="Loading boost pricing…" />
+        <BrandLoader />
       ) : (
         <Card className="max-w-xl p-5">
           <div className="grid gap-4 sm:grid-cols-3">
@@ -315,7 +315,7 @@ function ExpiryPolicySection() {
         description="Choose whether sellers keep their paid plan after it expires, or move to the Free plan if they don't renew."
       />
       {isLoading || !values ? (
-        <LoadingPanel label="Loading…" />
+        <BrandLoader />
       ) : (
         <Card className="max-w-xl space-y-4 p-5">
           <Toggle
@@ -386,7 +386,7 @@ function PaymentCurrencySection() {
         description="Sellers choose where they pay from. Pakistan pays the PKR price (JazzCash / bank) with no tax. Other countries pay the plan's USD price plus tax and the online fee, through Payoneer."
       />
       {isLoading ? (
-        <LoadingPanel label="Loading…" />
+        <BrandLoader />
       ) : (
         <Card className="max-w-xl space-y-4 p-5">
           <div className="grid gap-4 sm:grid-cols-2">

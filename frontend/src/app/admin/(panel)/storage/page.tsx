@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink, Files, HardDrive, Store as StoreIcon } from "lucide-react";
-import { Badge, Button, StatCardSkeleton, TableSkeleton } from "@/components/ui";
+import { Badge, BrandLoader, Button } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { StatCard } from "@/components/domain/StatCard";
@@ -97,14 +97,7 @@ export default function AdminStoragePage() {
       </div>
 
       {isLoading || !data ? (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <StatCardSkeleton key={i} />
-            ))}
-          </div>
-          <TableSkeleton />
-        </>
+        <BrandLoader />
       ) : (
         <div className={cn(isFetching && "opacity-60 transition-opacity")}>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

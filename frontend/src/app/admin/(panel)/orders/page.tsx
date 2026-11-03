@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, ClipboardList, Download, Eye, Search, Wallet, X } from "lucide-react";
-import { Badge, Button, Input, Modal, StatCardSkeleton, TableSkeleton } from "@/components/ui";
+import { Badge, BrandLoader, Button, Input, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { StatCard } from "@/components/domain/StatCard";
@@ -226,13 +226,7 @@ export default function AdminOrdersPage() {
       />
 
       {isLoading || !data ? (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </div>
-          <TableSkeleton />
-        </>
+        <BrandLoader />
       ) : (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <StatCard
@@ -327,7 +321,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {isLoading ? (
-        <TableSkeleton />
+        <BrandLoader />
       ) : (
         <div className={cn(isFetching && "opacity-60 transition-opacity")}>
           <DataTable

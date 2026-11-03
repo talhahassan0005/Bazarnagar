@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CreditCard, Landmark, RefreshCw, X, AlertTriangle, CheckCircle, Clock, Ban, EyeOff } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Modal, Skeleton } from "@/components/ui";
+import { BrandLoader, Button, Card, CardBody, CardHeader, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { PlanCard } from "@/components/domain/PlanCard";
 import { PlanUsageBar } from "@/components/domain/StatCard";
@@ -137,17 +137,7 @@ export default function PlanPage() {
   }
 
   // Wait only for seller + products — sub status is optional (has its own fallback)
-  if (seller.isLoading || products.isLoading || !seller.data) {
-    return (
-      <>
-        <PageHeader title="Plan & billing" />
-        <Skeleton className="mb-6 h-44 rounded-2xl" />
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-72 rounded-2xl" />)}
-        </div>
-      </>
-    );
-  }
+  if (seller.isLoading || products.isLoading || !seller.data) return <BrandLoader />;
 
   // Use live DB plan config if available, fall back to hardcoded constants
   const livePlans = planConfig.data;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Download, ExternalLink, Search, SearchX, Tags } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Input, StatCardSkeleton, TableSkeleton } from "@/components/ui";
+import { BrandLoader, Button, Card, CardBody, CardHeader, Input } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard } from "@/components/domain/StatCard";
 import { DataTable, type Column } from "@/components/domain/DataTable";
@@ -112,7 +112,7 @@ function SearchLogSection({ range }: { range: Range }) {
       </form>
 
       {isLoading ? (
-        <TableSkeleton />
+        <BrandLoader />
       ) : (
         <div className={cn(isFetching && "opacity-60 transition-opacity")}>
           <DataTable
@@ -183,14 +183,7 @@ export default function AdminSearchInsightsPage() {
       </div>
 
       {isLoading || !data ? (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <StatCardSkeleton key={i} />
-            ))}
-          </div>
-          <TableSkeleton />
-        </>
+        <BrandLoader />
       ) : (
         <div className={cn(isFetching && "opacity-60 transition-opacity")}>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

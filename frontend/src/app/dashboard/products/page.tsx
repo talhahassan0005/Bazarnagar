@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
-import { Badge, Button, Card, TableSkeleton, EmptyState, Modal } from "@/components/ui";
+import { Badge, BrandLoader, Button, Card, EmptyState, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import {
   ModerationBadge,
@@ -29,14 +29,7 @@ export default function ProductsPage() {
   const [toDelete, setToDelete] = useState<Product | null>(null);
   const [toBoost, setToBoost] = useState<Product | null>(null);
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Products" />
-        <TableSkeleton rows={5} />
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   const list = products ?? [];
   const plan = seller ? PLANS[seller.planId] : null;

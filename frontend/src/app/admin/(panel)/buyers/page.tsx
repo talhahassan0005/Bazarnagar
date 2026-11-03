@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, Search, ShoppingBag, UserCheck, Users } from "lucide-react";
-import { Avatar, Button, Input, StatCardSkeleton, TableSkeleton } from "@/components/ui";
+import { Avatar, BrandLoader, Button, Input } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { StatCard } from "@/components/domain/StatCard";
@@ -108,14 +108,7 @@ export default function AdminBuyersPage() {
       />
 
       {isLoading ? (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <StatCardSkeleton key={i} />
-            ))}
-          </div>
-          <TableSkeleton />
-        </>
+        <BrandLoader />
       ) : (
         <>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

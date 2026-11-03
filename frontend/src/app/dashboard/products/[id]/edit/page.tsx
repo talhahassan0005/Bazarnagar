@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { LoadingPanel, EmptyState, Button } from "@/components/ui";
+import { BrandLoader, EmptyState, Button } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { ProductForm } from "@/components/domain/ProductForm";
 import { useAppDispatch } from "@/store/hooks";
@@ -22,7 +22,7 @@ export default function EditProductPage() {
   const { data: seller } = useGetSellerQuery();
   const [updateProduct, { isLoading: saving }] = useUpdateProductMutation();
 
-  if (isLoading || !seller) return <LoadingPanel label="Loading product…" />;
+  if (isLoading || !seller) return <BrandLoader />;
 
   if (!product) {
     return (

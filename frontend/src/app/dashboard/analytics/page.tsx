@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Eye, MessageCircle, ShoppingCart, TrendingUp, Zap } from "lucide-react";
-import { Card, CardBody, CardHeader, StatCardSkeleton, Skeleton } from "@/components/ui";
+import { BrandLoader, Card, CardBody, CardHeader } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { StatCard } from "@/components/domain/StatCard";
 import { useAppSelector } from "@/store/hooks";
@@ -19,19 +19,7 @@ export default function AnalyticsPage() {
   const [period, setPeriod] = useState<SocialClickPeriod>("30");
   const social = useGetMySocialClicksQuery(period, { refetchOnMountOrArgChange: true });
 
-  if (metrics.isLoading || products.isLoading) {
-    return (
-      <>
-        <Skeleton className="mb-6 h-8 w-44" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-        <Skeleton className="mt-6 h-72 rounded-2xl" />
-      </>
-    );
-  }
+  if (metrics.isLoading || products.isLoading) return <BrandLoader />;
 
   const m = metrics.data!;
   const rows = [...(products.data ?? [])].sort((a, b) => b.views - a.views);

@@ -1,7 +1,7 @@
 "use client";
 
 import { CreditCard } from "lucide-react";
-import { Badge, Card, EmptyState, Skeleton } from "@/components/ui";
+import { Badge, BrandLoader, Card, EmptyState } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { useGetMyPaymentsQuery } from "@/store/apiSlice";
 import { formatPrice } from "@/lib/utils";
@@ -17,9 +17,7 @@ export default function PaymentsPage() {
       />
 
       {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
-        </div>
+        <BrandLoader />
       ) : !data || data.length === 0 ? (
         <EmptyState
           icon={<CreditCard className="h-6 w-6" />}

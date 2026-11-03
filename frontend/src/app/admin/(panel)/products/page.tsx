@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink, Search, Trash2 } from "lucide-react";
-import { Button, TableSkeleton, ConfirmDialog } from "@/components/ui";
+import { BrandLoader, Button, ConfirmDialog } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { CategoryChips } from "@/components/domain/CategoryChips";
@@ -39,14 +39,7 @@ export default function AdminProductsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Products" description="All products across the platform." />
-        <TableSkeleton />
-      </>
-    );
-  }
+  if (isLoading) return <BrandLoader />;
 
   const needle = q.trim().toLowerCase();
   const rows = (data ?? []).filter((p) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LoadingPanel } from "@/components/ui";
+import { BrandLoader } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { ProductForm } from "@/components/domain/ProductForm";
 import { useAppDispatch } from "@/store/hooks";
@@ -22,7 +22,7 @@ export default function NewProductPage() {
   const { data: store, isLoading: storeLoading } = useGetMyStoreQuery();
   const [createProduct, { isLoading: saving }] = useCreateProductMutation();
 
-  if (isLoading || storeLoading || !seller) return <LoadingPanel label="Loading…" />;
+  if (isLoading || storeLoading || !seller) return <BrandLoader />;
 
   if (!store) {
     return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Card, LoadingPanel } from "@/components/ui";
+import { BrandLoader, Button, Card } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
@@ -64,7 +64,7 @@ export default function HomeSettingsPage() {
     }
   }
 
-  if (isLoading) return <LoadingPanel />;
+  if (isLoading) return <BrandLoader />;
 
   return (
     <div className="space-y-6">
