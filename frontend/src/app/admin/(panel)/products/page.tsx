@@ -11,17 +11,31 @@ import {
   ModerationBadge,
   ProductStatusBadge,
 } from "@/components/domain/StatusBadges";
-import { useGetAllProductsQuery } from "@/store/apiSlice";
+import { useGetAllProductsQuery, useDeleteProductMutation } from "@/store/apiSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { addToast } from "@/store/uiSlice";
 import { MODERATION_META } from "@/lib/constants";
-import { formatCount, formatPrice } from "@/lib/utils";
+import { formatCount, formatPrice, getErrorMessage } from "@/lib/utils";
 import type { ModerationStatus, ProductWithStore } from "@/lib/types";
 
 const MOD_FILTERS = Object.keys(MODERATION_META) as ModerationStatus[];
 
 export default function AdminProductsPage() {
+  const dispatch = useAppDispatch();
   const { data, isLoading } = useGetAllProductsQuery();
+  const [deleteProduct] = useDeleteProductMutation();
   const [q, setQ] = useState("");
   const [mod, setMod] = useState("");
+
+  async function handleDelete(p: ProductWithStore) {
+    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteProduct(p.id).unwrap();
+      dispatch(addToast("Product deleted", "success"));
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Failed to delete"), "error"));
+    }
+  }
 
   if (isLoading) {
     return (
@@ -76,7 +90,7 @@ export default function AdminProductsPage() {
           >
             View
           </Button>
-          <button className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Remove">
+          <button onClick={() => handleDelete(p)} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Remove">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
