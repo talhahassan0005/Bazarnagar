@@ -12,14 +12,13 @@ import {
 } from "@/store/apiSlice";
 import { formatCount, formatPrice } from "@/lib/utils";
 
-// Brand palette from Logo.tsx
+// Brand palette — exactly the 4 logo tile colors
 const C = {
-  navy:   "#1b3a5b",
-  orange: "#e85d2c",
-  amber:  "#f5a623",
-  green:  "#1f6b2e",
-  slate:  "#94a3b8",
-  teal:   "#0d9488",
+  navy:   "#1b3a5b",  // top-left tile
+  orange: "#e85d2c",  // top-right tile
+  amber:  "#f5a623",  // bottom-left tile
+  green:  "#1f6b2e",  // bottom-right tile
+  slate:  "#94a3b8",  // neutral / inactive
 };
 
 // ── Donut chart ────────────────────────────────────────────────────────────────
@@ -118,7 +117,7 @@ function GroupedBarChart({ stores }: { stores: { name: string; views: number; cl
           Views
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-4 rounded-sm" style={{ background: C.green }} />
+          <span className="h-2 w-4 rounded-sm" style={{ background: C.orange }} />
           WA clicks
         </span>
       </div>
@@ -131,7 +130,7 @@ function GroupedBarChart({ stores }: { stores: { name: string; views: number; cl
               <span className="text-[10px] text-slate-400">{s.views}</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="h-2 rounded-sm" style={{ width: `${(s.clicks / maxVal) * 100}%`, background: C.green, minWidth: 2 }} />
+              <div className="h-2 rounded-sm" style={{ width: `${(s.clicks / maxVal) * 100}%`, background: C.orange, minWidth: 2 }} />
               <span className="text-[10px] text-slate-400">{s.clicks}</span>
             </div>
           </div>
@@ -247,7 +246,7 @@ export default function AdminOverviewPage() {
             </Card>
           </div>
 
-          {/* ── Charts row 2: views + clicks grouped bar ───────────────────── */}
+          {/* ── Charts row 2: views + clicks ──────────────────────────────── */}
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader
@@ -268,7 +267,7 @@ export default function AdminOverviewPage() {
                 <CardBody>
                   {topStores.length === 0
                     ? <p className="py-4 text-center text-xs text-slate-400">No data</p>
-                    : <HBarChart rows={topStores.slice(0, 4).map((s) => ({ label: s.name, value: s.views }))} color={C.navy} />
+                    : <HBarChart rows={topStores.slice(0, 4).map((s) => ({ label: s.name, value: s.views }))} color={C.amber} />
                   }
                 </CardBody>
               </Card>
@@ -277,7 +276,7 @@ export default function AdminOverviewPage() {
                 <CardBody>
                   {topStores.length === 0
                     ? <p className="py-4 text-center text-xs text-slate-400">No data</p>
-                    : <HBarChart rows={[...topStores].sort((a,b) => b.clicks-a.clicks).slice(0,4).map((s) => ({ label: s.name, value: s.clicks }))} color={C.green} />
+                    : <HBarChart rows={[...topStores].sort((a,b) => b.clicks-a.clicks).slice(0,4).map((s) => ({ label: s.name, value: s.clicks }))} color={C.orange} />
                   }
                 </CardBody>
               </Card>
