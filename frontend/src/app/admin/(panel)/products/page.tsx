@@ -11,7 +11,7 @@ import {
   ModerationBadge,
   ProductStatusBadge,
 } from "@/components/domain/StatusBadges";
-import { useGetAllProductsQuery, useDeleteProductMutation } from "@/store/apiSlice";
+import { useGetAllProductsQuery, useAdminDeleteProductMutation } from "@/store/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { MODERATION_META } from "@/lib/constants";
@@ -23,7 +23,7 @@ const MOD_FILTERS = Object.keys(MODERATION_META) as ModerationStatus[];
 export default function AdminProductsPage() {
   const dispatch = useAppDispatch();
   const { data, isLoading } = useGetAllProductsQuery();
-  const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+  const [deleteProduct, { isLoading: isDeleting }] = useAdminDeleteProductMutation();
   const [q, setQ] = useState("");
   const [mod, setMod] = useState("");
   const [toDelete, setToDelete] = useState<ProductWithStore | null>(null);

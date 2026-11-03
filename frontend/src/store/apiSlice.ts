@@ -287,6 +287,10 @@ export const apiSlice = createApi({
       query: (id) => ({ url: `/seller/products/${id}`, method: "DELETE" }),
       invalidatesTags: ["Product"],
     }),
+    adminDeleteProduct: builder.mutation<{ ok: boolean }, string>({
+      query: (id) => ({ url: `/admin/products/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Product"],
+    }),
     boostProduct: builder.mutation<
       Product,
       { id: string; days: number; method: PaymentRequestMethod; reference: string; proofUrl?: string }
@@ -633,6 +637,7 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useAdminDeleteProductMutation,
   useBoostProductMutation,
   useGetBoostPricingQuery,
   useChangePlanMutation,
