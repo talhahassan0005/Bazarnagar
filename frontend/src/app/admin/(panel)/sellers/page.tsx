@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, ShieldCheck } from "lucide-react";
-import { Badge, Button, Modal, TableSkeleton, Textarea } from "@/components/ui";
+import { Badge, Button, ConfirmDialog, Modal, TableSkeleton, Textarea } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { SubscriptionBadge } from "@/components/domain/StatusBadges";
@@ -118,18 +118,17 @@ export default function AdminSellersPage() {
   const [q, setQ] = useState("");
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState<Seller | null>(null);
+  const [confirm, setConfirm] = useState<{ seller: Seller; status: "active" | "suspended" } | null>(null);
 
-  async function setSellerStatus(s: Seller, status: "active" | "suspended") {
+  async function applySellerStatus() {
+    if (!confirm) return;
+    const { seller: s, status } = confirm;
     const key = `${s.id}:${status}`;
+    setConfirm(null);
     setPendingKey(key);
     try {
       await updateSeller({ id: s.id, status }).unwrap();
-      dispatch(
-        addToast(
-          `${s.name} ${status === "suspended" ? "suspended" : "reactivated"}`,
-          status === "suspended" ? "error" : "success"
-        )
-      );
+      dispatch(addToast(`${s.name} ${status === "suspended" ? "suspended" : "reactivated"}`, status === "suspended" ? "error" : "success"));
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
     } finally {
@@ -227,7 +226,7 @@ export default function AdminSellersPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSellerStatus(s, "active")}
+              onClick={() => setConfirm({ seller: s, status: "active" })}
               loading={pendingKey === `${s.id}:active`}
             >
               Reactivate
@@ -237,7 +236,7 @@ export default function AdminSellersPage() {
               variant="ghost"
               size="sm"
               className="text-red-600 hover:bg-red-50"
-              onClick={() => setSellerStatus(s, "suspended")}
+              onClick={() => setConfirm({ seller: s, status: "suspended" })}
               loading={pendingKey === `${s.id}:suspended`}
             >
               Suspend
@@ -269,6 +268,19 @@ export default function AdminSellersPage() {
       />
 
       {reviewing && <KycReviewModal seller={reviewing} onClose={() => setReviewing(null)} />}
+
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm?.status === "suspended" ? "Suspend seller?" : "Reactivate seller?"}
+        message={
+          confirm?.status === "suspended"
+            ? `"${confirm?.seller.name}" will be suspended. Their store and products will be hidden from buyers.`
+            : `"${confirm?.seller.name}" will be reactivated and their store will become visible again.`
+        }
+        confirmLabel={confirm?.status === "suspended" ? "Suspend" : "Reactivate"}
+        onConfirm={applySellerStatus}
+        onCancel={() => setConfirm(null)}
+      />
     </>
   );
 }
