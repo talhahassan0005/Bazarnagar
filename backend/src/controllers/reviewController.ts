@@ -53,8 +53,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     customerName: data.customerName,
     rating: data.rating,
     comment: data.comment,
-    // Reviews await admin approval before showing publicly.
-    status: "pending",
+    status: "approved",
   });
 
   res.status(201).json(review.toJSON());
