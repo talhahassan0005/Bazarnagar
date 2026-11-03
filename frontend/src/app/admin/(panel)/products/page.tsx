@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink, Search, Trash2 } from "lucide-react";
-import { Button, TableSkeleton } from "@/components/ui";
+import { Button, TableSkeleton, ConfirmDialog } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { CategoryChips } from "@/components/domain/CategoryChips";
@@ -23,15 +23,17 @@ const MOD_FILTERS = Object.keys(MODERATION_META) as ModerationStatus[];
 export default function AdminProductsPage() {
   const dispatch = useAppDispatch();
   const { data, isLoading } = useGetAllProductsQuery();
-  const [deleteProduct] = useDeleteProductMutation();
+  const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
   const [q, setQ] = useState("");
   const [mod, setMod] = useState("");
+  const [toDelete, setToDelete] = useState<ProductWithStore | null>(null);
 
-  async function handleDelete(p: ProductWithStore) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+  async function confirmDelete() {
+    if (!toDelete) return;
     try {
-      await deleteProduct(p.id).unwrap();
+      await deleteProduct(toDelete.id).unwrap();
       dispatch(addToast("Product deleted", "success"));
+      setToDelete(null);
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Failed to delete"), "error"));
     }
@@ -90,7 +92,7 @@ export default function AdminProductsPage() {
           >
             View
           </Button>
-          <button onClick={() => handleDelete(p)} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Remove">
+          <button onClick={() => setToDelete(p)} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Remove">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
@@ -126,6 +128,16 @@ export default function AdminProductsPage() {
         columns={columns}
         rows={rows}
         empty={<p className="py-10 text-center text-sm text-slate-400">No products match.</p>}
+      />
+
+      <ConfirmDialog
+        open={!!toDelete}
+        title="Delete product?"
+        message={`"${toDelete?.name}" will be permanently deleted along with its images. This cannot be undone.`}
+        confirmLabel="Delete"
+        loading={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setToDelete(null)}
       />
     </>
   );
