@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = store.description
     ? store.description.slice(0, 160)
     : `Browse products from ${store.name} on ${SITE_NAME}.`;
-  const image = store.coverImage ?? store.logo ?? null;
+  const image = store.coverUrl ?? store.logoUrl ?? null;
   const url = `https://${SITE_DOMAIN}/store/${slug}`;
 
   return {
