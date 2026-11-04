@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/domain/ProductCard";
 import { useSearchProductsQuery } from "@/store/apiSlice";
 import { CATEGORIES } from "@/lib/constants";
 import { useFilterCities } from "@/components/domain/CitySelect";
+import { useCountry } from "@/lib/useCountry";
 import { cn, distanceKm, effectivePrice } from "@/lib/utils";
 
 type Sort = "relevance" | "price-asc" | "price-desc";
@@ -28,6 +29,8 @@ export default function SearchPage() {
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
   const cities = useFilterCities();
+  const { country } = useCountry();
+  const isPakistan = country === "Pakistan";
   const [sort, setSort] = useState<Sort>("relevance");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -191,13 +194,15 @@ export default function SearchPage() {
                 placeholder="Search products, shops, tags…"
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
-              <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
-              <select value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent py-2.5 text-sm outline-none">
-                <option value="">All cities</option>
-                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+            {isPakistan && (
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
+                <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
+                <select value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent py-2.5 text-sm outline-none">
+                  <option value="">All cities</option>
+                  {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
               <ArrowDownUp className="h-4 w-4 shrink-0 text-slate-400" />
               <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} disabled={!!coords}

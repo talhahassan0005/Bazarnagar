@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Globe, MapPin } from "lucide-react";
+import { ChevronDown, Globe, MapPin } from "lucide-react";
 import { useCountry } from "@/lib/useCountry";
 import { useAppSelector } from "@/store/hooks";
 import { COUNTRY_OPTIONS } from "@/lib/countries";
@@ -75,29 +75,19 @@ export function CountrySelectPopup() {
               <select
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               >
                 {COUNTRY_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="mt-4 flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                // Keep Pakistan default, just dismiss
-                setCountry("Pakistan");
-                setOpen(false);
-              }}
-            >
-              Skip
-            </Button>
-            <Button className="flex-1" onClick={confirm}>
+          <div className="mt-4">
+            <Button className="w-full" onClick={confirm}>
               Continue
             </Button>
           </div>

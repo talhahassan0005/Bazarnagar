@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import { FaXTwitter, FaLinkedin, FaReddit } from "react-icons/fa6";
 import { BrandMark } from "./Logo";
-import { CountryPicker } from "./CountryPicker";
 import { SITE_EMAIL, SITE_EXTRA_SOCIALS, SITE_NAME, SITE_SOCIALS, SITE_TAGLINE, SITE_TAGLINE_UR } from "@/lib/constants";
 import { storeSocials } from "@/lib/socials";
 
@@ -35,8 +34,6 @@ export function Footer() {
               <Mail className="h-3.5 w-3.5" />
               {SITE_EMAIL}
             </Link>
-            <CountryPicker />
-
             <div className="mt-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-900">Follow us</p>
               <div className="flex flex-wrap gap-2">

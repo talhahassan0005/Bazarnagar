@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight, Eye, MessageCircle, PlayCircle, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
+import { ChevronRight, Check, Copy, Eye, MessageCircle, PlayCircle, Share2, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge, Button, EmptyState, LoadingPanel, ProductCardSkeleton, Skeleton } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
@@ -25,6 +25,33 @@ import {
 } from "@/store/apiSlice";
 import { discountPercent, effectivePrice, formatCount, formatPrice } from "@/lib/utils";
 import type { Store } from "@/lib/types";
+
+function ShareButton({ name }: { name: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function share() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: name, url }); } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={share}
+      title="Share product"
+      className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+    >
+      {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Share2 className="h-3.5 w-3.5" />}
+      {copied ? "Copied!" : "Share"}
+    </button>
+  );
+}
 
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -79,7 +106,10 @@ export default function ProductDetailPage() {
             {product.condition && (
               <Badge tone="gray">{product.condition === "new" ? "Brand new" : "Second hand"}</Badge>
             )}
-            <WishlistButton productId={product.id} className="ml-auto" />
+            <div className="ml-auto flex items-center gap-2">
+              <ShareButton name={product.name} />
+              <WishlistButton productId={product.id} />
+            </div>
           </div>
 
           <h1 className="mt-3 text-2xl font-bold text-slate-900">{product.name}</h1>
