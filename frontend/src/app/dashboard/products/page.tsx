@@ -33,11 +33,15 @@ function CopyLinkButton({ slug, productId }: { slug: string; productId: string }
   return (
     <button
       onClick={copy}
-      className="rounded-lg p-2 text-slate-400 hover:bg-brand-50 hover:text-brand-600"
-      aria-label="Copy product link"
       title="Copy product link"
+      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+        copied
+          ? "bg-green-50 text-green-600"
+          : "bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-700"
+      }`}
     >
-      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied!" : "Copy Link"}
     </button>
   );
 }
