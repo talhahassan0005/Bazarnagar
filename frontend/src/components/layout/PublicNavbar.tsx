@@ -85,14 +85,16 @@ export function PublicNavbar() {
         <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <Logo />
 
-          {/* Search bar — desktop only */}
-          <Link
-            href="/search"
-            className="group hidden flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-400 transition-colors hover:border-brand-300 hover:bg-white sm:flex sm:max-w-md"
-          >
-            <Search className="h-4 w-4 transition-colors group-hover:text-brand-500" />
-            Search products…
-          </Link>
+          {/* Search bar — desktop only, hidden on /search page */}
+          {pathname !== "/search" && (
+            <Link
+              href="/search"
+              className="group hidden flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-400 transition-colors hover:border-brand-300 hover:bg-white sm:flex sm:max-w-md"
+            >
+              <Search className="h-4 w-4 transition-colors group-hover:text-brand-500" />
+              Search products…
+            </Link>
+          )}
 
           {/* Desktop right links */}
           <nav className="hidden items-center gap-1 sm:flex">
@@ -106,7 +108,6 @@ export function PublicNavbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <NavCountryPicker />
             <CartLink />
 
             {isCustomer ? (
