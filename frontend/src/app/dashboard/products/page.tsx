@@ -14,6 +14,7 @@ import { useAppDispatch } from "@/store/hooks";
 import {
   useDeleteProductMutation,
   useGetMyProductsQuery,
+  useGetMyStoreQuery,
   useGetSellerQuery,
 } from "@/store/apiSlice";
 import { addToast } from "@/store/uiSlice";
@@ -45,6 +46,7 @@ export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const { data: products, isLoading } = useGetMyProductsQuery();
   const { data: seller } = useGetSellerQuery();
+  const { data: myStore } = useGetMyStoreQuery();
   const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
   const [toDelete, setToDelete] = useState<Product | null>(null);
   const [toBoost, setToBoost] = useState<Product | null>(null);
@@ -160,8 +162,8 @@ export default function ProductsPage() {
                   {p.hiddenOverPlanLimit && <Badge tone="amber">Hidden · over plan limit</Badge>}
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
-                  {seller?.slug && (
-                    <CopyLinkButton slug={seller.slug} productId={p.id} />
+                  {myStore?.slug && (
+                    <CopyLinkButton slug={myStore.slug} productId={p.id} />
                   )}
                   <button
                     onClick={() => setToBoost(p)}
