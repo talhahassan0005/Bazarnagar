@@ -48,7 +48,7 @@ export function WhatsAppButton({
       size={size}
       fullWidth={fullWidth}
       href={href}
-      target="_blank"
+      target="whatsapp"
       rel="noopener noreferrer"
       leftIcon={<MessageCircle className="h-4 w-4" />}
       onClick={() => { void trackClick(product.id); }}
