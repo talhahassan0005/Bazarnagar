@@ -55,9 +55,6 @@ export default function DashboardPage() {
           <div className="flex flex-1 flex-wrap items-center gap-2 sm:max-w-lg">
             <CopyLink value={storeUrl} className="flex-1" />
             <ShareStoreButton store={s} />
-            <Button href={`/store/${s.slug}`} variant="outline" target="_blank">
-              Preview
-            </Button>
           </div>
         </CardBody>
       </Card>
