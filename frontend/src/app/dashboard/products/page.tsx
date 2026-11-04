@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
+import { Check, Copy, Package, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
 import { Badge, BrandLoader, Button, Card, EmptyState, Modal } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import {
@@ -20,6 +20,26 @@ import { addToast } from "@/store/uiSlice";
 import { PLANS } from "@/lib/constants";
 import { formatCount, formatPrice, getErrorMessage, isBoosted } from "@/lib/utils";
 import type { Product } from "@/lib/types";
+
+function CopyLinkButton({ slug, productId }: { slug: string; productId: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    const url = `${window.location.origin}/store/${slug}/product/${productId}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <button
+      onClick={copy}
+      className="rounded-lg p-2 text-slate-400 hover:bg-brand-50 hover:text-brand-600"
+      aria-label="Copy product link"
+      title="Copy product link"
+    >
+      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+    </button>
+  );
+}
 
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
@@ -140,6 +160,9 @@ export default function ProductsPage() {
                   {p.hiddenOverPlanLimit && <Badge tone="amber">Hidden · over plan limit</Badge>}
                 </div>
                 <div className="col-span-1 flex justify-end gap-1">
+                  {seller?.slug && (
+                    <CopyLinkButton slug={seller.slug} productId={p.id} />
+                  )}
                   <button
                     onClick={() => setToBoost(p)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
