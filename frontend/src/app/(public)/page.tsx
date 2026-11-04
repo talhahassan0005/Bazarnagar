@@ -65,9 +65,6 @@ export default async function LandingPage() {
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-500">
            Create your store, add products, and share your link anywhere.
           </p>
-          <p dir="rtl" lang="ur" className="mt-4 text-xl text-slate-800 sm:text-2xl">
-            اپنا آن لائن اسٹور مفت بنائیں - {FREE_PRODUCT_LIMIT} تک مصنوعات شامل کریں۔
-          </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <CreateStoreButton className="shadow-lg shadow-accent-500/25" />
             <Button href="/how-it-works" size="lg" variant="outline" leftIcon={<PlayCircle className="h-5 w-5" />}>
