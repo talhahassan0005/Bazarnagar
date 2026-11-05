@@ -102,6 +102,7 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm text-slate-500">
               <li><Link href="/terms" className="transition-colors hover:text-brand-700">Terms &amp; Conditions</Link></li>
               <li><Link href="/privacy" className="transition-colors hover:text-brand-700">Privacy Policy</Link></li>
+              <li><Link href="/prohibited-products-policy" className="transition-colors hover:text-brand-700">Prohibited Products Policy</Link></li>
               <li><Link href="/return-policy" className="transition-colors hover:text-brand-700">Return &amp; Refund Policy</Link></li>
               <li><Link href="/shipping-policy" className="transition-colors hover:text-brand-700">Shipping Policy</Link></li>
               <li><Link href="/cancellation-policy" className="transition-colors hover:text-brand-700">Cancellation Policy</Link></li>
