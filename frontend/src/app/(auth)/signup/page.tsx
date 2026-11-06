@@ -38,6 +38,7 @@ function SignupForm() {
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState<string>(DEFAULT_COUNTRY);
   const [password, setPassword] = useState("");
+  const [agreed, setAgreed] = useState(false);
   /** Set once a seller signs up: they verify by email before logging in. */
   const [sentTo, setSentTo] = useState<string | null>(null);
 
@@ -127,7 +128,24 @@ function SignupForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button type="submit" fullWidth disabled={isLoading}>
+        {role === "seller" && (
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-brand-600"
+            />
+            <span className="text-xs text-slate-600 leading-relaxed">
+              I have read and agree to BazarNagar&apos;s{" "}
+              <a href="/terms" target="_blank" className="text-brand-600 underline hover:text-brand-700">Terms &amp; Conditions</a>,{" "}
+              <a href="/privacy" target="_blank" className="text-brand-600 underline hover:text-brand-700">Privacy Policy</a>, and{" "}
+              <a href="/prohibited-products-policy" target="_blank" className="text-brand-600 underline hover:text-brand-700">Restricted &amp; Prohibited Products Policy</a>.
+              I confirm that I will not list or promote prohibited products, including drugs, medicines, and adult content.
+            </span>
+          </label>
+        )}
+        <Button type="submit" fullWidth disabled={isLoading || (role === "seller" && !agreed)}>
           {isLoading ? "Creating account…" : "Create account"}
         </Button>
       </form>
