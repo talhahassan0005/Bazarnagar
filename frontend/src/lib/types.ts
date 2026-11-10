@@ -170,6 +170,8 @@ export interface Store {
     requestedAt: string;
     reviewedAt?: string;
   };
+  /** Admin-controlled: hide this store's products from the home/landing page. */
+  hideFromLanding?: boolean;
   /** Seller/admin only — public endpoints omit views and whatsappClicks. */
   views: number;
   whatsappClicks: number;

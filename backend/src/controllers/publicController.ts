@@ -169,8 +169,11 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
   const area = req.query.area as string | undefined;
   const country = req.query.country as string | undefined;
 
+  const fromLanding = req.query.source === "home";
+
   // Find stores that are public-searchable and (optionally) match city/area/country.
   const storeFilter: Record<string, unknown> = { showInSearch: true, status: "active" };
+  if (fromLanding) storeFilter.hideFromLanding = { $ne: true };
   if (city) storeFilter.city = cityMatch(city);
   if (area) storeFilter.area = area;
   if (country) storeFilter.country = country;

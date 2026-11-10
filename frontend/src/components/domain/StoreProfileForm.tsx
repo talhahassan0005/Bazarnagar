@@ -257,8 +257,8 @@ export function StoreProfileForm({
           </div>
           <div className="sm:col-span-2">
             <Toggle
-              label="Show my products in public search"
-              description="If off, products only appear on your own shop page."
+              label="Store visibility: Public"
+              description="Public — anyone can discover your store via search, shops listing, and the home page. Turn off to make your store Private (only accessible via your direct link)."
               checked={v.showInSearch}
               onChange={(val) => set("showInSearch", val)}
             />

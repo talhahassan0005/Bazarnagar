@@ -148,7 +148,7 @@ export const apiSlice = createApi({
       query: (id) => `/public/products/${id}/related`,
       providesTags: ["Product"],
     }),
-    searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string; country?: string }>({
+    searchProducts: builder.query<ProductWithStore[], { q?: string; category?: string; city?: string; area?: string; country?: string; source?: string }>({
       query: (params) => ({ url: "/public/search", params }),
       providesTags: ["Product"],
     }),
@@ -411,6 +411,10 @@ export const apiSlice = createApi({
       query: ({ id, status }) => ({ url: `/admin/stores/${id}`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Store"],
     }),
+    toggleStoreHideFromLanding: builder.mutation<Store, { id: string; hideFromLanding: boolean }>({
+      query: ({ id, hideFromLanding }) => ({ url: `/admin/stores/${id}`, method: "PATCH", body: { hideFromLanding } }),
+      invalidatesTags: ["Store"],
+    }),
     getStoreReviews: builder.query<StoreReviewItem[], "pending" | "reviewed">({
       query: (status) => ({ url: "/admin/store-reviews", params: { status } }),
       providesTags: ["Store"],
@@ -668,6 +672,7 @@ export const {
   useModerateProductMutation,
   useUpdateSellerMutation,
   useUpdateStoreStatusMutation,
+  useToggleStoreHideFromLandingMutation,
   useGetStoreReviewsQuery,
   useMarkStoreReviewedMutation,
   useGetSellerPaymentsQuery,

@@ -447,7 +447,8 @@ export const updateSeller = asyncHandler(async (req: Request, res: Response) => 
 });
 
 const updateStoreSchema = z.object({
-  status: z.enum(["active", "inactive", "pending"]),
+  status: z.enum(["active", "inactive", "pending"]).optional(),
+  hideFromLanding: z.boolean().optional(),
 });
 
 /** PATCH /api/admin/stores/:id — approve / deactivate a store. */

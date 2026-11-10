@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { EyeOff, ExternalLink } from "lucide-react";
 import { Badge, BrandLoader, Button, ConfirmDialog } from "@/components/ui";
 import { PageHeader } from "@/components/layout/DashboardShell";
 import { DataTable, type Column } from "@/components/domain/DataTable";
 import { CopyId } from "@/components/domain/CopyId";
-import { useGetAllStoresQuery, useUpdateStoreStatusMutation } from "@/store/apiSlice";
+import { useGetAllStoresQuery, useUpdateStoreStatusMutation, useToggleStoreHideFromLandingMutation } from "@/store/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { addToast } from "@/store/uiSlice";
 import { formatCount, getErrorMessage } from "@/lib/utils";
@@ -18,6 +18,7 @@ export default function AdminStoresPage() {
   const dispatch = useAppDispatch();
   const { data, isLoading } = useGetAllStoresQuery();
   const [updateStoreStatus] = useUpdateStoreStatusMutation();
+  const [toggleHideFromLanding] = useToggleStoreHideFromLandingMutation();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ store: Store; status: StoreStatus } | null>(null);
 
@@ -30,6 +31,23 @@ export default function AdminStoresPage() {
     try {
       await updateStoreStatus({ id: s.id, status }).unwrap();
       dispatch(addToast(`${s.name} ${status === "active" ? "activated" : "deactivated"}`, status === "active" ? "success" : "error"));
+    } catch (err) {
+      dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
+    } finally {
+      setPendingKey(null);
+    }
+  }
+
+  async function handleToggleLanding(s: Store) {
+    const next = !s.hideFromLanding;
+    const key = `${s.id}:landing`;
+    setPendingKey(key);
+    try {
+      await toggleHideFromLanding({ id: s.id, hideFromLanding: next }).unwrap();
+      dispatch(addToast(
+        next ? `${s.name} hidden from landing page` : `${s.name} shown on landing page`,
+        next ? "error" : "success"
+      ));
     } catch (err) {
       dispatch(addToast(getErrorMessage(err, "Update failed"), "error"));
     } finally {
@@ -64,6 +82,11 @@ export default function AdminStoresPage() {
             {s.status}
           </Badge>
           {s.review?.status === "pending" && <Badge tone="amber">Needs review</Badge>}
+          {s.hideFromLanding && (
+            <Badge tone="gray" className="flex items-center gap-1">
+              <EyeOff className="h-3 w-3" /> Hidden from landing
+            </Badge>
+          )}
         </div>
       ),
     },
@@ -71,7 +94,7 @@ export default function AdminStoresPage() {
       header: "Action",
       className: "text-right",
       cell: (s) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex flex-wrap justify-end gap-1">
           <Button
             href={`/store/${s.slug}`}
             target="_blank"
@@ -80,6 +103,16 @@ export default function AdminStoresPage() {
             leftIcon={<ExternalLink className="h-4 w-4" />}
           >
             View
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={s.hideFromLanding ? "text-brand-600 hover:bg-brand-50" : "text-slate-500 hover:bg-slate-100"}
+            onClick={() => handleToggleLanding(s)}
+            loading={pendingKey === `${s.id}:landing`}
+            title={s.hideFromLanding ? "Show on landing page" : "Hide from landing page"}
+          >
+            {s.hideFromLanding ? "Show on landing" : "Hide from landing"}
           </Button>
           {s.status === "active" ? (
             <Button

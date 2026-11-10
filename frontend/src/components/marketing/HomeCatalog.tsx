@@ -34,7 +34,7 @@ export function HomeCatalog() {
 
   const { country } = useCountry();
   // Fetch all products filtered by country — we group client-side by category
-  const { data, isLoading } = useSearchProductsQuery({ country });
+  const { data, isLoading } = useSearchProductsQuery({ country, source: "home" });
   const { data: homeSettings } = useGetHomeSettingsQuery();
   const defaultRows = homeSettings?.defaultRows ?? 1;
   const categoryRows = homeSettings?.categoryRows ?? {};

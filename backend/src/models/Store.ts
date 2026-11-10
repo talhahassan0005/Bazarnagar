@@ -64,6 +64,7 @@ export interface StoreDoc extends Document {
   whatsappClicks: number;
   addToCartClicks: number;
   buyNowClicks: number;
+  hideFromLanding?: boolean;
 }
 
 const landingSchema = new Schema<StoreLanding>(
@@ -151,6 +152,8 @@ const storeSchema = new Schema<StoreDoc>(
       enum: ["active", "inactive", "pending"],
       default: "active",
     },
+    /** Admin-only: hide this store's products from the public landing/home page. */
+    hideFromLanding: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     whatsappClicks: { type: Number, default: 0 },
     addToCartClicks: { type: Number, default: 0 },
