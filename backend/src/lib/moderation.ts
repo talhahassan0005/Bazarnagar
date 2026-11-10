@@ -65,11 +65,31 @@ const BANNED_PATTERNS: { reason: string; words: string[] }[] = [
     ],
   },
   {
-    reason: "unauthorized medicines / pharmaceuticals",
+    reason: "medicines / pharmaceuticals (not allowed on this platform)",
     words: [
-      "prescription medicine", "prescription drug", "pharma for sale",
-      "antibiotic for sale", "steroid for sale", "anabolic steroid",
-      "growth hormone for sale", "sleeping pill for sale", "pain killer for sale",
+      // General medicine words
+      "medicine", "tablet", "capsule", "syrup", "injection", "vaccine",
+      "pharmaceutical", "pharma", "drug store", "medical store",
+      "dawai", "dawa", "دوائی", "دوا", "گولی", "کیپسول", "شربت",
+      // Prescription / OTC
+      "prescription", "antibiotic", "paracetamol", "ibuprofen", "aspirin",
+      "amoxicillin", "metformin", "omeprazole", "cetirizine", "loratadine",
+      "cough syrup", "eye drop", "ear drop", "nasal spray", "inhaler",
+      "insulin", "blood pressure tablet", "diabetes tablet",
+      // Pain / sleep
+      "pain killer", "painkiller", "sleeping pill", "sedative", "tranquilizer",
+      // Vitamins / supplements sold as medicines
+      "multivitamin tablet", "vitamin tablet", "iron tablet", "zinc tablet",
+      "calcium tablet", "fish oil capsule",
+      // Steroids / hormones
+      "steroid", "anabolic", "testosterone", "growth hormone", "hgh",
+      // Sexual medicines (consolidated)
+      "viagra", "sildenafil", "cialis", "tadalafil", "levitra", "vardenafil",
+      "timing tablet", "timing spray", "delay spray", "delay cream",
+      "erection pill", "erection cream", "sex capsule", "sex tablet",
+      "sex medicine", "sex power", "sex booster", "mardana kamzori",
+      "mardana taqat", "jinsee taqat", "jinsee kamzori", "nafs ka ilaj",
+      "لنگ بڑھاؤ", "مردانہ کمزوری", "جنسی کمزوری", "جنسی طاقت", "وایگرا", "سیکس کیپسول",
     ],
   },
   {
