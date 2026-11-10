@@ -67,23 +67,55 @@ const BANNED_PATTERNS: { reason: string; words: string[] }[] = [
   {
     reason: "medicines / pharmaceuticals (not allowed on this platform)",
     words: [
-      // General medicine words
-      "medicine", "tablet", "capsule", "syrup", "injection", "vaccine",
-      "pharmaceutical", "pharma", "drug store", "medical store",
-      "dawai", "dawa", "دوائی", "دوا", "گولی", "کیپسول", "شربت",
-      // Prescription / OTC
-      "prescription", "antibiotic", "paracetamol", "ibuprofen", "aspirin",
-      "amoxicillin", "metformin", "omeprazole", "cetirizine", "loratadine",
-      "cough syrup", "eye drop", "ear drop", "nasal spray", "inhaler",
-      "insulin", "blood pressure tablet", "diabetes tablet",
-      // Pain / sleep
-      "pain killer", "painkiller", "sleeping pill", "sedative", "tranquilizer",
-      // Vitamins / supplements sold as medicines
-      "multivitamin tablet", "vitamin tablet", "iron tablet", "zinc tablet",
-      "calcium tablet", "fish oil capsule",
+      // Core medicine words (English)
+      "medicine", "medication", "medicated", "medicinal",
+      "tablet", "tablets", "capsule", "capsules", "pill", "pills",
+      "syrup", "injection", "injections", "vaccine", "vaccines",
+      "pharmaceutical", "pharma", "drug store", "medical store", "pharmacy",
+      "ointment", "gel medicine", "drops medicine", "patch medicine",
+      "suppository", "inhaler", "nebulizer",
+
+      // Roman Urdu
+      "dawai", "dawa", "dawi", "goli", "nuskha", "hakim nuskha",
+      "tibbi", "unani", "homeopathic", "herbal medicine", "herbal tablet",
+      "herbal capsule", "herbal syrup", "ayurvedic",
+
+      // Urdu script
+      "دوائی", "دوا", "گولی", "کیپسول", "شربت", "انجیکشن", "ٹیبلٹ",
+      "دوائیں", "نسخہ", "حکیم", "طبی",
+
+      // Prescription / OTC common names
+      "paracetamol", "panadol", "calpol", "ibuprofen", "brufen",
+      "aspirin", "disprin", "amoxicillin", "augmentin", "flagyl",
+      "metronidazole", "metformin", "omeprazole", "nexium", "cetirizine",
+      "loratadine", "chlorpheniramine", "azithromycin", "ciprofloxacin",
+      "doxycycline", "clotrimazole", "fluconazole", "pantoprazole",
+      "ranitidine", "cimetidine", "domperidone", "metoclopramide",
+
+      // Category terms
+      "antibiotic", "antibiotics", "antifungal", "antiviral", "antibacterial",
+      "antihistamine", "antacid", "antidepressant", "antipsychotic",
+      "antimalarial", "antidiabetic", "antihypertensive",
+      "cough syrup", "cough medicine", "cold medicine", "fever medicine",
+      "eye drop", "ear drop", "nasal spray", "nasal drop",
+      "blood pressure medicine", "diabetes medicine", "sugar medicine",
+      "cholesterol medicine", "thyroid medicine", "liver medicine",
+      "kidney medicine", "heart medicine",
+
+      // Vitamins / supplements as medicines
+      "vitamin tablet", "vitamin capsule", "multivitamin",
+      "iron tablet", "zinc tablet", "calcium tablet",
+      "fish oil capsule", "omega 3 capsule",
+
+      // Pain / sleep / mental
+      "painkiller", "pain killer", "sleeping pill", "sleep tablet",
+      "sedative", "tranquilizer", "antidepressant tablet",
+
       // Steroids / hormones
-      "steroid", "anabolic", "testosterone", "growth hormone", "hgh",
-      // Sexual medicines (consolidated)
+      "steroid", "anabolic steroid", "testosterone", "growth hormone", "hgh",
+      "insulin", "dexamethasone", "prednisolone", "cortisone",
+
+      // Sexual / performance medicines
       "viagra", "sildenafil", "cialis", "tadalafil", "levitra", "vardenafil",
       "timing tablet", "timing spray", "delay spray", "delay cream",
       "erection pill", "erection cream", "sex capsule", "sex tablet",
