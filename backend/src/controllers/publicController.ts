@@ -380,6 +380,59 @@ export const submitContactForm = asyncHandler(async (req: Request, res: Response
   res.json({ ok: true });
 });
 
+const reportSchema = z.object({
+  reason: z.enum(["prohibited_product", "fake_product", "wrong_category", "spam", "other"]),
+  details: z.string().max(1000).optional(),
+  productUrl: z.string().max(500).optional(),
+});
+
+/** POST /api/public/products/:id/report — visitor reports a product listing. */
+export const reportProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { reason, details, productUrl } = reportSchema.parse(req.body);
+  const productId = req.params.id;
+
+  const adminEmail = env.smtp.user || env.smtp.from;
+  const reasonLabels: Record<string, string> = {
+    prohibited_product: "Prohibited / Illegal Product",
+    fake_product: "Fake / Counterfeit Product",
+    wrong_category: "Wrong Category / Misleading",
+    spam: "Spam / Duplicate Listing",
+    other: "Other",
+  };
+
+  await sendMail({
+    to: adminEmail,
+    subject: `[Product Report] ${reasonLabels[reason]}`,
+    text: `A product has been reported.\n\nProduct ID: ${productId}\nURL: ${productUrl ?? "N/A"}\nReason: ${reasonLabels[reason]}\nDetails: ${details ?? "None provided"}`,
+    html: `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);max-width:100%">
+        <tr><td style="background:#dc2626;padding:24px 32px">
+          <h2 style="margin:0;color:#fff;font-size:18px">Product Reported</h2>
+          <p style="margin:4px 0 0;color:#fecaca;font-size:13px">A visitor has flagged a listing for review</p>
+        </td></tr>
+        <tr><td style="padding:24px 32px">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px">
+            <tr style="background:#f8fafc"><td style="padding:10px 16px;color:#64748b;font-size:13px;font-weight:600;width:140px">Reason</td><td style="padding:10px 16px;font-size:14px;color:#dc2626;font-weight:600">${reasonLabels[reason]}</td></tr>
+            <tr><td style="padding:10px 16px;color:#64748b;font-size:13px;font-weight:600">Product ID</td><td style="padding:10px 16px;font-size:14px;color:#0f172a;font-family:monospace">${productId}</td></tr>
+            <tr style="background:#f8fafc"><td style="padding:10px 16px;color:#64748b;font-size:13px;font-weight:600">URL</td><td style="padding:10px 16px;font-size:14px"><a href="${productUrl ?? "#"}" style="color:#1d4ed8">${productUrl ?? "N/A"}</a></td></tr>
+            ${details ? `<tr><td style="padding:10px 16px;color:#64748b;font-size:13px;font-weight:600;vertical-align:top">Details</td><td style="padding:10px 16px;font-size:14px;color:#1e293b;line-height:1.6">${details}</td></tr>` : ""}
+          </table>
+        </td></tr>
+        <tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px">
+          <p style="margin:0;font-size:12px;color:#94a3b8">Submitted via bazarnagar.com product report form</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+  });
+
+  res.json({ ok: true });
+});
+
 /** POST /api/public/products/:id/whatsapp-click — "Inquire on WhatsApp" on a product. */
 export const trackWhatsappClick = asyncHandler(async (req: Request, res: Response) => {
   if (!isValidObjectId(req.params.id)) return res.json({ ok: true });

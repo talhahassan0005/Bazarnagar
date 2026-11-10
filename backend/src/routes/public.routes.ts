@@ -12,6 +12,7 @@ import {
   trackButtonClick,
   trackSocialClick,
   submitContactForm,
+  reportProduct,
 } from "../controllers/publicController";
 import { createOrder, getOrdersByIds } from "../controllers/orderController";
 import { getProductReviews, createReview } from "../controllers/reviewController";
@@ -43,5 +44,6 @@ router.post("/products/:id/reviews", createReview);
 router.post("/orders", optionalAuthenticate, createOrder);
 router.get("/orders/by-ids", getOrdersByIds);
 router.post("/contact", submitContactForm);
+router.post("/products/:id/report", reportProduct);
 
 export default router;

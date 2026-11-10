@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight, Check, Eye, MessageCircle, PlayCircle, Share2, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
+import { ChevronRight, Check, Eye, Flag, MessageCircle, PlayCircle, Share2, ShoppingCart, Store as StoreIcon, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge, Button, EmptyState, LoadingPanel, ProductCardSkeleton, Skeleton } from "@/components/ui";
 import { ImageGallery } from "@/components/domain/ImageGallery";
@@ -24,7 +24,108 @@ import {
   useGetStoreProductsQuery,
 } from "@/store/apiSlice";
 import { discountPercent, effectivePrice, formatCount, formatPrice } from "@/lib/utils";
+import { API_BASE } from "@/lib/api";
 import type { Store } from "@/lib/types";
+
+const REPORT_REASONS = [
+  { value: "prohibited_product", label: "Prohibited / Illegal Product" },
+  { value: "fake_product", label: "Fake / Counterfeit Product" },
+  { value: "wrong_category", label: "Wrong Category / Misleading" },
+  { value: "spam", label: "Spam / Duplicate Listing" },
+  { value: "other", label: "Other" },
+] as const;
+
+function ReportButton({ productId }: { productId: string }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<string>("prohibited_product");
+  const [details, setDetails] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await fetch(`${API_BASE}/public/products/${productId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, details: details.trim() || undefined, productUrl: window.location.href }),
+      });
+      setDone(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="Report this product"
+        className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+      >
+        <Flag className="h-3.5 w-3.5" />
+        Report
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {done ? (
+              <div className="py-4 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Report submitted</h3>
+                <p className="mt-1 text-sm text-slate-500">Thank you. We&apos;ll review this listing shortly.</p>
+                <button onClick={() => { setOpen(false); setDone(false); setDetails(""); }} className="mt-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submit} className="space-y-4">
+                <h3 className="text-base font-semibold text-slate-900">Report this product</h3>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-600">Reason</label>
+                  <select
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  >
+                    {REPORT_REASONS.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-600">Additional details <span className="text-slate-400">(optional)</span></label>
+                  <textarea
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="Describe the issue…"
+                    className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={loading} className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60">
+                    {loading ? "Submitting…" : "Submit report"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function ShareButton({ name }: { name: string }) {
   const [copied, setCopied] = useState(false);
@@ -108,6 +209,7 @@ export function ProductDetailClient() {
             <div className="ml-auto flex items-center gap-2">
               <ShareButton name={product.name} />
               <WishlistButton productId={product.id} />
+              <ReportButton productId={product.id} />
             </div>
           </div>
 
