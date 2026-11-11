@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { Navigation, Search, SlidersHorizontal, Store as StoreIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Navigation, Search, SlidersHorizontal, Store as StoreIcon } from "lucide-react";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { StoreCard } from "@/components/storefront/StoreCard";
 import { useGetPublicStoresQuery } from "@/store/apiSlice";
@@ -10,19 +10,26 @@ import { useFilterCities } from "@/components/domain/CitySelect";
 import { useCountry } from "@/lib/useCountry";
 import { distanceKm } from "@/lib/utils";
 
+const PAGE_SIZE = 24;
+
 export default function ShopsPage() {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
+  const [page, setPage] = useState(1);
   const cities = useFilterCities();
   const { country } = useCountry();
   const isPakistan = country === "Pakistan";
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
 
+  // Reset to page 1 on filter change
+  useEffect(() => { setPage(1); }, [query, city, coords]);
+
   const { data, isLoading } = useGetPublicStoresQuery({ q: query, city });
   const results = data ?? [];
 
   function nearMe() {
+    if (coords) { setCoords(null); return; }
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
@@ -35,21 +42,34 @@ export default function ShopsPage() {
     );
   }
 
-  // Attach distance + sort nearest-first when a location is set.
-  const shops = results.map((store) => ({
-    store,
-    distance:
-      coords && store.lat != null && store.lng != null
-        ? distanceKm(coords.lat, coords.lng, store.lat, store.lng)
-        : undefined,
-  }));
-  if (coords) {
-    shops.sort((a, b) => {
-      if (a.distance == null && b.distance == null) return 0;
-      if (a.distance == null) return 1;
-      if (b.distance == null) return -1;
-      return a.distance - b.distance;
-    });
+  const shops = useMemo(() => {
+    const list = results.map((store) => ({
+      store,
+      distance:
+        coords && store.lat != null && store.lng != null
+          ? distanceKm(coords.lat, coords.lng, store.lat, store.lng)
+          : undefined,
+    }));
+    if (coords) {
+      list.sort((a, b) => {
+        if (a.distance == null && b.distance == null) return 0;
+        if (a.distance == null) return 1;
+        if (b.distance == null) return -1;
+        return a.distance - b.distance;
+      });
+    }
+    return list;
+  }, [results, coords]);
+
+  const totalPages = Math.ceil(shops.length / PAGE_SIZE);
+  const paginated = useMemo(
+    () => shops.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [shops, page]
+  );
+
+  function goToPage(p: number) {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -87,9 +107,7 @@ export default function ShopsPage() {
             >
               <option value="">All cities</option>
               {cities.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
@@ -108,7 +126,7 @@ export default function ShopsPage() {
       <div className="mt-6">
         {isLoading ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-56 rounded-2xl" />
             ))}
           </div>
@@ -118,25 +136,66 @@ export default function ShopsPage() {
             title="No shops found"
             description="Try a different search or clear the filters."
             action={
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setQuery("");
-                  setCity("");
-                }}
-              >
+              <Button variant="outline" onClick={() => { setQuery(""); setCity(""); setCoords(null); }}>
                 Clear filters
               </Button>
             }
           />
         ) : (
           <>
-            <p className="mb-3 text-sm text-slate-500">{shops.length} shops</p>
+            <p className="mb-3 text-sm text-slate-500">
+              {shops.length} shops{totalPages > 1 ? ` · Page ${page} of ${totalPages}` : ""}
+            </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {shops.map(({ store, distance }) => (
+              {paginated.map(({ store, distance }) => (
                 <StoreCard key={store.id} store={store} distanceKm={distance} />
               ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-1.5">
+                <button
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page === 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                  .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("…");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "…" ? (
+                      <span key={`e${i}`} className="px-1 text-slate-400">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => goToPage(p as number)}
+                        className={`flex h-9 min-w-[36px] items-center justify-center rounded-lg border px-3 text-sm font-medium transition ${
+                          p === page
+                            ? "border-brand-600 bg-brand-600 text-white"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
+                <button
+                  onClick={() => goToPage(page + 1)}
+                  disabled={page === totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

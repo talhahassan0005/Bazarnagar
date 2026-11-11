@@ -12,7 +12,7 @@ import type { Store } from "@/lib/types";
 
 const NAVBAR_H = 64;
 const STICKY_BAR_H = 44;
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 50;
 
 export function StoreCatalog({ store }: { store: Store }) {
   const products = useGetStoreProductsQuery({ storeId: store.id, publicOnly: true });
