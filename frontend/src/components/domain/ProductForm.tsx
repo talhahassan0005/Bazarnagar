@@ -42,6 +42,7 @@ const EMPTY: ProductFormValues = {
   variants: [],
   deliveryOption: "available",
   deliveryFee: undefined,
+  hideFromLanding: false,
 };
 
 /**
@@ -476,6 +477,18 @@ export function ProductForm({
               Leave blank to use your store&apos;s location.
             </p>
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Visibility" subtitle="Control where this product appears." />
+        <CardBody>
+          <Toggle
+            label="Hide from home page"
+            description="This product won't appear on the Bazarnagar home page. It will still be visible in your store and in search results."
+            checked={v.hideFromLanding ?? false}
+            onChange={(val) => set("hideFromLanding", val)}
+          />
         </CardBody>
       </Card>
 

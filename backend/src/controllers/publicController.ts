@@ -184,6 +184,7 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
     ...PUBLIC_PRODUCT_FILTER,
     storeId: { $in: stores.map((s) => s._id) },
   };
+  if (fromLanding) productFilter.hideFromLanding = { $ne: true };
   if (category) productFilter.category = category;
 
   let products = await Product.find(productFilter).sort({ createdAt: -1 });

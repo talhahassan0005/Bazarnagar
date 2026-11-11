@@ -54,6 +54,8 @@ export interface ProductDoc extends Document {
   boostedUntil?: Date;
   /** Over the seller's plan product limit (e.g. moved to Free): hidden from the public, still shown to the seller. */
   hiddenOverPlanLimit?: boolean;
+  /** Seller-controlled: exclude this product from the home/landing page. */
+  hideFromLanding?: boolean;
   views: number;
   whatsappClicks: number;
   addToCartClicks: number;
@@ -116,6 +118,7 @@ const productSchema = new Schema<ProductDoc>(
     moderationReason: String,
     boostedUntil: { type: Date, index: true },
     hiddenOverPlanLimit: { type: Boolean, default: false, index: true },
+    hideFromLanding: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     whatsappClicks: { type: Number, default: 0 },
     addToCartClicks: { type: Number, default: 0 },

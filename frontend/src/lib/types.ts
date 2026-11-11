@@ -195,6 +195,8 @@ export interface Product {
   id: string;
   /** Over the plan's product limit (e.g. after moving to Free): hidden from customers, still visible to the seller. */
   hiddenOverPlanLimit?: boolean;
+  /** Seller-controlled: exclude this product from the home/landing page. */
+  hideFromLanding?: boolean;
   storeId: string;
   name: string;
   category: string;

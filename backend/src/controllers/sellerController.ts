@@ -242,6 +242,7 @@ const productSchema = z.object({
   deliveryFee: z.number().nonnegative().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  hideFromLanding: z.boolean().default(false),
 });
 
 async function requireOwnedStore(req: Request) {
