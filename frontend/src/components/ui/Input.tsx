@@ -60,7 +60,7 @@ export function Input({
 
   return (
     <Field label={label} hint={hint} error={error} required={required}>
-      <div className="flex items-stretch">
+      <div className="relative flex items-stretch">
         {leftAddon && (
           <span className="inline-flex items-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 px-3 text-sm text-slate-500 select-none whitespace-nowrap">
             {leftAddon}
@@ -83,7 +83,7 @@ export function Input({
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="absolute right-2.5 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600"
             aria-label={show ? "Hide password" : "Show password"}
             tabIndex={-1}
           >
