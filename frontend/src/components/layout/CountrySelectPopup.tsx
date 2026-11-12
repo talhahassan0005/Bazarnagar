@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { ChevronDown, Globe, MapPin } from "lucide-react";
 import { useCountry } from "@/lib/useCountry";
 import { useAppSelector } from "@/store/hooks";
@@ -11,6 +12,8 @@ import { Button } from "@/components/ui";
 
 const LS_KEY = "bazarnagar_country";
 
+const ALLOWED_PATHS = ["/", "/shops", "/search"];
+
 function hasStoredCountry(): boolean {
   try { return !!localStorage.getItem(LS_KEY); } catch { return false; }
 }
@@ -18,19 +21,22 @@ function hasStoredCountry(): boolean {
 export function CountrySelectPopup() {
   const { setCountry } = useCountry();
   const customer = useAppSelector((s) => s.auth.customer);
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState("Pakistan");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    // Only show on home, shops, and search pages
+    if (!ALLOWED_PATHS.includes(pathname)) return;
     // Don't show for logged-in users (they have a registered country)
     if (customer) return;
     // Don't show if country already saved in localStorage
     if (hasStoredCountry()) return;
     const t = setTimeout(() => setOpen(true), 600);
     return () => clearTimeout(t);
-  }, [customer]);
+  }, [customer, pathname]);
 
   function confirm() {
     setCountry(selected);
